@@ -5,8 +5,7 @@ import { Dashboard } from './pages/Dashboard.jsx';
 import { normalizeFinanceData } from './utils/financeEngine.js';
 
 export default function App() {
-  const [financeData, setFinanceData] = useLocalStorageState(sampleFinanceData);
-  const normalizedFinanceData = normalizeFinanceData(financeData);
+  const [financeData, setFinanceData] = useLocalStorageState(sampleFinanceData, normalizeFinanceData);
 
-  return <Dashboard financeData={normalizedFinanceData} setFinanceData={setFinanceData} />;
+  return <Dashboard financeData={financeData} setFinanceData={setFinanceData} />;
 }

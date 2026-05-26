@@ -74,6 +74,39 @@ export function Dashboard({ financeData, setFinanceData }) {
     }));
   }
 
+  function startActiveWeek(activeWeek) {
+    setFinanceData((currentData) => ({
+      ...currentData,
+      activeWeek,
+    }));
+  }
+
+  function updateActiveWeek(updater) {
+    setFinanceData((currentData) => {
+      if (!currentData.activeWeek) return currentData;
+
+      const nextActiveWeek =
+        typeof updater === 'function' ? updater(currentData.activeWeek) : { ...currentData.activeWeek, ...updater };
+
+      return {
+        ...currentData,
+        activeWeek: {
+          ...nextActiveWeek,
+          updatedAt: new Date().toISOString(),
+        },
+      };
+    });
+  }
+
+  function closeActiveWeek(record) {
+    setFinanceData((currentData) => ({
+      ...currentData,
+      weeklyIncome: record.income,
+      activeWeek: null,
+      weeklyRecords: [...(currentData.weeklyRecords || []), record],
+    }));
+  }
+
   function deleteWeeklyRecord(recordId) {
     setFinanceData((currentData) => ({
       ...currentData,
@@ -140,8 +173,10 @@ export function Dashboard({ financeData, setFinanceData }) {
             financeData={financeData}
             weeklySummary={weeklySummary}
             onDeleteWeek={deleteWeeklyRecord}
+            onCloseWeek={closeActiveWeek}
             onIncomeChange={updateWeeklyIncome}
-            onSaveWeek={saveWeeklyRecord}
+            onStartActiveWeek={startActiveWeek}
+            onUpdateActiveWeek={updateActiveWeek}
           />
         )}
 

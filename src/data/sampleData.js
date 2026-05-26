@@ -54,5 +54,6 @@ export const sampleFinanceData = {
       thirdPartyContribution: 120,
     },
   ],
+  activeWeek: null,
   weeklyRecords: [],
 };

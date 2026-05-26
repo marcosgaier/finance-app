@@ -8,7 +8,22 @@ const transactionCategories = [
 ];
 
 function getTodayIsoDate() {
-  return new Date().toISOString().slice(0, 10);
+  return formatIsoDate(new Date());
+}
+
+function formatIsoDate(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function getCurrentFinancialWeekStartDate(referenceDate = new Date()) {
+  const startDate = new Date(referenceDate.getFullYear(), referenceDate.getMonth(), referenceDate.getDate());
+  const tuesday = 2;
+  const daysSinceTuesday = (startDate.getDay() - tuesday + 7) % 7;
+  startDate.setDate(startDate.getDate() - daysSinceTuesday);
+  return formatIsoDate(startDate);
 }
 
 function createEmptyTransaction(date = getTodayIsoDate()) {
@@ -20,40 +35,86 @@ function createEmptyTransaction(date = getTodayIsoDate()) {
   };
 }
 
-export function WeeklyTracker({ financeData, weeklySummary, onDeleteWeek, onIncomeChange, onSaveWeek }) {
-  const [weekDate, setWeekDate] = useState(getTodayIsoDate());
-  const [realIncome, setRealIncome] = useState(Number(financeData.weeklyIncome || 0));
-  const [transactionDraft, setTransactionDraft] = useState(createEmptyTransaction());
-  const [variableTransactions, setVariableTransactions] = useState([]);
-  const [expandedRecordIds, setExpandedRecordIds] = useState({});
-  const [note, setNote] = useState('');
-  const [cardPaymentDrafts, setCardPaymentDrafts] = useState({});
-
-  useEffect(() => {
-    setRealIncome(Number(financeData.weeklyIncome || 0));
-  }, [financeData.weeklyIncome]);
-
-  useEffect(() => {
-    setTransactionDraft((currentDraft) => ({ ...currentDraft, date: weekDate }));
-  }, [weekDate]);
-
-  const transactionTotals = calculateTransactionTotals(variableTransactions);
+function createActiveWeek({ weekStartDate, income, weeklySummary }) {
   const plannedGroceries = Number(weeklySummary.groceries || 0);
   const plannedFuel = Number(weeklySummary.fuel || 0);
+
+  return {
+    id: `active-week-${weekStartDate}`,
+    weekStartDate,
+    weekDate: weekStartDate,
+    income: Number(income || 0),
+    realIncome: Number(income || 0),
+    variableTransactions: [],
+    payments: [],
+    note: '',
+    plannedGroceries,
+    plannedFuel,
+    plannedVariableBudget: plannedGroceries + plannedFuel,
+    minimumToAvoidExpiry: weeklySummary.minimumToAvoidExpiry,
+    recommendedPayment: weeklySummary.recommendedPayment,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+}
+
+export function WeeklyTracker({
+  financeData,
+  weeklySummary,
+  onCloseWeek,
+  onDeleteWeek,
+  onIncomeChange,
+  onStartActiveWeek,
+  onUpdateActiveWeek,
+}) {
+  const financialWeekStartDate = useMemo(() => getCurrentFinancialWeekStartDate(), []);
+  const activeWeek = financeData.activeWeek;
+  const [transactionDraft, setTransactionDraft] = useState(createEmptyTransaction(financialWeekStartDate));
+  const [expandedRecordIds, setExpandedRecordIds] = useState({});
+
+  useEffect(() => {
+    if (!activeWeek) {
+      onStartActiveWeek(
+        createActiveWeek({
+          weekStartDate: financialWeekStartDate,
+          income: financeData.weeklyIncome,
+          weeklySummary,
+        }),
+      );
+    }
+  }, [activeWeek, financeData.weeklyIncome, financialWeekStartDate, onStartActiveWeek, weeklySummary]);
+
+  useEffect(() => {
+    setTransactionDraft((currentDraft) => ({
+      ...currentDraft,
+      date: currentDraft.date || activeWeek?.weekStartDate || financialWeekStartDate,
+    }));
+  }, [activeWeek?.weekStartDate, financialWeekStartDate]);
+
+  if (!activeWeek) {
+    return (
+      <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
+        <p className="text-sm font-semibold text-stone-900">Preparando semana actual...</p>
+      </section>
+    );
+  }
+
+  const normalizedActiveWeek = normalizeActiveWeek(activeWeek, weeklySummary);
+  const variableTransactions = normalizedActiveWeek.variableTransactions;
+  const transactionTotals = calculateTransactionTotals(variableTransactions);
+  const plannedGroceries = normalizedActiveWeek.plannedGroceries;
+  const plannedFuel = normalizedActiveWeek.plannedFuel;
   const plannedVariableBudget = plannedGroceries + plannedFuel;
   const actualVariableSpent = transactionTotals.total;
   const groceriesDifference = plannedGroceries - transactionTotals.groceries;
   const fuelDifference = plannedFuel - transactionTotals.fuel;
   const variableDifference = plannedVariableBudget - actualVariableSpent;
-
-  const totalPaid = useMemo(
-    () => Object.values(cardPaymentDrafts).reduce((total, amount) => total + Number(amount || 0), 0),
-    [cardPaymentDrafts],
-  );
+  const payments = normalizedActiveWeek.payments;
+  const totalPaid = payments.reduce((total, payment) => total + Number(payment.amount || 0), 0);
   const minimumDifference = totalPaid - weeklySummary.minimumToAvoidExpiry;
   const recommendedDifference = totalPaid - weeklySummary.recommendedPayment;
   const realWeeklyMargin =
-    Number(realIncome || 0) -
+    Number(normalizedActiveWeek.realIncome || 0) -
     Number(weeklySummary.weeklyExpensesTotal || 0) -
     Number(weeklySummary.monthlyReserveWeekly || 0) -
     actualVariableSpent -
@@ -72,13 +133,24 @@ export function WeeklyTracker({ financeData, weeklySummary, onDeleteWeek, onInco
       ...card,
       minimumPayment: plans.reduce((total, plan) => total + Number(plan.recommendedPayment || 0), 0),
       recommendedPayment: plans.reduce((total, plan) => total + Number(plan.totalRecommendedPayment || 0), 0),
+      paidAmount: payments.find((payment) => payment.cardId === card.id)?.amount || '',
     };
   });
 
+  function updateActiveWeek(patch) {
+    onUpdateActiveWeek((currentWeek) => ({
+      ...currentWeek,
+      ...patch,
+    }));
+  }
+
   function updateRealIncome(amount) {
     const nextIncome = Number(amount);
-    setRealIncome(nextIncome);
     onIncomeChange(nextIncome);
+    updateActiveWeek({
+      income: nextIncome,
+      realIncome: nextIncome,
+    });
   }
 
   function updateTransactionDraft(field, value) {
@@ -93,18 +165,20 @@ export function WeeklyTracker({ financeData, weeklySummary, onDeleteWeek, onInco
     const description = transactionDraft.description.trim();
     if (amount <= 0 || description.length === 0) return;
 
-    setVariableTransactions((currentTransactions) => [
-      ...currentTransactions,
-      {
-        id: `transaction-${Date.now()}`,
-        date: transactionDraft.date || weekDate,
-        description,
-        category: transactionDraft.category,
-        amount,
-      },
-    ]);
+    const nextTransaction = {
+      id: `transaction-${Date.now()}`,
+      date: transactionDraft.date || normalizedActiveWeek.weekStartDate,
+      description,
+      category: transactionDraft.category,
+      amount,
+    };
+
+    onUpdateActiveWeek((currentWeek) => ({
+      ...currentWeek,
+      variableTransactions: [...normalizeRecordTransactions(currentWeek), nextTransaction],
+    }));
     setTransactionDraft({
-      date: transactionDraft.date || weekDate,
+      date: transactionDraft.date || normalizedActiveWeek.weekStartDate,
       description: '',
       category: transactionDraft.category,
       amount: '',
@@ -112,23 +186,51 @@ export function WeeklyTracker({ financeData, weeklySummary, onDeleteWeek, onInco
   }
 
   function deleteVariableTransaction(transactionId) {
-    setVariableTransactions((currentTransactions) =>
-      currentTransactions.filter((transaction) => transaction.id !== transactionId),
-    );
-  }
-
-  function updateCardPayment(cardId, amount) {
-    setCardPaymentDrafts((currentDrafts) => ({
-      ...currentDrafts,
-      [cardId]: Number(amount),
+    onUpdateActiveWeek((currentWeek) => ({
+      ...currentWeek,
+      variableTransactions: normalizeRecordTransactions(currentWeek).filter(
+        (transaction) => transaction.id !== transactionId,
+      ),
     }));
   }
 
+  function updateCardPayment(cardId, amount) {
+    const nextAmount = Number(amount || 0);
+
+    onUpdateActiveWeek((currentWeek) => {
+      const currentPayments = currentWeek.payments || [];
+      const currentCard = financeData.cards.find((card) => card.id === cardId);
+      const otherPayments = currentPayments.filter((payment) => payment.cardId !== cardId);
+      const nextPayments =
+        nextAmount > 0
+          ? [
+              ...otherPayments,
+              {
+                cardId,
+                cardName: currentCard?.name || 'Tarjeta',
+                amount: nextAmount,
+              },
+            ]
+          : otherPayments;
+
+      return {
+        ...currentWeek,
+        payments: nextPayments,
+      };
+    });
+  }
+
   function fillCardPayments(amountKey) {
-    const nextDrafts = Object.fromEntries(
-      cardSummaries.map((card) => [card.id, Number(card[amountKey] || 0).toFixed(2)]),
-    );
-    setCardPaymentDrafts(nextDrafts);
+    onUpdateActiveWeek((currentWeek) => ({
+      ...currentWeek,
+      payments: cardSummaries
+        .map((card) => ({
+          cardId: card.id,
+          cardName: card.name,
+          amount: Number(card[amountKey] || 0),
+        }))
+        .filter((payment) => payment.amount > 0),
+    }));
   }
 
   function toggleRecordDetails(recordId) {
@@ -138,57 +240,48 @@ export function WeeklyTracker({ financeData, weeklySummary, onDeleteWeek, onInco
     }));
   }
 
-  function saveWeek() {
-    const payments = cardSummaries
-      .map((card) => ({
-        cardId: card.id,
-        cardName: card.name,
-        amount: Number(cardPaymentDrafts[card.id] || 0),
-      }))
-      .filter((payment) => payment.amount > 0);
-
-    onSaveWeek({
+  function closeWeek() {
+    const closedRecord = {
+      ...normalizedActiveWeek,
       id: `week-${Date.now()}`,
-      weekDate,
-      income: Number(realIncome || 0),
-      realIncome: Number(realIncome || 0),
-      variableTransactions,
-      note: note.trim(),
-      payments,
+      weekDate: normalizedActiveWeek.weekStartDate,
+      income: Number(normalizedActiveWeek.realIncome || 0),
       totalPaid,
       plannedGroceries,
       plannedFuel,
       plannedVariableBudget,
       minimumToAvoidExpiry: weeklySummary.minimumToAvoidExpiry,
       recommendedPayment: weeklySummary.recommendedPayment,
-      createdAt: new Date().toISOString(),
-    });
-    setCardPaymentDrafts({});
-    setVariableTransactions([]);
-    setTransactionDraft(createEmptyTransaction(weekDate));
-    setNote('');
+      closedAt: new Date().toISOString(),
+      createdAt: normalizedActiveWeek.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    onCloseWeek(closedRecord);
+    setTransactionDraft(createEmptyTransaction(getCurrentFinancialWeekStartDate()));
   }
 
   return (
     <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-stone-950">Control de la semana</h2>
+          <p className="text-sm font-semibold uppercase tracking-wide text-teal-700">Semana actual</p>
+          <h2 className="mt-1 text-lg font-semibold text-stone-950">Control de la semana financiera</h2>
           <p className="text-sm text-stone-500">
-            Registrá lo real de la semana y comparalo contra tu presupuesto planificado.
+            Empieza el martes {normalizedActiveWeek.weekStartDate}. Todo lo que cargues queda guardado automáticamente.
           </p>
         </div>
         <div className="grid gap-2 sm:grid-cols-2">
           <label className="text-sm font-medium text-stone-600">
-            Fecha
+            Inicio de semana
             <input
-              className="mt-1 w-full rounded-md border border-stone-200 px-3 py-2 outline-none focus:border-sky-500"
+              className="mt-1 w-full rounded-md border border-stone-200 bg-stone-50 px-3 py-2 text-stone-700 outline-none"
+              readOnly
               type="date"
-              value={weekDate}
-              onChange={(event) => setWeekDate(event.target.value)}
+              value={normalizedActiveWeek.weekStartDate}
             />
           </label>
-          <MoneyInput label="Ingreso real cobrado" value={realIncome} onChange={updateRealIncome} />
+          <MoneyInput label="Ingreso real cobrado" value={normalizedActiveWeek.realIncome} onChange={updateRealIncome} />
         </div>
       </div>
 
@@ -280,8 +373,8 @@ export function WeeklyTracker({ financeData, weeklySummary, onDeleteWeek, onInco
             Nota opcional
             <textarea
               className="mt-1 min-h-24 w-full rounded-md border border-stone-200 bg-white px-3 py-2 text-sm outline-none focus:border-sky-500"
-              value={note}
-              onChange={(event) => setNote(event.target.value)}
+              value={normalizedActiveWeek.note}
+              onChange={(event) => updateActiveWeek({ note: event.target.value })}
               placeholder="Ej: semana con compra grande, gasto inesperado, horas extra..."
             />
           </label>
@@ -376,7 +469,7 @@ export function WeeklyTracker({ financeData, weeklySummary, onDeleteWeek, onInco
                       className="numeric-input min-w-0 flex-1 bg-transparent font-semibold outline-none"
                       type="number"
                       min="0"
-                      value={cardPaymentDrafts[card.id] || ''}
+                      value={card.paidAmount}
                       onChange={(event) => updateCardPayment(card.id, event.target.value)}
                     />
                   </span>
@@ -388,7 +481,7 @@ export function WeeklyTracker({ financeData, weeklySummary, onDeleteWeek, onInco
       </div>
 
       <p className="mt-3 rounded-md bg-amber-50 p-3 text-sm leading-6 text-amber-900">
-        Estos pagos quedan como historial por tarjeta. Los saldos de los planes se editan manualmente cuando GEM, Purple u otra tarjeta actualicen cómo aplicaron el pago.
+        Estos pagos quedan guardados en la semana activa. Los saldos de los planes se editan manualmente cuando GEM, Purple u otra tarjeta actualicen cómo aplicaron el pago.
       </p>
 
       <div className="mt-4 flex flex-col gap-3 border-t border-stone-200 pt-4 lg:flex-row lg:items-center lg:justify-between">
@@ -398,15 +491,15 @@ export function WeeklyTracker({ financeData, weeklySummary, onDeleteWeek, onInco
         <button
           className="w-fit rounded-md bg-stone-950 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-stone-800"
           type="button"
-          onClick={saveWeek}
+          onClick={closeWeek}
         >
-          Guardar semana
+          Cerrar semana
         </button>
       </div>
 
       {savedRecords.length > 0 ? (
         <div className="mt-5">
-          <h3 className="text-sm font-semibold text-stone-900">Semanas guardadas</h3>
+          <h3 className="text-sm font-semibold text-stone-900">Semanas cerradas</h3>
           <div className="mt-2 grid gap-3">
             {savedRecords.map((record) => (
               <WeeklyRecordItem
@@ -520,11 +613,28 @@ function WeeklyRecordItem({ expanded, record, weeklySummary, onDeleteWeek, onTog
   );
 }
 
+function normalizeActiveWeek(activeWeek, weeklySummary) {
+  const plannedGroceries = Number(activeWeek.plannedGroceries ?? weeklySummary.groceries ?? 0);
+  const plannedFuel = Number(activeWeek.plannedFuel ?? weeklySummary.fuel ?? 0);
+
+  return {
+    ...activeWeek,
+    weekStartDate: activeWeek.weekStartDate || activeWeek.weekDate || getCurrentFinancialWeekStartDate(),
+    realIncome: Number(activeWeek.realIncome ?? activeWeek.income ?? 0),
+    variableTransactions: normalizeRecordTransactions(activeWeek),
+    payments: activeWeek.payments || [],
+    note: activeWeek.note || '',
+    plannedGroceries,
+    plannedFuel,
+    plannedVariableBudget: plannedGroceries + plannedFuel,
+  };
+}
+
 function normalizeWeeklyRecord(record, weeklySummary) {
   const variableTransactions = normalizeRecordTransactions(record);
   const totals = calculateTransactionTotals(variableTransactions);
   const realIncome = Number(record.realIncome ?? record.income ?? 0);
-  const totalPaid = Number(record.totalPaid ?? 0);
+  const totalPaid = Number(record.totalPaid ?? calculatePaymentTotal(record.payments || []));
   const plannedGroceries = Number(record.plannedGroceries ?? weeklySummary.groceries ?? 0);
   const plannedFuel = Number(record.plannedFuel ?? weeklySummary.fuel ?? 0);
   const plannedVariableBudget = plannedGroceries + plannedFuel;
@@ -539,7 +649,7 @@ function normalizeWeeklyRecord(record, weeklySummary) {
   );
 
   return {
-    weekDate: record.weekDate,
+    weekDate: record.weekDate || record.weekStartDate,
     realIncome,
     totalPaid,
     plannedVariableBudget,
@@ -555,7 +665,7 @@ function normalizeRecordTransactions(record) {
   if (Array.isArray(record.variableTransactions) && record.variableTransactions.length > 0) {
     return record.variableTransactions.map((transaction, index) => ({
       id: transaction.id || `legacy-transaction-${record.id || record.weekDate}-${index}`,
-      date: transaction.date || record.weekDate || '',
+      date: transaction.date || record.weekDate || record.weekStartDate || '',
       description: transaction.description || transaction.merchant || 'Gasto variable',
       category: normalizeCategory(transaction.category),
       amount: Number(transaction.amount || 0),
@@ -565,21 +675,21 @@ function normalizeRecordTransactions(record) {
   const legacyTransactions = [
     {
       id: `legacy-groceries-${record.id || record.weekDate}`,
-      date: record.weekDate || '',
+      date: record.weekDate || record.weekStartDate || '',
       description: 'Supermercado',
       category: 'groceries',
       amount: Number(record.realGroceries ?? record.grocerySpent ?? record.groceriesSpent ?? 0),
     },
     {
       id: `legacy-fuel-${record.id || record.weekDate}`,
-      date: record.weekDate || '',
+      date: record.weekDate || record.weekStartDate || '',
       description: 'Combustible',
       category: 'fuel',
       amount: Number(record.realFuel ?? record.fuelSpent ?? 0),
     },
     {
       id: `legacy-other-${record.id || record.weekDate}`,
-      date: record.weekDate || '',
+      date: record.weekDate || record.weekStartDate || '',
       description: 'Otros gastos',
       category: 'other',
       amount: Number(record.otherVariableExpenses ?? record.otherVariableSpent ?? record.otherSpent ?? 0),
@@ -602,6 +712,10 @@ function calculateTransactionTotals(transactions) {
     },
     { groceries: 0, fuel: 0, other: 0, total: 0 },
   );
+}
+
+function calculatePaymentTotal(payments) {
+  return payments.reduce((total, payment) => total + Number(payment.amount || 0), 0);
 }
 
 function normalizeCategory(category) {

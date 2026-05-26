@@ -10,19 +10,34 @@ export function calculateWeeksUntilDue(dueDate, referenceDate = new Date()) {
   return Math.ceil((due.getTime() - today.getTime()) / millisecondsPerWeek);
 }
 
-export function formatShortDate(dateValue) {
-  return new Intl.DateTimeFormat('es-NZ', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  }).format(new Date(dateValue));
+export function formatIsoDate(date = new Date()) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+export function formatDisplayDate(dateValue) {
+  if (!dateValue) return '';
+  const dateParts = String(dateValue).split('T')[0].split('-');
+
+  if (dateParts.length === 3) {
+    const [year, month, day] = dateParts;
+    if (year && month && day) return `${day.padStart(2, '0')}/${month.padStart(2, '0')}/${year}`;
+  }
+
+  const parsedDate = new Date(dateValue);
+  if (Number.isNaN(parsedDate.getTime())) return '';
+
+  return `${String(parsedDate.getDate()).padStart(2, '0')}/${String(parsedDate.getMonth() + 1).padStart(2, '0')}/${parsedDate.getFullYear()}`;
 }
 
 export function formatDateForDisplay(dateValue) {
-  if (!dateValue) return '';
-  const [year, month, day] = dateValue.split('-');
-  if (!year || !month || !day) return '';
-  return `${day}/${month}/${year}`;
+  return formatDisplayDate(dateValue);
+}
+
+export function formatShortDate(dateValue) {
+  return formatDisplayDate(dateValue);
 }
 
 export function parseDisplayDate(displayDate) {

@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { formatDisplayDate, formatIsoDate, parseDisplayDate } from '../utils/dateUtils.js';
 import { formatMoney } from '../utils/financeEngine.js';
 
 const transactionCategories = [
@@ -9,13 +10,6 @@ const transactionCategories = [
 
 function getTodayIsoDate() {
   return formatIsoDate(new Date());
-}
-
-function formatIsoDate(date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
 }
 
 function getCurrentFinancialWeekStartDate(referenceDate = new Date()) {
@@ -268,18 +262,15 @@ export function WeeklyTracker({
           <p className="text-sm font-semibold uppercase tracking-wide text-teal-700">Semana actual</p>
           <h2 className="mt-1 text-lg font-semibold text-stone-950">Control de la semana financiera</h2>
           <p className="text-sm text-stone-500">
-            Empieza el martes {normalizedActiveWeek.weekStartDate}. Todo lo que cargues queda guardado automáticamente.
+            Empieza el martes {formatDisplayDate(normalizedActiveWeek.weekStartDate)}. Todo lo que cargues queda guardado automáticamente.
           </p>
         </div>
         <div className="grid gap-2 sm:grid-cols-2">
           <label className="text-sm font-medium text-stone-600">
             Inicio de semana
-            <input
-              className="mt-1 w-full rounded-md border border-stone-200 bg-stone-50 px-3 py-2 text-stone-700 outline-none"
-              readOnly
-              type="date"
-              value={normalizedActiveWeek.weekStartDate}
-            />
+            <span className="mt-1 block w-full rounded-md border border-stone-200 bg-stone-50 px-3 py-2 font-semibold text-stone-700">
+              {formatDisplayDate(normalizedActiveWeek.weekStartDate)}
+            </span>
           </label>
           <MoneyInput label="Ingreso real cobrado" value={normalizedActiveWeek.realIncome} onChange={updateRealIncome} />
         </div>
@@ -308,15 +299,11 @@ export function WeeklyTracker({
           </div>
 
           <div className="mt-3 grid gap-3 md:grid-cols-[1fr_1.2fr_1fr_0.8fr_auto]">
-            <label className="text-sm font-medium text-stone-600">
-              Fecha
-              <input
-                className="mt-1 w-full rounded-md border border-stone-200 bg-white px-3 py-2 outline-none focus:border-sky-500"
-                type="date"
-                value={transactionDraft.date}
-                onChange={(event) => updateTransactionDraft('date', event.target.value)}
-              />
-            </label>
+            <DateInput
+              label="Fecha"
+              value={transactionDraft.date}
+              onChange={(value) => updateTransactionDraft('date', value)}
+            />
             <label className="text-sm font-medium text-stone-600">
               Comercio / descripción
               <input
@@ -521,7 +508,7 @@ export function WeeklyTracker({
 function TransactionRow({ transaction, onDelete }) {
   return (
     <div className="grid gap-2 rounded-md border border-stone-200 bg-white p-3 text-sm sm:grid-cols-[0.9fr_1.5fr_1fr_0.8fr_auto] sm:items-center">
-      <span className="text-stone-500">{transaction.date}</span>
+      <span className="text-stone-500">{formatDisplayDate(transaction.date)}</span>
       <span className="font-semibold text-stone-900">{transaction.description}</span>
       <span className="text-stone-600">{getCategoryLabel(transaction.category)}</span>
       <span className="font-bold text-stone-950">{formatMoney(transaction.amount)}</span>
@@ -546,7 +533,7 @@ function WeeklyRecordItem({ expanded, record, weeklySummary, onDeleteWeek, onTog
       <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <p>
-            <strong className="text-stone-950">{normalizedRecord.weekDate}</strong> · Cobrado {formatMoney(normalizedRecord.realIncome)} · Pagado a deudas {formatMoney(normalizedRecord.totalPaid)}
+            <strong className="text-stone-950">{formatDisplayDate(normalizedRecord.weekDate)}</strong> · Cobrado {formatMoney(normalizedRecord.realIncome)} · Pagado a deudas {formatMoney(normalizedRecord.totalPaid)}
           </p>
           <p className="mt-1 text-stone-500">
             Supermercado {formatMoney(normalizedRecord.totals.groceries)} · Combustible {formatMoney(normalizedRecord.totals.fuel)} · Otros {formatMoney(normalizedRecord.totals.other)} · {normalizedRecord.variableTransactions.length} transacciones
@@ -564,7 +551,7 @@ function WeeklyRecordItem({ expanded, record, weeklySummary, onDeleteWeek, onTog
             className="w-fit rounded-md border border-red-200 bg-white px-2 py-1 text-xs font-semibold text-red-700 hover:bg-red-50"
             type="button"
             onClick={() => {
-              const confirmed = window.confirm(`¿Eliminar la semana del ${normalizedRecord.weekDate}?`);
+              const confirmed = window.confirm(`¿Eliminar la semana del ${formatDisplayDate(normalizedRecord.weekDate)}?`);
               if (confirmed) onDeleteWeek(record.id);
             }}
           >
@@ -592,7 +579,7 @@ function WeeklyRecordItem({ expanded, record, weeklySummary, onDeleteWeek, onTog
           {normalizedRecord.variableTransactions.length > 0 ? (
             normalizedRecord.variableTransactions.map((transaction) => (
               <div key={transaction.id} className="grid gap-1 rounded-md border border-stone-200 bg-white p-2 sm:grid-cols-[0.8fr_1.4fr_1fr_0.7fr] sm:items-center">
-                <span className="text-stone-500">{transaction.date}</span>
+                <span className="text-stone-500">{formatDisplayDate(transaction.date)}</span>
                 <span className="font-semibold text-stone-900">{transaction.description}</span>
                 <span className="text-stone-600">{getCategoryLabel(transaction.category)}</span>
                 <span className="font-bold text-stone-950">{formatMoney(transaction.amount)}</span>
@@ -759,6 +746,43 @@ function MoneyInput({ label, value, onChange }) {
           className="numeric-input min-w-0 flex-1 bg-transparent font-semibold outline-none"
           type="number"
           min="0"
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+        />
+      </span>
+    </label>
+  );
+}
+
+function DateInput({ label, value, onChange }) {
+  const [displayValue, setDisplayValue] = useState(formatDisplayDate(value));
+
+  useEffect(() => {
+    setDisplayValue(formatDisplayDate(value));
+  }, [value]);
+
+  function handleDisplayChange(nextValue) {
+    setDisplayValue(nextValue);
+    const nextDate = parseDisplayDate(nextValue);
+    if (nextDate) onChange(nextDate);
+  }
+
+  return (
+    <label className="text-sm font-medium text-stone-600">
+      {label}
+      <span className="mt-1 grid grid-cols-[1fr_auto] gap-2">
+        <input
+          className="w-full rounded-md border border-stone-200 bg-white px-3 py-2 outline-none focus:border-sky-500"
+          inputMode="numeric"
+          placeholder="dd/mm/aaaa"
+          type="text"
+          value={displayValue}
+          onChange={(event) => handleDisplayChange(event.target.value)}
+        />
+        <input
+          aria-label="Elegir fecha"
+          className="w-12 rounded-md border border-stone-200 bg-white px-2 py-2 text-stone-700 outline-none focus:border-sky-500"
+          type="date"
           value={value}
           onChange={(event) => onChange(event.target.value)}
         />

@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { AppTabs } from '../components/AppTabs.jsx';
 import { BudgetEditor } from '../components/BudgetEditor.jsx';
 import { CardSummary } from '../components/CardSummary.jsx';
+import { GemMinimumSummary } from '../components/GemMinimumSummary.jsx';
 import { PlanList } from '../components/PlanList.jsx';
 import { ScenarioSimulator } from '../components/ScenarioSimulator.jsx';
 import { StatCard } from '../components/StatCard.jsx';
@@ -43,9 +44,11 @@ export function Dashboard({ financeData, setFinanceData }) {
             id: `plan-${Date.now()}`,
             name: 'Nuevo plan',
             cardId: currentData.cards[0]?.id || '',
+            originalAmount: 0,
             balance: 0,
             dueDate: dueDate.toISOString().slice(0, 10),
             thirdPartyContribution: 0,
+            minimumPaymentRule: null,
           },
         ],
       };
@@ -162,6 +165,13 @@ export function Dashboard({ financeData, setFinanceData }) {
         {activeTab === 'debts' && (
           <div className="grid gap-5">
             <CardSummary cards={weeklySummary.cardSummaries} />
+            <GemMinimumSummary
+              summary={{
+                ...weeklySummary.gemMinimumSummary,
+                interestFreeRecommendedPayment: weeklySummary.interestFreeRecommendedPayment,
+                suggestedSafeWeeklyPayment: weeklySummary.suggestedSafeWeeklyPayment,
+              }}
+            />
             <PlanList plans={weeklySummary.plans} cards={financeData.cards} onAddPlan={addPlan} onDeletePlan={deletePlan} onUpdatePlan={updatePlan} />
           </div>
         )}

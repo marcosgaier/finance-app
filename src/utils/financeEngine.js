@@ -30,6 +30,8 @@ const monthlyServiceTemplates = [
 ];
 
 const smartExtraAllocationRatio = 0.65;
+const gemCardNamePattern = /gem/i;
+const approximateWeeksPerMonthlyCycle = 30 / 7;
 
 export function calculateUrgency(weeksUntilDue) {
   if (weeksUntilDue < 0) return 'overdue';
@@ -62,7 +64,13 @@ export function calculateWeeklyAvailable(financeData) {
 }
 
 export function normalizeFinanceData(financeData) {
-  const paymentPlans = (financeData.paymentPlans || []).filter((plan) => plan.calculationMode !== 'fixedWeekly');
+  const paymentPlans = (financeData.paymentPlans || [])
+    .filter((plan) => plan.calculationMode !== 'fixedWeekly')
+    .map((plan) => ({
+      ...plan,
+      originalAmount: Number(plan.originalAmount ?? plan.balance ?? 0),
+      minimumPaymentRule: normalizeMinimumPaymentRule(plan.minimumPaymentRule),
+    }));
   const weeklyRecords = financeData.weeklyRecords || [];
 
   if (financeData.weeklyExpenses && financeData.monthlyExpenses) {
@@ -91,6 +99,31 @@ export function normalizeFinanceData(financeData) {
     paymentPlans,
     weeklyRecords,
   };
+}
+
+function normalizeMinimumPaymentRule(rule) {
+  if (!rule || rule.enabled === false) return null;
+
+  if (rule.type === 'percentageOrFixedMinimum') {
+    return {
+      enabled: true,
+      type: 'percentageOrFixedMinimum',
+      percentage: Number(rule.percentage || 0),
+      fixedMinimum: Number(rule.fixedMinimum || 0),
+      frequency: 'monthly',
+    };
+  }
+
+  if (rule.type === 'fixedMonthlyMinimum') {
+    return {
+      enabled: true,
+      type: 'fixedMonthlyMinimum',
+      amount: Number(rule.amount || 0),
+      frequency: 'monthly',
+    };
+  }
+
+  return null;
 }
 
 function normalizeWeeklyExpenses(weeklyExpenses = []) {
@@ -322,6 +355,8 @@ export function calculateWeeklyDebtReserve(financeData, referenceDate = new Date
     minimumToAvoidExpiry,
     Math.min(minimumToAvoidExpiry + smartExtraReserve, budget.availableForDebt),
   );
+  const gemMinimumSummary = calculateGemMinimumSummary(financeData, referenceDate);
+  const suggestedSafeWeeklyPayment = recommendedPayment + gemMinimumSummary.weeklyBuffer;
   const lifeMargin = budget.availableBeforeDebt - recommendedPayment;
   const lifeMarginStatus = classifyLifeMargin(lifeMargin);
   const summary = {
@@ -335,6 +370,9 @@ export function calculateWeeklyDebtReserve(financeData, referenceDate = new Date
     debtReserve: minimumToAvoidExpiry,
     smartExtraReserve,
     recommendedPayment,
+    interestFreeRecommendedPayment: recommendedPayment,
+    gemMinimumSummary,
+    suggestedSafeWeeklyPayment,
     smartDebtReserve: recommendedPayment,
     freeAfterReserve: freeAfterMinimum,
     lifeMarginAfterMinimum: freeAfterMinimum,
@@ -349,6 +387,106 @@ export function calculateWeeklyDebtReserve(financeData, referenceDate = new Date
     decisionMessage: buildDecisionMessage(summary),
     weeklyStatus: buildWeeklyStatus(summary),
   };
+}
+
+export function calculateMonthlyMinimumForPlan(plan) {
+  const rule = normalizeMinimumPaymentRule(plan.minimumPaymentRule);
+  if (!rule) return 0;
+
+  const originalAmount = Math.max(0, Number(plan.originalAmount ?? plan.balance ?? 0));
+
+  if (rule.type === 'percentageOrFixedMinimum') {
+    return Math.max(originalAmount * Number(rule.percentage || 0), Number(rule.fixedMinimum || 0));
+  }
+
+  if (rule.type === 'fixedMonthlyMinimum') {
+    return Number(rule.amount || 0);
+  }
+
+  return 0;
+}
+
+export function getGemBillingCycle(referenceDate = new Date()) {
+  const date = getLocalStartOfDay(referenceDate);
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  const cycleStart = date.getDate() >= 20 ? new Date(year, month, 20) : new Date(year, month - 1, 20);
+  const cycleEnd = new Date(cycleStart.getFullYear(), cycleStart.getMonth() + 1, 19);
+
+  return {
+    startDate: toIsoDate(cycleStart),
+    endDate: toIsoDate(cycleEnd),
+    start: cycleStart,
+    end: cycleEnd,
+  };
+}
+
+export function calculateGemMinimumSummary(financeData, referenceDate = new Date()) {
+  const normalizedData = normalizeFinanceData(financeData);
+  const gemCards = normalizedData.cards.filter((card) => gemCardNamePattern.test(card.id) || gemCardNamePattern.test(card.name));
+  const gemCardIds = new Set(gemCards.map((card) => card.id));
+  const cycle = getGemBillingCycle(referenceDate);
+  const plans = normalizedData.paymentPlans
+    .filter((plan) => gemCardIds.has(plan.cardId))
+    .map((plan) => ({
+      id: plan.id,
+      name: plan.name,
+      cardId: plan.cardId,
+      monthlyMinimum: calculateMonthlyMinimumForPlan(plan),
+      rule: normalizeMinimumPaymentRule(plan.minimumPaymentRule),
+    }))
+    .filter((plan) => plan.monthlyMinimum > 0);
+  const monthlyMinimumTotal = plans.reduce((total, plan) => total + plan.monthlyMinimum, 0);
+  const paymentsThisCycle = calculateCardCyclePayments(normalizedData, gemCardIds, cycle);
+  const cycleShortfall = Math.max(0, monthlyMinimumTotal - paymentsThisCycle);
+  const weeklySuggestedPayment = cycleShortfall / calculateRemainingWeeklySlots(cycle.end, referenceDate);
+  const weeklyBuffer = monthlyMinimumTotal / approximateWeeksPerMonthlyCycle;
+
+  return {
+    cardIds: [...gemCardIds],
+    cycleStartDate: cycle.startDate,
+    cycleEndDate: cycle.endDate,
+    plans,
+    monthlyMinimumTotal,
+    paymentsThisCycle,
+    cycleShortfall,
+    weeklyBuffer,
+    weeklySuggestedPayment,
+  };
+}
+
+function calculateCardCyclePayments(financeData, cardIds, cycle) {
+  const records = [...(financeData.weeklyRecords || [])];
+  if (financeData.activeWeek) records.push(financeData.activeWeek);
+
+  return records.reduce((total, record) => {
+    const recordDate = new Date(`${record.weekDate || record.weekStartDate || ''}T00:00:00`);
+    if (Number.isNaN(recordDate.getTime()) || recordDate < cycle.start || recordDate > cycle.end) return total;
+
+    return (
+      total +
+      (record.payments || [])
+        .filter((payment) => cardIds.has(payment.cardId))
+        .reduce((paymentTotal, payment) => paymentTotal + Number(payment.amount || 0), 0)
+    );
+  }, 0);
+}
+
+function calculateRemainingWeeklySlots(cycleEnd, referenceDate = new Date()) {
+  const today = getLocalStartOfDay(referenceDate);
+  const daysRemaining = Math.max(0, Math.ceil((cycleEnd.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)));
+  return Math.max(1, Math.ceil((daysRemaining + 1) / 7));
+}
+
+function getLocalStartOfDay(date = new Date()) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+function toIsoDate(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 export function calculateCardSummaries(cards, plans) {

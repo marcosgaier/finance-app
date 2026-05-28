@@ -601,8 +601,8 @@ function WeeklyRecordItem({ expanded, record, weeklySummary, onDeleteWeek, onTog
 }
 
 function normalizeActiveWeek(activeWeek, weeklySummary) {
-  const plannedGroceries = Number(activeWeek.plannedGroceries ?? weeklySummary.groceries ?? 0);
-  const plannedFuel = Number(activeWeek.plannedFuel ?? weeklySummary.fuel ?? 0);
+  const plannedGroceries = Number(weeklySummary.groceries || 0);
+  const plannedFuel = Number(weeklySummary.fuel || 0);
 
   return {
     ...activeWeek,

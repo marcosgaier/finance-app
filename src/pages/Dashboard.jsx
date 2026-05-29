@@ -127,6 +127,25 @@ export function Dashboard({ financeData, setFinanceData }) {
     }));
   }
 
+  function reopenWeeklyRecord(recordId) {
+    setFinanceData((currentData) => {
+      const recordToReopen = (currentData.weeklyRecords || []).find((record) => record.id === recordId);
+      if (!recordToReopen) return currentData;
+
+      return {
+        ...currentData,
+        weeklyIncome: Number(recordToReopen.income ?? recordToReopen.realIncome ?? currentData.weeklyIncome ?? 0),
+        activeWeek: {
+          ...recordToReopen,
+          weekStartDate: recordToReopen.weekStartDate || recordToReopen.weekDate,
+          weekDate: recordToReopen.weekDate || recordToReopen.weekStartDate,
+          updatedAt: new Date().toISOString(),
+        },
+        weeklyRecords: (currentData.weeklyRecords || []).filter((record) => record.id !== recordId),
+      };
+    });
+  }
+
   return (
     <main className="min-h-screen bg-[#f6f7f4]">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-5 px-4 py-5 sm:px-6 lg:px-8">
@@ -193,6 +212,7 @@ export function Dashboard({ financeData, setFinanceData }) {
             financeData={financeData}
             weeklySummary={weeklySummary}
             onDeleteWeek={deleteWeeklyRecord}
+            onReopenWeek={reopenWeeklyRecord}
             onUpdateWeek={updateWeeklyRecord}
             onCloseWeek={closeActiveWeek}
             onIncomeChange={updateWeeklyIncome}

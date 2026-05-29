@@ -20,6 +20,16 @@ function getCurrentFinancialWeekStartDate(referenceDate = new Date()) {
   return formatIsoDate(startDate);
 }
 
+function calculateDaysBetween(startDate, endDate) {
+  if (!startDate || !endDate) return 0;
+
+  const start = new Date(`${startDate}T00:00:00`);
+  const end = new Date(`${endDate}T00:00:00`);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return 0;
+
+  return Math.max(0, Math.round((end.getTime() - start.getTime()) / 86400000));
+}
+
 function createEmptyTransaction(date = getTodayIsoDate()) {
   return {
     date,
@@ -67,6 +77,7 @@ export function WeeklyTracker({
   onCloseWeek,
   onDeleteWeek,
   onIncomeChange,
+  onReopenWeek,
   onStartActiveWeek,
   onUpdateActiveWeek,
   onUpdateWeek,
@@ -78,6 +89,7 @@ export function WeeklyTracker({
   const [expandedRecordIds, setExpandedRecordIds] = useState({});
   const [editingRecordId, setEditingRecordId] = useState(null);
   const [editingRecordDraft, setEditingRecordDraft] = useState(null);
+  const [dismissedPendingWeekWarning, setDismissedPendingWeekWarning] = useState(false);
 
   useEffect(() => {
     if (!activeWeek) {
@@ -111,6 +123,9 @@ export function WeeklyTracker({
   }
 
   const normalizedActiveWeek = normalizeActiveWeek(activeWeek, weeklySummary);
+  const hasPendingPreviousWeek = normalizedActiveWeek.weekStartDate !== financialWeekStartDate;
+  const pendingWeekDays = calculateDaysBetween(normalizedActiveWeek.weekStartDate, financialWeekStartDate);
+  const showPendingWeekWarning = hasPendingPreviousWeek && !dismissedPendingWeekWarning;
   const extraIncome = normalizedActiveWeek.extraIncome;
   const extraIncomeTotal = calculateExtraIncomeTotal(extraIncome);
   const totalIncome = Number(normalizedActiveWeek.realIncome || 0) + extraIncomeTotal;
@@ -291,6 +306,17 @@ export function WeeklyTracker({
     }));
   }
 
+  function reopenRecord(record) {
+    if (activeWeekHasRealData(normalizedActiveWeek)) {
+      const confirmed = window.confirm(
+        'La semana activa actual tiene datos cargados. Si reabrís esta semana cerrada, la semana activa actual será reemplazada. ¿Querés continuar?',
+      );
+      if (!confirmed) return;
+    }
+
+    onReopenWeek(record.id);
+  }
+
   function startEditingRecord(record) {
     setEditingRecordId(record.id);
     setEditingRecordDraft(createEditableRecordDraft(record));
@@ -454,6 +480,43 @@ export function WeeklyTracker({
 
   return (
     <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
+      {showPendingWeekWarning ? (
+        <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 p-4 text-amber-950">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <p className="text-sm font-bold uppercase tracking-wide">⚠️ Semana pendiente de cierre</p>
+              <p className="mt-2 text-sm leading-6">
+                Tu semana activa comenzó el {formatDisplayDate(normalizedActiveWeek.weekStartDate)}.
+                <br />
+                La semana financiera actual comenzó el {formatDisplayDate(financialWeekStartDate)}.
+              </p>
+              <p className="mt-2 text-sm font-semibold">Todavía no cerraste la semana anterior.</p>
+              {pendingWeekDays > 0 ? (
+                <p className="mt-1 text-sm text-amber-900">
+                  Nueva semana disponible desde hace {pendingWeekDays} {pendingWeekDays === 1 ? 'día' : 'días'}.
+                </p>
+              ) : null}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button
+                className="rounded-md bg-stone-950 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-stone-800"
+                type="button"
+                onClick={closeWeek}
+              >
+                Cerrar semana e iniciar nueva
+              </button>
+              <button
+                className="rounded-md border border-amber-300 bg-white px-3 py-2 text-sm font-semibold text-amber-900 hover:bg-amber-100"
+                type="button"
+                onClick={() => setDismissedPendingWeekWarning(true)}
+              >
+                Recordármelo después
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <p className="text-sm font-semibold uppercase tracking-wide text-teal-700">Semana actual</p>
@@ -743,13 +806,14 @@ export function WeeklyTracker({
         <div className="mt-5">
           <h3 className="text-sm font-semibold text-stone-900">Semanas cerradas</h3>
           <div className="mt-2 grid gap-3">
-            {savedRecords.map((record) => (
+            {savedRecords.map((record, index) => (
               <WeeklyRecordItem
                 key={record.id}
                 expanded={Boolean(expandedRecordIds[record.id])}
                 record={record}
                 cards={financeData.cards}
                 editingDraft={editingRecordId === record.id ? editingRecordDraft : null}
+                isMostRecent={index === 0}
                 weeklySummary={weeklySummary}
                 onDeleteWeek={onDeleteWeek}
                 onAddEditingExtraIncome={addEditingExtraIncome}
@@ -759,6 +823,7 @@ export function WeeklyTracker({
                 onDeleteEditingTransaction={deleteEditingTransaction}
                 onSaveEditing={() => saveEditingRecord(record)}
                 onStartEditing={() => startEditingRecord(record)}
+                onReopenWeek={() => reopenRecord(record)}
                 onToggleDetails={() => toggleRecordDetails(record.id)}
                 onUpdateEditingExtraIncome={updateEditingExtraIncome}
                 onUpdateEditingPayment={updateEditingPayment}
@@ -813,6 +878,7 @@ function WeeklyRecordItem({
   record,
   cards,
   editingDraft,
+  isMostRecent,
   weeklySummary,
   onDeleteWeek,
   onAddEditingExtraIncome,
@@ -822,6 +888,7 @@ function WeeklyRecordItem({
   onDeleteEditingTransaction,
   onSaveEditing,
   onStartEditing,
+  onReopenWeek,
   onToggleDetails,
   onUpdateEditingExtraIncome,
   onUpdateEditingPayment,
@@ -859,6 +926,15 @@ function WeeklyRecordItem({
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          {isMostRecent ? (
+            <button
+              className="w-fit rounded-md border border-sky-300 bg-white px-2 py-1 text-xs font-semibold text-sky-700 hover:bg-sky-50"
+              type="button"
+              onClick={onReopenWeek}
+            >
+              Reabrir como semana actual
+            </button>
+          ) : null}
           <button
             className="w-fit rounded-md border border-stone-300 bg-white px-2 py-1 text-xs font-semibold text-stone-700 hover:bg-stone-100"
             type="button"
@@ -1203,6 +1279,15 @@ function normalizeWeeklyRecord(record, weeklySummary) {
     realWeeklyMargin,
     note: record.note || '',
   };
+}
+
+function activeWeekHasRealData(activeWeek) {
+  return (
+    normalizeExtraIncome(activeWeek).length > 0 ||
+    normalizeRecordTransactions(activeWeek).length > 0 ||
+    (activeWeek.payments || []).length > 0 ||
+    Boolean((activeWeek.note || '').trim())
+  );
 }
 
 function createEditableRecordDraft(record) {

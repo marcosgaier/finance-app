@@ -684,35 +684,14 @@ export function WeeklyTracker({
 
         <div className="rounded-lg border border-sky-200 bg-sky-50 p-4">
           <p className="text-sm font-semibold uppercase tracking-wide text-sky-700">Resultado real de la semana</p>
-          <div className="mt-3 grid gap-3 sm:grid-cols-2">
-            <SummaryTile label="Ingreso principal" value={normalizedActiveWeek.realIncome} />
-            <SummaryTile label="Otros ingresos" value={extraIncomeTotal} tone={extraIncomeTotal > 0 ? 'positive' : 'default'} />
-            <SummaryTile label="Total ingresos" value={totalIncome} tone="positive" />
-            <SummaryTile label="Supermercado real" value={transactionTotals.groceries} />
-            <SummaryTile
-              label={groceriesDifference >= 0 ? 'Super: de menos' : 'Super: de más'}
-              value={Math.abs(groceriesDifference)}
-              tone={groceriesDifference >= 0 ? 'positive' : 'warning'}
-            />
-            <SummaryTile label="Combustible real" value={transactionTotals.fuel} />
-            <SummaryTile
-              label={fuelDifference >= 0 ? 'Nafta: de menos' : 'Nafta: de más'}
-              value={Math.abs(fuelDifference)}
-              tone={fuelDifference >= 0 ? 'positive' : 'warning'}
-            />
-            <SummaryTile label="Otros reales" value={transactionTotals.other} />
-            <SummaryTile
-              label={variableDifference >= 0 ? 'Total: gasté de menos' : 'Total: gasté de más'}
-              value={Math.abs(variableDifference)}
-              tone={variableDifference >= 0 ? 'positive' : 'warning'}
-            />
-            <SummaryTile
-              label={realWeeklyMargin >= 0 ? 'Margen real' : 'Faltante real'}
-              value={Math.abs(realWeeklyMargin)}
-              tone={realWeeklyMargin >= 0 ? 'positive' : 'warning'}
-            />
-            <SummaryTile label="Gasto variable total" value={actualVariableSpent} />
-          </div>
+          <MoneyFlowPanel
+            summary={buildMoneyFlowSummary({
+              financeData,
+              record: normalizedActiveWeek,
+              useCurrentBudget: true,
+              weeklySummary,
+            })}
+          />
         </div>
       </div>
 
@@ -812,6 +791,7 @@ export function WeeklyTracker({
                 expanded={Boolean(expandedRecordIds[record.id])}
                 record={record}
                 cards={financeData.cards}
+                financeData={financeData}
                 editingDraft={editingRecordId === record.id ? editingRecordDraft : null}
                 isMostRecent={index === 0}
                 weeklySummary={weeklySummary}
@@ -877,6 +857,7 @@ function WeeklyRecordItem({
   expanded,
   record,
   cards,
+  financeData,
   editingDraft,
   isMostRecent,
   weeklySummary,
@@ -995,6 +976,23 @@ function WeeklyRecordItem({
 
       {expanded ? (
         <div className="mt-3 grid gap-2">
+          <MoneyFlowPanel
+            summary={buildMoneyFlowSummary({
+              financeData,
+              record: {
+                ...record,
+                income: previewRecord.realIncome,
+                realIncome: previewRecord.realIncome,
+                extraIncome: previewRecord.extraIncome,
+                variableTransactions: previewRecord.variableTransactions,
+                payments: editingDraft?.payments || record.payments || [],
+                totalPaid: previewRecord.totalPaid,
+                note: previewRecord.note,
+              },
+              useCurrentBudget: false,
+              weeklySummary,
+            })}
+          />
           <div className="grid gap-2 sm:grid-cols-3">
             <SmallResult label="Ingreso principal" value={formatMoney(previewRecord.realIncome)} />
             <SmallResult label="Otros ingresos" value={formatMoney(previewRecord.extraIncomeTotal)} tone={previewRecord.extraIncomeTotal > 0 ? 'positive' : 'default'} />
@@ -1226,6 +1224,88 @@ function ClosedWeekEditor({
   );
 }
 
+function MoneyFlowPanel({ summary }) {
+  return (
+    <div className="mt-3 grid gap-3">
+      <div className="grid gap-3 sm:grid-cols-3">
+        <SummaryTile label="Ingresó" value={summary.totalIncome} tone="positive" />
+        <SummaryTile label="Salió / reservado" value={summary.totalOutflow} tone="warning" />
+        <SummaryTile
+          label={summary.margin >= 0 ? 'Sobró' : 'Faltó'}
+          value={Math.abs(summary.margin)}
+          tone={summary.margin >= 0 ? 'positive' : 'warning'}
+        />
+      </div>
+
+      <div className="grid gap-3">
+        <CollapsibleMoneySection title="Ingresos" total={summary.totalIncome} defaultOpen={false}>
+          <MoneyFlowRow label="Ingreso principal" value={summary.primaryIncome} tone="positive" />
+          <MoneyFlowRow label="Otros ingresos" value={summary.extraIncomeTotal} tone={summary.extraIncomeTotal > 0 ? 'positive' : 'default'} />
+          <MoneyFlowRow label="Total ingresos" value={summary.totalIncome} strong tone="positive" />
+        </CollapsibleMoneySection>
+
+        <CollapsibleMoneySection title="Dinero comprometido" total={summary.fixedAndReservedTotal} defaultOpen>
+          {summary.weeklyExpenseRows.length > 0 ? (
+            summary.weeklyExpenseRows.map((expense) => (
+              <MoneyFlowRow key={expense.id} label={expense.name} value={expense.amount} />
+            ))
+          ) : (
+            <MoneyFlowRow label="Gastos semanales fijos" value={summary.fixedWeeklyExpensesTotal} />
+          )}
+          <MoneyFlowRow label="Servicios mensuales prorrateados" value={summary.monthlyReserveWeekly} />
+          <MoneyFlowRow label="Total fijo / reservado" value={summary.fixedAndReservedTotal} strong />
+        </CollapsibleMoneySection>
+
+        <CollapsibleMoneySection title="Gasto real" total={summary.variableTotals.total + summary.totalPaid} defaultOpen>
+          <MoneyFlowRow label="Supermercado" value={summary.variableTotals.groceries} />
+          <MoneyFlowRow label="Combustible" value={summary.variableTotals.fuel} />
+          <MoneyFlowRow label="Otros variables" value={summary.variableTotals.other} />
+          <MoneyFlowRow label="Pagos a deudas" value={summary.totalPaid} />
+          <MoneyFlowRow label="Total gasto real" value={summary.variableTotals.total + summary.totalPaid} strong tone="warning" />
+        </CollapsibleMoneySection>
+      </div>
+    </div>
+  );
+}
+
+function CollapsibleMoneySection({ title, total, defaultOpen = false, children }) {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+
+  return (
+    <div className="rounded-md border border-sky-200 bg-white">
+      <button
+        className="flex w-full items-center justify-between gap-3 px-3 py-3 text-left"
+        type="button"
+        onClick={() => setIsOpen((currentValue) => !currentValue)}
+      >
+        <span>
+          <span className="block text-xs font-semibold uppercase tracking-wide text-sky-700">{title}</span>
+          <span className="mt-1 block text-lg font-bold text-stone-950">{formatMoney(total)}</span>
+        </span>
+        <span className="shrink-0 rounded-full border border-sky-200 bg-sky-50 px-2 py-1 text-xs font-semibold text-sky-700">
+          {isOpen ? 'Ocultar' : 'Ver'}
+        </span>
+      </button>
+      {isOpen ? <div className="grid gap-2 border-t border-sky-100 p-3">{children}</div> : null}
+    </div>
+  );
+}
+
+function MoneyFlowRow({ label, value, strong = false, tone = 'default' }) {
+  const toneClass = {
+    default: 'text-stone-900',
+    positive: 'text-emerald-700',
+    warning: 'text-amber-800',
+  }[tone];
+
+  return (
+    <div className={`flex items-center justify-between gap-3 rounded-md bg-stone-50 px-3 py-2 ${strong ? 'border border-stone-200' : ''}`}>
+      <span className={`${strong ? 'font-semibold text-stone-950' : 'text-stone-600'}`}>{label}</span>
+      <span className={`font-bold ${toneClass}`}>{formatMoney(value)}</span>
+    </div>
+  );
+}
+
 function normalizeActiveWeek(activeWeek, weeklySummary) {
   const plannedGroceries = Number(weeklySummary.groceries || 0);
   const plannedFuel = Number(weeklySummary.fuel || 0);
@@ -1278,6 +1358,47 @@ function normalizeWeeklyRecord(record, weeklySummary) {
     variableDifference,
     realWeeklyMargin,
     note: record.note || '',
+  };
+}
+
+function buildMoneyFlowSummary({ financeData, record, useCurrentBudget, weeklySummary }) {
+  const budgetSnapshot = useCurrentBudget ? null : record.budgetSnapshot || null;
+  const weeklyExpenseRows = (budgetSnapshot?.weeklyExpenses || financeData.weeklyExpenses || []).map((expense) => ({
+    id: expense.id || expense.name,
+    name: expense.name || 'Gasto semanal',
+    amount: Number(expense.amount || 0),
+  }));
+  const fallbackWeeklyExpensesTotal = weeklyExpenseRows.reduce((total, expense) => total + Number(expense.amount || 0), 0);
+  const fixedWeeklyExpensesTotal = Number(
+    budgetSnapshot?.fixedWeeklyExpensesTotal ??
+      (fallbackWeeklyExpensesTotal > 0 ? fallbackWeeklyExpensesTotal : weeklySummary.weeklyExpensesTotal) ??
+      0,
+  );
+  const monthlyReserveWeekly = Number(budgetSnapshot?.monthlyReserveWeekly ?? weeklySummary.monthlyReserveWeekly ?? 0);
+  const extraIncome = normalizeExtraIncome(record);
+  const extraIncomeTotal = calculateExtraIncomeTotal(extraIncome);
+  const primaryIncome = Number(record.realIncome ?? record.income ?? 0);
+  const totalIncome = primaryIncome + extraIncomeTotal;
+  const variableTransactions = normalizeRecordTransactions(record);
+  const variableTotals = calculateTransactionTotals(variableTransactions);
+  const hasPaymentDetails = Array.isArray(record.payments) && record.payments.length > 0;
+  const totalPaid = hasPaymentDetails ? calculatePaymentTotal(record.payments) : Number(record.totalPaid ?? 0);
+  const fixedAndReservedTotal = fixedWeeklyExpensesTotal + monthlyReserveWeekly;
+  const totalOutflow = fixedAndReservedTotal + variableTotals.total + totalPaid;
+  const margin = totalIncome - totalOutflow;
+
+  return {
+    primaryIncome,
+    extraIncomeTotal,
+    totalIncome,
+    weeklyExpenseRows,
+    fixedWeeklyExpensesTotal,
+    monthlyReserveWeekly,
+    fixedAndReservedTotal,
+    variableTotals,
+    totalPaid,
+    totalOutflow,
+    margin,
   };
 }
 

@@ -29,6 +29,12 @@ const monthlyServiceTemplates = [
   { id: 'car-insurance', name: 'Seguro auto', amount: 180 },
 ];
 
+const reserveBucketTemplates = [
+  { id: 'emergency-fund', name: 'Fondo de emergencia', balance: 0, note: '' },
+  { id: 'bbva', name: 'BBVA Argentina', balance: 0, note: '' },
+  { id: 'free-savings', name: 'Ahorro libre', balance: 0, note: '' },
+];
+
 const smartExtraAllocationRatio = 0.65;
 const gemCardNamePattern = /gem/i;
 const approximateWeeksPerMonthlyCycle = 30 / 7;
@@ -72,6 +78,7 @@ export function normalizeFinanceData(financeData) {
       minimumPaymentRule: normalizeMinimumPaymentRule(plan.minimumPaymentRule),
     }));
   const weeklyRecords = financeData.weeklyRecords || [];
+  const reserveBuckets = normalizeReserveBuckets(financeData.reserveBuckets);
 
   if (financeData.weeklyExpenses && financeData.monthlyExpenses) {
     return {
@@ -80,6 +87,7 @@ export function normalizeFinanceData(financeData) {
       monthlyExpenses: normalizeMonthlyServices(financeData.monthlyExpenses),
       paymentPlans,
       weeklyRecords,
+      reserveBuckets,
     };
   }
 
@@ -98,7 +106,22 @@ export function normalizeFinanceData(financeData) {
     monthlyExpenses: normalizeMonthlyServices(monthlyExpenses),
     paymentPlans,
     weeklyRecords,
+    reserveBuckets,
   };
+}
+
+function normalizeReserveBuckets(reserveBuckets = []) {
+  const bucketsById = Object.fromEntries(reserveBuckets.map((bucket) => [bucket.id, bucket]));
+
+  return reserveBucketTemplates.map((template) => {
+    const bucket = bucketsById[template.id];
+    return {
+      ...template,
+      ...bucket,
+      balance: Number(bucket?.balance ?? template.balance),
+      note: bucket?.note ?? template.note,
+    };
+  });
 }
 
 function normalizeMinimumPaymentRule(rule) {

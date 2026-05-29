@@ -71,6 +71,11 @@ export const sampleFinanceData = {
       thirdPartyContribution: 120,
     },
   ],
+  reserveBuckets: [
+    { id: 'emergency-fund', name: 'Fondo de emergencia', balance: 0, note: '' },
+    { id: 'bbva', name: 'BBVA Argentina', balance: 0, note: '' },
+    { id: 'free-savings', name: 'Ahorro libre', balance: 0, note: '' },
+  ],
   activeWeek: null,
   weeklyRecords: [],
 };

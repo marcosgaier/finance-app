@@ -4,6 +4,7 @@ import { BudgetEditor } from '../components/BudgetEditor.jsx';
 import { CardSummary } from '../components/CardSummary.jsx';
 import { GemMinimumSummary } from '../components/GemMinimumSummary.jsx';
 import { PlanList } from '../components/PlanList.jsx';
+import { ReserveBuckets } from '../components/ReserveBuckets.jsx';
 import { ScenarioSimulator } from '../components/ScenarioSimulator.jsx';
 import { StatCard } from '../components/StatCard.jsx';
 import { UpcomingDueSummary } from '../components/UpcomingDueSummary.jsx';
@@ -17,6 +18,7 @@ const dashboardTabs = [
   { id: 'debts', label: 'Deudas' },
   { id: 'budget', label: 'Presupuesto' },
   { id: 'history', label: 'Historial' },
+  { id: 'reserves', label: 'Reservas' },
   { id: 'simulator', label: 'Simulador' },
   { id: 'settings', label: 'Ajustes' },
 ];
@@ -128,6 +130,33 @@ export function Dashboard({ financeData, setFinanceData }) {
         },
       };
     });
+  }
+
+  function updateReserveBucket(bucketId, patch) {
+    setFinanceData((currentData) => ({
+      ...currentData,
+      reserveBuckets: (currentData.reserveBuckets || []).map((bucket) =>
+        bucket.id === bucketId ? { ...bucket, ...patch } : bucket,
+      ),
+    }));
+  }
+
+  function addReserveMovement({ bucketId, type, amount }) {
+    const signedAmount = type === 'deposit' ? Number(amount || 0) : -Number(amount || 0);
+    adjustReserveBucketBalance(bucketId, signedAmount);
+  }
+
+  function adjustReserveBucketBalance(bucketId, delta) {
+    if (!bucketId || bucketId === 'weekly-income' || Number(delta || 0) === 0) return;
+
+    setFinanceData((currentData) => ({
+      ...currentData,
+      reserveBuckets: (currentData.reserveBuckets || []).map((bucket) =>
+        bucket.id === bucketId
+          ? { ...bucket, balance: Number(bucket.balance || 0) + Number(delta || 0) }
+          : bucket,
+      ),
+    }));
   }
 
   function closeActiveWeek(record) {
@@ -256,8 +285,17 @@ export function Dashboard({ financeData, setFinanceData }) {
             onReopenWeek={reopenWeeklyRecord}
             onUpdateWeek={updateWeeklyRecord}
             onCloseWeek={closeActiveWeek}
+            onReserveBucketBalanceChange={adjustReserveBucketBalance}
             onStartActiveWeek={startActiveWeek}
             onUpdateActiveWeek={updateActiveWeek}
+          />
+        )}
+
+        {activeTab === 'reserves' && (
+          <ReserveBuckets
+            buckets={financeData.reserveBuckets || []}
+            onAddMovement={addReserveMovement}
+            onUpdateBucket={updateReserveBucket}
           />
         )}
 

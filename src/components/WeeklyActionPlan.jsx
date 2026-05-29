@@ -47,8 +47,17 @@ export function WeeklyActionPlan({ financeData, weeklySummary }) {
   const debtPayment = minimumSafeWeeklyPayment;
   const estimatedFree = totalIncome - fixedReserve - variableBudget - debtPayment;
   const transactionTotals = calculateTransactionTotals(activeWeek?.variableTransactions || []);
+  const weeklyFundedTransactions = (activeWeek?.variableTransactions || []).filter((transaction) =>
+    isWeeklyIncomeFunded(transaction),
+  );
+  const weeklyFundedPayments = (activeWeek?.payments || []).filter((payment) => isWeeklyIncomeFunded(payment));
   const actualDebtPayments = sumAmounts(activeWeek?.payments || []);
-  const actualRemaining = totalIncome - fixedReserve - transactionTotals.total - actualDebtPayments;
+  const weeklyFundedDebtPayments = sumAmounts(weeklyFundedPayments);
+  const actualRemaining =
+    totalIncome -
+    fixedReserve -
+    calculateTransactionTotals(weeklyFundedTransactions).total -
+    weeklyFundedDebtPayments;
 
   return (
     <section className="rounded-lg border border-teal-200 bg-white p-4 shadow-sm">
@@ -104,6 +113,7 @@ export function WeeklyActionPlan({ financeData, weeklySummary }) {
               <p className="mt-1 text-sm text-stone-600">
                 Super {formatMoney(transactionTotals.groceries)} · combustible {formatMoney(transactionTotals.fuel)} · otros {formatMoney(transactionTotals.other)} · deudas {formatMoney(actualDebtPayments)}
               </p>
+              <p className="mt-1 text-xs text-stone-500">El margen descuenta solo lo que salió de semana actual.</p>
             </div>
             <div className={`rounded-md border px-3 py-2 ${actualRemaining >= 0 ? 'border-emerald-200 bg-white' : 'border-amber-200 bg-amber-50'}`}>
               <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">Margen aproximado</p>
@@ -114,6 +124,10 @@ export function WeeklyActionPlan({ financeData, weeklySummary }) {
       ) : null}
     </section>
   );
+}
+
+function isWeeklyIncomeFunded(item) {
+  return !item?.fundingSource || item.fundingSource === 'weekly-income';
 }
 
 function ActionStep({ label, value, helper, tone = 'default' }) {

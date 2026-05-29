@@ -147,6 +147,20 @@ export function WeeklyTracker({
   const weeklyFundedPaid = payments
     .filter((payment) => isWeeklyIncomeFunded(payment))
     .reduce((total, payment) => total + Number(payment.amount || 0), 0);
+  const weeklyGemBuffer = Number(weeklySummary.gemMinimumSummary?.weeklyBuffer || 0);
+  const minimumSafeWeeklyPayment = Number(weeklySummary.minimumToAvoidExpiry || 0) + weeklyGemBuffer;
+  const optionalExtraPayment = Math.max(
+    0,
+    Number(weeklySummary.recommendedPayment || 0) - Number(weeklySummary.minimumToAvoidExpiry || 0),
+  );
+  const totalRecommendedPayment = minimumSafeWeeklyPayment + optionalExtraPayment;
+  const marginAfterMinimumSafe =
+    totalIncome -
+    Number(weeklySummary.weeklyExpensesTotal || 0) -
+    Number(weeklySummary.monthlyReserveWeekly || 0) -
+    Number(weeklySummary.groceries || 0) -
+    Number(weeklySummary.fuel || 0) -
+    minimumSafeWeeklyPayment;
   const minimumDifference = totalPaid - weeklySummary.minimumToAvoidExpiry;
   const recommendedDifference = totalPaid - weeklySummary.recommendedPayment;
   const realWeeklyMargin =
@@ -590,12 +604,13 @@ export function WeeklyTracker({
             <SummaryTile label="Ingreso principal" value={normalizedActiveWeek.realIncome} />
             <SummaryTile label="Otros ingresos" value={extraIncomeTotal} />
             <SummaryTile label="Total ingresos" value={totalIncome} tone="positive" />
-            <SummaryTile label="Mínimo para no vencer" value={weeklySummary.minimumToAvoidExpiry} />
-            <SummaryTile label="Pago inteligente" value={weeklySummary.recommendedPayment} />
+            <SummaryTile label="Mínimo semanal seguro" value={minimumSafeWeeklyPayment} tone="warning" />
+            <SummaryTile label="Extra opcional" value={optionalExtraPayment} />
+            <SummaryTile label="Pago recomendado total" value={totalRecommendedPayment} />
             <SummaryTile
-              label={minimumDifference >= 0 ? 'Diferencia a favor' : 'Te falta cubrir'}
-              value={Math.abs(minimumDifference)}
-              tone={minimumDifference >= 0 ? 'positive' : 'warning'}
+              label="Margen estimado si pago mínimo seguro"
+              value={Math.abs(marginAfterMinimumSafe)}
+              tone={marginAfterMinimumSafe >= 0 ? 'positive' : 'warning'}
             />
           </div>
 

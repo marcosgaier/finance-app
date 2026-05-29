@@ -8,6 +8,7 @@ import { ScenarioSimulator } from '../components/ScenarioSimulator.jsx';
 import { StatCard } from '../components/StatCard.jsx';
 import { UpcomingDueSummary } from '../components/UpcomingDueSummary.jsx';
 import { WeeklyTracker } from '../components/WeeklyTracker.jsx';
+import { WeeklyActionPlan } from '../components/WeeklyActionPlan.jsx';
 import { WeeklyStatus } from '../components/WeeklyStatus.jsx';
 import { calculateWeeklyDebtReserve, formatMoney } from '../utils/financeEngine.js';
 
@@ -163,6 +164,7 @@ export function Dashboard({ financeData, setFinanceData }) {
 
         {activeTab === 'dashboard' && (
           <div className="grid gap-5">
+            <WeeklyActionPlan financeData={financeData} weeklySummary={weeklySummary} />
             <WeeklyStatus summary={weeklySummary} />
 
             <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">

@@ -12,6 +12,16 @@ const urgencyStyles = {
 export function PlanList({ plans, cards, onAddPlan, onDeletePlan, onUpdatePlan }) {
   const [expandedPlanIds, setExpandedPlanIds] = useState({});
   const [editingPlanIds, setEditingPlanIds] = useState({});
+  const [priorityDetailsInitialized, setPriorityDetailsInitialized] = useState(false);
+
+  useEffect(() => {
+    if (priorityDetailsInitialized || plans.length === 0) return;
+
+    setExpandedPlanIds(
+      Object.fromEntries(plans.filter((plan) => isPriorityPlan(plan)).map((plan) => [plan.id, true])),
+    );
+    setPriorityDetailsInitialized(true);
+  }, [plans, priorityDetailsInitialized]);
 
   function collapseAll() {
     setExpandedPlanIds({});
@@ -74,7 +84,7 @@ export function PlanList({ plans, cards, onAddPlan, onDeletePlan, onUpdatePlan }
       <div className="mt-4 grid gap-3">
         {plans.map((plan) => {
           const priorityPlan = isPriorityPlan(plan);
-          const detailVisible = priorityPlan || Boolean(expandedPlanIds[plan.id]);
+          const detailVisible = Boolean(expandedPlanIds[plan.id]);
           const editorVisible = Boolean(editingPlanIds[plan.id]);
 
           return (
@@ -103,15 +113,13 @@ export function PlanList({ plans, cards, onAddPlan, onDeletePlan, onUpdatePlan }
               {detailVisible ? <PlanDetail plan={plan} compact={!priorityPlan} /> : null}
 
               <div className="mt-3 flex flex-wrap gap-2">
-                {!priorityPlan ? (
-                  <button
-                    className="rounded-md border border-stone-300 bg-white px-3 py-2 text-sm font-semibold text-stone-700 hover:border-stone-500"
-                    type="button"
-                    onClick={() => togglePlanDetail(plan.id)}
-                  >
-                    {expandedPlanIds[plan.id] ? 'Ocultar detalle' : 'Ver detalle'}
-                  </button>
-                ) : null}
+                <button
+                  className="rounded-md border border-stone-300 bg-white px-3 py-2 text-sm font-semibold text-stone-700 hover:border-stone-500"
+                  type="button"
+                  onClick={() => togglePlanDetail(plan.id)}
+                >
+                  {expandedPlanIds[plan.id] ? 'Ocultar detalle' : 'Ver detalle'}
+                </button>
                 <button
                   className="rounded-md border border-sky-200 bg-sky-50 px-3 py-2 text-sm font-semibold text-sky-800 hover:border-sky-400"
                   type="button"

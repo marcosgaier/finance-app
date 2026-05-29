@@ -25,11 +25,15 @@ export function Dashboard({ financeData, setFinanceData }) {
   const [activeTab, setActiveTab] = useState('dashboard');
   const effectiveFinanceData = useMemo(() => {
     const activeRealIncome = Number(financeData.activeWeek?.realIncome || 0);
-    if (activeRealIncome <= 0) return financeData;
+    const activeExtraIncome = (financeData.activeWeek?.extraIncome || []).reduce(
+      (total, income) => total + Number(income.amount || 0),
+      0,
+    );
+    if (activeRealIncome <= 0 && activeExtraIncome <= 0) return financeData;
 
     return {
       ...financeData,
-      weeklyIncome: activeRealIncome,
+      weeklyIncome: (activeRealIncome > 0 ? activeRealIncome : Number(financeData.weeklyIncome || 0)) + activeExtraIncome,
     };
   }, [financeData]);
   const weeklySummary = useMemo(() => calculateWeeklyDebtReserve(effectiveFinanceData), [effectiveFinanceData]);
@@ -174,7 +178,7 @@ export function Dashboard({ financeData, setFinanceData }) {
             <WeeklyStatus summary={weeklySummary} />
 
             <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-              <StatCard label="Ingreso usado esta semana" value={weeklySummary.weeklyIncome} helper="Real cobrado si existe; si no, ingreso base esperado." />
+              <StatCard label="Ingreso usado esta semana" value={weeklySummary.weeklyIncome} helper="Ingreso principal usado + ingresos extra de la semana activa." />
               <StatCard label="Disponible para deudas" value={weeklySummary.availableForDebt} helper="Después de números semanales, servicios, supermercado y combustible." tone="strong" />
               <StatCard
                 label={weeklySummary.weeklyShortfall > 0 ? 'Faltante semanal' : `Margen de vida: ${weeklySummary.lifeMarginStatus.label}`}

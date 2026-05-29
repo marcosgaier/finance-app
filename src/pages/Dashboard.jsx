@@ -44,6 +44,22 @@ export function Dashboard({ financeData, setFinanceData }) {
     Number(weeklySummary.recommendedPayment || 0) - Number(weeklySummary.minimumToAvoidExpiry || 0),
   );
   const totalRecommendedPayment = minimumSafeWeeklyPayment + extraSuggestedPayment;
+  const marginAfterMinimumSafe = Number(weeklySummary.availableBeforeDebt || 0) - minimumSafeWeeklyPayment;
+  const marginAfterRecommendedTotal = Number(weeklySummary.availableBeforeDebt || 0) - totalRecommendedPayment;
+  const safeWeeklyShortfall = Math.max(0, minimumSafeWeeklyPayment - Number(weeklySummary.availableBeforeDebt || 0));
+  const weeklyStatusOverride =
+    safeWeeklyShortfall > 0
+      ? {
+          label: 'No llegás al mínimo seguro',
+          tone: 'danger',
+          message: `Esta semana no llegás al mínimo semanal seguro de ${formatMoney(minimumSafeWeeklyPayment)}. Te faltarían ${formatMoney(safeWeeklyShortfall)}.`,
+        }
+      : {
+          label: marginAfterMinimumSafe < 30 ? 'Llegás muy justo' : 'Llegás al mínimo seguro',
+          tone: marginAfterMinimumSafe < 30 ? 'warning' : 'positive',
+          message: `Cubriendo el mínimo semanal seguro de ${formatMoney(minimumSafeWeeklyPayment)}, te quedarían ${formatMoney(marginAfterMinimumSafe)} estimados esta semana.`,
+        };
+  const decisionMessage = `Piso seguro esta semana: ${formatMoney(minimumSafeWeeklyPayment)}. Si tenés margen, podés sumar ${formatMoney(extraSuggestedPayment)} extra. Pago recomendado total: ${formatMoney(totalRecommendedPayment)}.`;
 
   function updatePlan(planId, patch) {
     setFinanceData((currentData) => ({
@@ -175,20 +191,20 @@ export function Dashboard({ financeData, setFinanceData }) {
         {activeTab === 'dashboard' && (
           <div className="grid gap-5">
             <WeeklyActionPlan financeData={financeData} weeklySummary={weeklySummary} />
-            <WeeklyStatus summary={weeklySummary} />
+            <WeeklyStatus summary={weeklySummary} statusOverride={weeklyStatusOverride} />
 
             <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
               <StatCard label="Ingreso usado esta semana" value={weeklySummary.weeklyIncome} helper="Ingreso principal usado + ingresos extra de la semana activa." />
               <StatCard label="Disponible para deudas" value={weeklySummary.availableForDebt} helper="Después de números semanales, servicios, supermercado y combustible." tone="strong" />
               <StatCard
-                label={weeklySummary.weeklyShortfall > 0 ? 'Faltante semanal' : `Margen de vida: ${weeklySummary.lifeMarginStatus.label}`}
-                value={weeklySummary.weeklyShortfall > 0 ? weeklySummary.weeklyShortfall : weeklySummary.lifeMargin}
+                label={marginAfterRecommendedTotal < 0 ? 'Faltante si pagás recomendado total' : 'Margen si pagás recomendado total'}
+                value={Math.abs(marginAfterRecommendedTotal)}
                 helper={
-                  weeklySummary.weeklyShortfall > 0
-                    ? 'Ese es el extra real que falta para cubrir todos los vencimientos a tiempo.'
-                    : 'Disponible después del pago inteligente recomendado.'
+                  marginAfterRecommendedTotal < 0
+                    ? 'Eso faltaría si intentás pagar el ideal completo esta semana.'
+                    : 'Estimado después del mínimo seguro más el extra opcional.'
                 }
-                tone={weeklySummary.weeklyShortfall > 0 ? 'danger' : weeklySummary.lifeMarginStatus.tone}
+                tone={marginAfterRecommendedTotal < 0 ? 'danger' : 'positive'}
               />
             </section>
 
@@ -205,7 +221,7 @@ export function Dashboard({ financeData, setFinanceData }) {
 
             <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
               <p className="text-sm font-semibold uppercase tracking-wide text-teal-700">Motor de decision</p>
-              <p className="mt-2 text-base leading-7 text-stone-800">{weeklySummary.decisionMessage}</p>
+              <p className="mt-2 text-base leading-7 text-stone-800">{decisionMessage}</p>
             </section>
 
             <UpcomingDueSummary plans={weeklySummary.plans} />

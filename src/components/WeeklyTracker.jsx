@@ -60,11 +60,14 @@ export function WeeklyTracker({
   onIncomeChange,
   onStartActiveWeek,
   onUpdateActiveWeek,
+  onUpdateWeek,
 }) {
   const financialWeekStartDate = useMemo(() => getCurrentFinancialWeekStartDate(), []);
   const activeWeek = financeData.activeWeek;
   const [transactionDraft, setTransactionDraft] = useState(createEmptyTransaction(financialWeekStartDate));
   const [expandedRecordIds, setExpandedRecordIds] = useState({});
+  const [editingRecordId, setEditingRecordId] = useState(null);
+  const [editingRecordDraft, setEditingRecordDraft] = useState(null);
 
   useEffect(() => {
     if (!activeWeek) {
@@ -232,6 +235,103 @@ export function WeeklyTracker({
       ...currentExpandedIds,
       [recordId]: !currentExpandedIds[recordId],
     }));
+  }
+
+  function startEditingRecord(record) {
+    setEditingRecordId(record.id);
+    setEditingRecordDraft(createEditableRecordDraft(record));
+    setExpandedRecordIds((currentExpandedIds) => ({
+      ...currentExpandedIds,
+      [record.id]: true,
+    }));
+  }
+
+  function cancelEditingRecord() {
+    setEditingRecordId(null);
+    setEditingRecordDraft(null);
+  }
+
+  function updateEditingRecordDraft(patch) {
+    setEditingRecordDraft((currentDraft) => ({
+      ...currentDraft,
+      ...patch,
+    }));
+  }
+
+  function updateEditingTransaction(transactionId, patch) {
+    setEditingRecordDraft((currentDraft) => ({
+      ...currentDraft,
+      variableTransactions: currentDraft.variableTransactions.map((transaction) =>
+        transaction.id === transactionId ? { ...transaction, ...patch } : transaction,
+      ),
+    }));
+  }
+
+  function addEditingTransaction() {
+    setEditingRecordDraft((currentDraft) => ({
+      ...currentDraft,
+      variableTransactions: [
+        ...currentDraft.variableTransactions,
+        {
+          id: `transaction-${Date.now()}`,
+          date: currentDraft.weekDate || getTodayIsoDate(),
+          description: '',
+          category: 'groceries',
+          amount: 0,
+        },
+      ],
+    }));
+  }
+
+  function deleteEditingTransaction(transactionId) {
+    setEditingRecordDraft((currentDraft) => ({
+      ...currentDraft,
+      variableTransactions: currentDraft.variableTransactions.filter((transaction) => transaction.id !== transactionId),
+    }));
+  }
+
+  function updateEditingPayment(cardId, amount) {
+    const nextAmount = Number(amount || 0);
+
+    setEditingRecordDraft((currentDraft) => {
+      const card = financeData.cards.find((item) => item.id === cardId);
+      const otherPayments = currentDraft.payments.filter((payment) => payment.cardId !== cardId);
+      const payments =
+        nextAmount > 0
+          ? [
+              ...otherPayments,
+              {
+                cardId,
+                cardName: card?.name || 'Tarjeta',
+                amount: nextAmount,
+              },
+            ]
+          : otherPayments;
+
+      return {
+        ...currentDraft,
+        payments,
+      };
+    });
+  }
+
+  function saveEditingRecord(originalRecord) {
+    if (!editingRecordDraft || !onUpdateWeek) return;
+
+    const variableTransactions = sanitizeTransactions(editingRecordDraft.variableTransactions);
+    const payments = sanitizePayments(editingRecordDraft.payments);
+
+    onUpdateWeek(originalRecord.id, (currentRecord) => ({
+      ...currentRecord,
+      income: Number(editingRecordDraft.realIncome || 0),
+      realIncome: Number(editingRecordDraft.realIncome || 0),
+      variableTransactions,
+      payments,
+      note: editingRecordDraft.note || '',
+      totalPaid: calculatePaymentTotal(payments),
+      updatedAt: new Date().toISOString(),
+    }));
+    cancelEditingRecord();
   }
 
   function closeWeek() {
@@ -501,9 +601,19 @@ export function WeeklyTracker({
                 key={record.id}
                 expanded={Boolean(expandedRecordIds[record.id])}
                 record={record}
+                cards={financeData.cards}
+                editingDraft={editingRecordId === record.id ? editingRecordDraft : null}
                 weeklySummary={weeklySummary}
                 onDeleteWeek={onDeleteWeek}
+                onAddEditingTransaction={addEditingTransaction}
+                onCancelEditing={cancelEditingRecord}
+                onDeleteEditingTransaction={deleteEditingTransaction}
+                onSaveEditing={() => saveEditingRecord(record)}
+                onStartEditing={() => startEditingRecord(record)}
                 onToggleDetails={() => toggleRecordDetails(record.id)}
+                onUpdateEditingPayment={updateEditingPayment}
+                onUpdateEditingRecord={updateEditingRecordDraft}
+                onUpdateEditingTransaction={updateEditingTransaction}
               />
             ))}
           </div>
@@ -531,23 +641,60 @@ function TransactionRow({ transaction, onDelete }) {
   );
 }
 
-function WeeklyRecordItem({ expanded, record, weeklySummary, onDeleteWeek, onToggleDetails }) {
+function WeeklyRecordItem({
+  expanded,
+  record,
+  cards,
+  editingDraft,
+  weeklySummary,
+  onDeleteWeek,
+  onAddEditingTransaction,
+  onCancelEditing,
+  onDeleteEditingTransaction,
+  onSaveEditing,
+  onStartEditing,
+  onToggleDetails,
+  onUpdateEditingPayment,
+  onUpdateEditingRecord,
+  onUpdateEditingTransaction,
+}) {
   const normalizedRecord = normalizeWeeklyRecord(record, weeklySummary);
-  const variableTone = normalizedRecord.variableDifference >= 0 ? 'positive' : 'warning';
-  const marginTone = normalizedRecord.realWeeklyMargin >= 0 ? 'positive' : 'warning';
+  const previewRecord = editingDraft
+    ? normalizeWeeklyRecord(
+        {
+          ...record,
+          income: Number(editingDraft.realIncome || 0),
+          realIncome: Number(editingDraft.realIncome || 0),
+          variableTransactions: editingDraft.variableTransactions,
+          payments: editingDraft.payments,
+          note: editingDraft.note,
+          totalPaid: calculatePaymentTotal(editingDraft.payments),
+        },
+        weeklySummary,
+      )
+    : normalizedRecord;
+  const variableTone = previewRecord.variableDifference >= 0 ? 'positive' : 'warning';
+  const marginTone = previewRecord.realWeeklyMargin >= 0 ? 'positive' : 'warning';
 
   return (
     <article className="rounded-md border border-stone-200 bg-stone-50 p-3 text-sm text-stone-700">
       <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <p>
-            <strong className="text-stone-950">{formatDisplayDate(normalizedRecord.weekDate)}</strong> · Cobrado {formatMoney(normalizedRecord.realIncome)} · Pagado a deudas {formatMoney(normalizedRecord.totalPaid)}
+            <strong className="text-stone-950">{formatDisplayDate(previewRecord.weekDate)}</strong> · Cobrado {formatMoney(previewRecord.realIncome)} · Pagado a deudas {formatMoney(previewRecord.totalPaid)}
           </p>
           <p className="mt-1 text-stone-500">
-            Supermercado {formatMoney(normalizedRecord.totals.groceries)} · Combustible {formatMoney(normalizedRecord.totals.fuel)} · Otros {formatMoney(normalizedRecord.totals.other)} · {normalizedRecord.variableTransactions.length} transacciones
+            Supermercado {formatMoney(previewRecord.totals.groceries)} · Combustible {formatMoney(previewRecord.totals.fuel)} · Otros {formatMoney(previewRecord.totals.other)} · {previewRecord.variableTransactions.length} transacciones
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <button
+            className="w-fit rounded-md border border-stone-300 bg-white px-2 py-1 text-xs font-semibold text-stone-700 hover:bg-stone-100"
+            type="button"
+            onClick={onStartEditing}
+          >
+            {editingDraft ? 'Editando' : 'Editar'}
+          </button>
           <button
             className="w-fit rounded-md border border-stone-300 bg-white px-2 py-1 text-xs font-semibold text-stone-700 hover:bg-stone-100"
             type="button"
@@ -559,7 +706,7 @@ function WeeklyRecordItem({ expanded, record, weeklySummary, onDeleteWeek, onTog
             className="w-fit rounded-md border border-red-200 bg-white px-2 py-1 text-xs font-semibold text-red-700 hover:bg-red-50"
             type="button"
             onClick={() => {
-              const confirmed = window.confirm(`¿Eliminar la semana del ${formatDisplayDate(normalizedRecord.weekDate)}?`);
+              const confirmed = window.confirm(`¿Eliminar la semana del ${formatDisplayDate(previewRecord.weekDate)}?`);
               if (confirmed) onDeleteWeek(record.id);
             }}
           >
@@ -570,22 +717,36 @@ function WeeklyRecordItem({ expanded, record, weeklySummary, onDeleteWeek, onTog
 
       <div className="mt-3 grid gap-2 sm:grid-cols-3">
         <SmallResult
-          label={normalizedRecord.variableDifference >= 0 ? 'Gasté de menos' : 'Gasté de más'}
-          value={formatMoney(Math.abs(normalizedRecord.variableDifference))}
+          label={previewRecord.variableDifference >= 0 ? 'Gasté de menos' : 'Gasté de más'}
+          value={formatMoney(Math.abs(previewRecord.variableDifference))}
           tone={variableTone}
         />
         <SmallResult
-          label={normalizedRecord.realWeeklyMargin >= 0 ? 'Margen real' : 'Faltante real'}
-          value={formatMoney(Math.abs(normalizedRecord.realWeeklyMargin))}
+          label={previewRecord.realWeeklyMargin >= 0 ? 'Margen real' : 'Faltante real'}
+          value={formatMoney(Math.abs(previewRecord.realWeeklyMargin))}
           tone={marginTone}
         />
-        <SmallResult label="Gasto variable real" value={formatMoney(normalizedRecord.totals.total)} />
+        <SmallResult label="Gasto variable real" value={formatMoney(previewRecord.totals.total)} />
       </div>
+
+      {editingDraft ? (
+        <ClosedWeekEditor
+          cards={cards}
+          draft={editingDraft}
+          onAddTransaction={onAddEditingTransaction}
+          onCancel={onCancelEditing}
+          onDeleteTransaction={onDeleteEditingTransaction}
+          onSave={onSaveEditing}
+          onUpdateDraft={onUpdateEditingRecord}
+          onUpdatePayment={onUpdateEditingPayment}
+          onUpdateTransaction={onUpdateEditingTransaction}
+        />
+      ) : null}
 
       {expanded ? (
         <div className="mt-3 grid gap-2">
-          {normalizedRecord.variableTransactions.length > 0 ? (
-            normalizedRecord.variableTransactions.map((transaction) => (
+          {previewRecord.variableTransactions.length > 0 ? (
+            previewRecord.variableTransactions.map((transaction) => (
               <div key={transaction.id} className="grid gap-1 rounded-md border border-stone-200 bg-white p-2 sm:grid-cols-[0.8fr_1.4fr_1fr_0.7fr] sm:items-center">
                 <span className="text-stone-500">{formatDisplayDate(transaction.date)}</span>
                 <span className="font-semibold text-stone-900">{transaction.description}</span>
@@ -601,10 +762,143 @@ function WeeklyRecordItem({ expanded, record, weeklySummary, onDeleteWeek, onTog
         </div>
       ) : null}
 
-      {normalizedRecord.note ? (
-        <p className="mt-3 rounded-md border border-stone-200 bg-white p-2 text-stone-600">{normalizedRecord.note}</p>
+      {previewRecord.note ? (
+        <p className="mt-3 rounded-md border border-stone-200 bg-white p-2 text-stone-600">{previewRecord.note}</p>
       ) : null}
     </article>
+  );
+}
+
+function ClosedWeekEditor({
+  cards,
+  draft,
+  onAddTransaction,
+  onCancel,
+  onDeleteTransaction,
+  onSave,
+  onUpdateDraft,
+  onUpdatePayment,
+  onUpdateTransaction,
+}) {
+  return (
+    <div className="mt-3 rounded-md border border-sky-200 bg-white p-3">
+      <div className="grid gap-3 md:grid-cols-[0.8fr_1.2fr]">
+        <MoneyInput
+          label="Ingreso real cobrado"
+          value={draft.realIncome}
+          onChange={(value) => onUpdateDraft({ realIncome: Number(value || 0) })}
+        />
+        <label className="text-sm font-medium text-stone-600">
+          Nota
+          <textarea
+            className="mt-1 min-h-20 w-full rounded-md border border-stone-200 bg-white px-3 py-2 outline-none focus:border-sky-500"
+            value={draft.note}
+            onChange={(event) => onUpdateDraft({ note: event.target.value })}
+            placeholder="Algo importante de esta semana"
+          />
+        </label>
+      </div>
+
+      <div className="mt-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">Gastos variables reales</p>
+          <button
+            className="rounded-md border border-stone-300 bg-white px-3 py-2 text-xs font-semibold text-stone-700 hover:bg-stone-100"
+            type="button"
+            onClick={onAddTransaction}
+          >
+            Agregar gasto
+          </button>
+        </div>
+
+        <div className="mt-2 grid gap-2">
+          {draft.variableTransactions.length > 0 ? (
+            draft.variableTransactions.map((transaction) => (
+              <div
+                key={transaction.id}
+                className="grid gap-2 rounded-md border border-stone-200 bg-stone-50 p-2 md:grid-cols-[0.9fr_1.3fr_1fr_0.8fr_auto] md:items-end"
+              >
+                <DateInput
+                  label="Fecha"
+                  value={transaction.date}
+                  onChange={(value) => onUpdateTransaction(transaction.id, { date: value })}
+                />
+                <label className="text-sm font-medium text-stone-600">
+                  Comercio / descripcion
+                  <input
+                    className="mt-1 w-full rounded-md border border-stone-200 bg-white px-3 py-2 outline-none focus:border-sky-500"
+                    type="text"
+                    value={transaction.description}
+                    onChange={(event) => onUpdateTransaction(transaction.id, { description: event.target.value })}
+                  />
+                </label>
+                <label className="text-sm font-medium text-stone-600">
+                  Categoria
+                  <select
+                    className="mt-1 w-full rounded-md border border-stone-200 bg-white px-3 py-2 outline-none focus:border-sky-500"
+                    value={normalizeCategory(transaction.category)}
+                    onChange={(event) => onUpdateTransaction(transaction.id, { category: event.target.value })}
+                  >
+                    {transactionCategories.map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <MoneyInput
+                  label="Monto"
+                  value={transaction.amount}
+                  onChange={(value) => onUpdateTransaction(transaction.id, { amount: Number(value || 0) })}
+                />
+                <button
+                  className="w-fit rounded-md border border-red-200 bg-white px-2 py-2 text-xs font-semibold text-red-700 hover:bg-red-50"
+                  type="button"
+                  onClick={() => onDeleteTransaction(transaction.id)}
+                >
+                  Eliminar
+                </button>
+              </div>
+            ))
+          ) : (
+            <p className="rounded-md border border-stone-200 bg-stone-50 p-2 text-sm text-stone-500">
+              No hay gastos cargados en esta semana.
+            </p>
+          )}
+        </div>
+      </div>
+
+      <div className="mt-4">
+        <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">Pagos reales a deudas</p>
+        <div className="mt-2 grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+          {cards.map((card) => (
+            <MoneyInput
+              key={card.id}
+              label={card.name}
+              value={draft.payments.find((payment) => payment.cardId === card.id)?.amount || ''}
+              onChange={(value) => onUpdatePayment(card.id, value)}
+            />
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-4 flex flex-wrap justify-end gap-2 border-t border-stone-200 pt-3">
+        <button
+          className="rounded-md border border-stone-300 bg-white px-3 py-2 text-sm font-semibold text-stone-700 hover:bg-stone-100"
+          type="button"
+          onClick={onCancel}
+        >
+          Cancelar
+        </button>
+        <button
+          className="rounded-md bg-stone-950 px-3 py-2 text-sm font-semibold text-white hover:bg-stone-800"
+          type="button"
+          onClick={onSave}
+        >
+          Guardar cambios
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -630,19 +924,18 @@ function normalizeWeeklyRecord(record, weeklySummary) {
   const totals = calculateTransactionTotals(variableTransactions);
   const budgetSnapshot = record.budgetSnapshot || null;
   const realIncome = Number(record.realIncome ?? record.income ?? 0);
-  const totalPaid = Number(record.totalPaid ?? calculatePaymentTotal(record.payments || []));
+  const hasPaymentDetails = Array.isArray(record.payments) && record.payments.length > 0;
+  const totalPaid = hasPaymentDetails ? calculatePaymentTotal(record.payments) : Number(record.totalPaid ?? 0);
   const plannedGroceries = Number(record.plannedGroceries ?? budgetSnapshot?.plannedGroceries ?? weeklySummary.groceries ?? 0);
   const plannedFuel = Number(record.plannedFuel ?? budgetSnapshot?.plannedFuel ?? weeklySummary.fuel ?? 0);
   const plannedVariableBudget = plannedGroceries + plannedFuel;
   const variableDifference = plannedVariableBudget - totals.total;
-  const realWeeklyMargin = Number(
-    record.realWeeklyMargin ??
-      realIncome -
-        Number(budgetSnapshot?.fixedWeeklyExpensesTotal ?? weeklySummary.weeklyExpensesTotal ?? 0) -
-        Number(budgetSnapshot?.monthlyReserveWeekly ?? weeklySummary.monthlyReserveWeekly ?? 0) -
-        totals.total -
-        totalPaid,
-  );
+  const realWeeklyMargin =
+    realIncome -
+    Number(budgetSnapshot?.fixedWeeklyExpensesTotal ?? weeklySummary.weeklyExpensesTotal ?? 0) -
+    Number(budgetSnapshot?.monthlyReserveWeekly ?? weeklySummary.monthlyReserveWeekly ?? 0) -
+    totals.total -
+    totalPaid;
 
   return {
     weekDate: record.weekDate || record.weekStartDate,
@@ -655,6 +948,38 @@ function normalizeWeeklyRecord(record, weeklySummary) {
     realWeeklyMargin,
     note: record.note || '',
   };
+}
+
+function createEditableRecordDraft(record) {
+  return {
+    weekDate: record.weekDate || record.weekStartDate || getTodayIsoDate(),
+    realIncome: Number(record.realIncome ?? record.income ?? 0),
+    variableTransactions: normalizeRecordTransactions(record),
+    payments: sanitizePayments(record.payments || []),
+    note: record.note || '',
+  };
+}
+
+function sanitizeTransactions(transactions) {
+  return (transactions || [])
+    .map((transaction, index) => ({
+      id: transaction.id || `transaction-${Date.now()}-${index}`,
+      date: transaction.date || getTodayIsoDate(),
+      description: (transaction.description || '').trim(),
+      category: normalizeCategory(transaction.category),
+      amount: Number(transaction.amount || 0),
+    }))
+    .filter((transaction) => transaction.amount > 0 || transaction.description.length > 0);
+}
+
+function sanitizePayments(payments) {
+  return (payments || [])
+    .map((payment) => ({
+      cardId: payment.cardId,
+      cardName: payment.cardName || 'Tarjeta',
+      amount: Number(payment.amount || 0),
+    }))
+    .filter((payment) => payment.cardId && payment.amount > 0);
 }
 
 function createBudgetSnapshot({ financeData, weeklySummary, plannedGroceries, plannedFuel, plannedVariableBudget }) {
@@ -688,7 +1013,7 @@ function createBudgetSnapshot({ financeData, weeklySummary, plannedGroceries, pl
 }
 
 function normalizeRecordTransactions(record) {
-  if (Array.isArray(record.variableTransactions) && record.variableTransactions.length > 0) {
+  if (Array.isArray(record.variableTransactions)) {
     return record.variableTransactions.map((transaction, index) => ({
       id: transaction.id || `legacy-transaction-${record.id || record.weekDate}-${index}`,
       date: transaction.date || record.weekDate || record.weekStartDate || '',

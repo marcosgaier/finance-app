@@ -23,7 +23,16 @@ const dashboardTabs = [
 
 export function Dashboard({ financeData, setFinanceData }) {
   const [activeTab, setActiveTab] = useState('dashboard');
-  const weeklySummary = useMemo(() => calculateWeeklyDebtReserve(financeData), [financeData]);
+  const effectiveFinanceData = useMemo(() => {
+    const activeRealIncome = Number(financeData.activeWeek?.realIncome || 0);
+    if (activeRealIncome <= 0) return financeData;
+
+    return {
+      ...financeData,
+      weeklyIncome: activeRealIncome,
+    };
+  }, [financeData]);
+  const weeklySummary = useMemo(() => calculateWeeklyDebtReserve(effectiveFinanceData), [effectiveFinanceData]);
 
   function updatePlan(planId, patch) {
     setFinanceData((currentData) => ({
@@ -63,17 +72,9 @@ export function Dashboard({ financeData, setFinanceData }) {
     }));
   }
 
-  function updateWeeklyIncome(weeklyIncome) {
-    setFinanceData((currentData) => ({
-      ...currentData,
-      weeklyIncome,
-    }));
-  }
-
   function saveWeeklyRecord(record) {
     setFinanceData((currentData) => ({
       ...currentData,
-      weeklyIncome: record.income,
       weeklyRecords: [...(currentData.weeklyRecords || []), record],
     }));
   }
@@ -105,7 +106,6 @@ export function Dashboard({ financeData, setFinanceData }) {
   function closeActiveWeek(record) {
     setFinanceData((currentData) => ({
       ...currentData,
-      weeklyIncome: record.income,
       activeWeek: null,
       weeklyRecords: [...(currentData.weeklyRecords || []), record],
     }));
@@ -135,7 +135,6 @@ export function Dashboard({ financeData, setFinanceData }) {
 
       return {
         ...currentData,
-        weeklyIncome: Number(recordToReopen.income ?? recordToReopen.realIncome ?? currentData.weeklyIncome ?? 0),
         activeWeek: {
           ...recordToReopen,
           weekStartDate: recordToReopen.weekStartDate || recordToReopen.weekDate,
@@ -168,7 +167,7 @@ export function Dashboard({ financeData, setFinanceData }) {
             <WeeklyStatus summary={weeklySummary} />
 
             <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-              <StatCard label="Ingreso semanal" value={weeklySummary.weeklyIncome} helper="Base editable para todos los cálculos." />
+              <StatCard label="Ingreso usado esta semana" value={weeklySummary.weeklyIncome} helper="Real cobrado si existe; si no, ingreso base esperado." />
               <StatCard label="Disponible para deudas" value={weeklySummary.availableForDebt} helper="Después de números semanales, servicios, supermercado y combustible." tone="strong" />
               <StatCard label="Mínimo para no vencer" value={weeklySummary.minimumToAvoidExpiry} helper="Pago escalonado necesario para llegar a cada fecha límite." tone="warning" />
               <StatCard label="Pago inteligente" value={weeklySummary.recommendedPayment} helper={`${formatMoney(weeklySummary.smartExtraReserve)} extra sugerido sobre el mínimo.`} tone="strong" />
@@ -217,13 +216,12 @@ export function Dashboard({ financeData, setFinanceData }) {
             onReopenWeek={reopenWeeklyRecord}
             onUpdateWeek={updateWeeklyRecord}
             onCloseWeek={closeActiveWeek}
-            onIncomeChange={updateWeeklyIncome}
             onStartActiveWeek={startActiveWeek}
             onUpdateActiveWeek={updateActiveWeek}
           />
         )}
 
-        {activeTab === 'simulator' && <ScenarioSimulator financeData={financeData} />}
+        {activeTab === 'simulator' && <ScenarioSimulator financeData={effectiveFinanceData} />}
 
         {activeTab === 'settings' && (
           <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">

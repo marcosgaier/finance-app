@@ -31,7 +31,8 @@ function calculateTransactionTotals(transactions = []) {
 export function WeeklyActionPlan({ financeData, weeklySummary }) {
   const activeWeek = financeData.activeWeek || null;
   const extraIncomeTotal = sumAmounts(activeWeek?.extraIncome || []);
-  const totalIncome = Number(weeklySummary.weeklyIncome || 0) + extraIncomeTotal;
+  const usedWeeklyIncome = Number(weeklySummary.weeklyIncome || 0);
+  const totalIncome = usedWeeklyIncome + extraIncomeTotal;
   const fixedReserve = Number(weeklySummary.fixedTotal || 0);
   const variableBudget = Number(weeklySummary.groceries || 0) + Number(weeklySummary.fuel || 0);
   const debtPayment = Number(weeklySummary.suggestedSafeWeeklyPayment || weeklySummary.recommendedPayment || 0);
@@ -55,12 +56,12 @@ export function WeeklyActionPlan({ financeData, weeklySummary }) {
 
       <div className="mt-4 grid gap-3 lg:grid-cols-4">
         <ActionStep
-          label="Ingresó"
+          label="Ingreso usado esta semana"
           value={formatMoney(totalIncome)}
           helper={
             extraIncomeTotal > 0
-              ? `Sueldo ${formatMoney(weeklySummary.weeklyIncome)} + extras ${formatMoney(extraIncomeTotal)}.`
-              : 'Tu sueldo semanal cargado para planificar.'
+              ? `Ingreso principal ${formatMoney(usedWeeklyIncome)} + extras ${formatMoney(extraIncomeTotal)}.`
+              : 'Ingreso real cobrado si existe; si no, ingreso base esperado.'
           }
         />
         <ActionStep

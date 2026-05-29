@@ -84,7 +84,7 @@ export function BudgetEditor({ financeData, onChange }) {
             </button>
           </div>
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
-            <MoneyField label="Ingreso semanal" value={financeData.weeklyIncome} onChange={(value) => updateField('weeklyIncome', value)} />
+            <MoneyField label="Ingreso base esperado" value={financeData.weeklyIncome} onChange={(value) => updateField('weeklyIncome', value)} />
             <MoneyField label="Supermercado" value={financeData.variableBudgets.groceries} onChange={(value) => updateField('groceries', value)} />
             <MoneyField label="Combustible" value={financeData.variableBudgets.fuel} onChange={(value) => updateField('fuel', value)} />
             {financeData.weeklyExpenses.map((expense) => (

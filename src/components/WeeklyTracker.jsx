@@ -76,7 +76,6 @@ export function WeeklyTracker({
   weeklySummary,
   onCloseWeek,
   onDeleteWeek,
-  onIncomeChange,
   onReopenWeek,
   onStartActiveWeek,
   onUpdateActiveWeek,
@@ -175,7 +174,6 @@ export function WeeklyTracker({
 
   function updateRealIncome(amount) {
     const nextIncome = Number(amount);
-    onIncomeChange(nextIncome);
     updateActiveWeek({
       income: nextIncome,
       realIncome: nextIncome,

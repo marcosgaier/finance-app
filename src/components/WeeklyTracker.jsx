@@ -517,92 +517,103 @@ export function WeeklyTracker({
         </div>
       ) : null}
 
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-wide text-teal-700">Semana actual</p>
-          <h2 className="mt-1 text-lg font-semibold text-stone-950">Control de la semana financiera</h2>
-          <p className="text-sm text-stone-500">
-            Empieza el martes {formatDisplayDate(normalizedActiveWeek.weekStartDate)}. Todo lo que cargues queda guardado automáticamente.
-          </p>
-        </div>
-        <div className="grid gap-2 sm:grid-cols-2">
-          <label className="text-sm font-medium text-stone-600">
-            Inicio de semana
-            <span className="mt-1 block w-full rounded-md border border-stone-200 bg-stone-50 px-3 py-2 font-semibold text-stone-700">
-              {formatDisplayDate(normalizedActiveWeek.weekStartDate)}
-            </span>
-          </label>
-          <MoneyInput label="Ingreso real cobrado" value={normalizedActiveWeek.realIncome} onChange={updateRealIncome} />
-        </div>
-      </div>
-
-      <div className="mt-4 grid gap-3 md:grid-cols-3">
-        <SummaryTile label="Ingreso principal" value={normalizedActiveWeek.realIncome} />
-        <SummaryTile label="Otros ingresos" value={extraIncomeTotal} />
-        <SummaryTile label="Total ingresos" value={totalIncome} tone="positive" />
-        <SummaryTile label="Mínimo para no vencer" value={weeklySummary.minimumToAvoidExpiry} />
-        <SummaryTile label="Pago inteligente" value={weeklySummary.recommendedPayment} />
-        <SummaryTile
-          label={minimumDifference >= 0 ? 'Diferencia a favor' : 'Te falta cubrir'}
-          value={Math.abs(minimumDifference)}
-          tone={minimumDifference >= 0 ? 'positive' : 'warning'}
-        />
-      </div>
-
-      <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-4">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <h3 className="text-sm font-semibold uppercase tracking-wide text-emerald-700">Otros ingresos</h3>
-            <p className="mt-1 text-sm text-emerald-950">Registrá plata extra sin mezclarla con tu sueldo semanal.</p>
+      <div className="grid gap-3">
+        <CollapsiblePanel
+          title="Control de la semana financiera"
+          summary={`${formatDisplayDate(normalizedActiveWeek.weekStartDate)} · total ingresos ${formatMoney(totalIncome)}`}
+          defaultOpen
+        >
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-wide text-teal-700">Semana actual</p>
+              <h2 className="mt-1 text-lg font-semibold text-stone-950">Control de la semana financiera</h2>
+              <p className="text-sm text-stone-500">
+                Empieza el martes {formatDisplayDate(normalizedActiveWeek.weekStartDate)}. Todo lo que cargues queda guardado automáticamente.
+              </p>
+            </div>
+            <div className="grid gap-2 sm:grid-cols-2">
+              <label className="text-sm font-medium text-stone-600">
+                Inicio de semana
+                <span className="mt-1 block w-full rounded-md border border-stone-200 bg-stone-50 px-3 py-2 font-semibold text-stone-700">
+                  {formatDisplayDate(normalizedActiveWeek.weekStartDate)}
+                </span>
+              </label>
+              <MoneyInput label="Ingreso real cobrado" value={normalizedActiveWeek.realIncome} onChange={updateRealIncome} />
+            </div>
           </div>
-          <span className="rounded-full border border-emerald-200 bg-white px-3 py-1 text-xs font-semibold text-emerald-700">
-            Total {formatMoney(extraIncomeTotal)}
-          </span>
-        </div>
 
-        <div className="mt-3 grid gap-3 md:grid-cols-[1fr_1.4fr_0.8fr_auto]">
-          <DateInput
-            label="Fecha"
-            value={extraIncomeDraft.date}
-            onChange={(value) => updateExtraIncomeDraft('date', value)}
-          />
-          <label className="text-sm font-medium text-stone-600">
-            Descripción
-            <input
-              className="mt-1 w-full rounded-md border border-stone-200 bg-white px-3 py-2 outline-none focus:border-sky-500"
-              type="text"
-              value={extraIncomeDraft.description}
-              onChange={(event) => updateExtraIncomeDraft('description', event.target.value)}
-              placeholder="Devolución, reembolso, venta..."
+          <div className="mt-4 grid gap-3 md:grid-cols-3">
+            <SummaryTile label="Ingreso principal" value={normalizedActiveWeek.realIncome} />
+            <SummaryTile label="Otros ingresos" value={extraIncomeTotal} />
+            <SummaryTile label="Total ingresos" value={totalIncome} tone="positive" />
+            <SummaryTile label="Mínimo para no vencer" value={weeklySummary.minimumToAvoidExpiry} />
+            <SummaryTile label="Pago inteligente" value={weeklySummary.recommendedPayment} />
+            <SummaryTile
+              label={minimumDifference >= 0 ? 'Diferencia a favor' : 'Te falta cubrir'}
+              value={Math.abs(minimumDifference)}
+              tone={minimumDifference >= 0 ? 'positive' : 'warning'}
             />
-          </label>
-          <MoneyInput label="Monto" value={extraIncomeDraft.amount} onChange={(value) => updateExtraIncomeDraft('amount', value)} />
-          <div className="flex items-end">
-            <button
-              className="w-full rounded-md bg-stone-950 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-stone-800 md:w-auto"
-              type="button"
-              onClick={addExtraIncome}
-            >
-              Agregar
-            </button>
           </div>
-        </div>
 
-        {extraIncome.length > 0 ? (
-          <div className="mt-4 grid gap-2">
-            {extraIncome.map((income) => (
-              <ExtraIncomeRow key={income.id} income={income} onDelete={() => deleteExtraIncome(income.id)} />
-            ))}
+          <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <h3 className="text-sm font-semibold uppercase tracking-wide text-emerald-700">Otros ingresos</h3>
+                <p className="mt-1 text-sm text-emerald-950">Registrá plata extra sin mezclarla con tu sueldo semanal.</p>
+              </div>
+              <span className="rounded-full border border-emerald-200 bg-white px-3 py-1 text-xs font-semibold text-emerald-700">
+                Total {formatMoney(extraIncomeTotal)}
+              </span>
+            </div>
+
+            <div className="mt-3 grid gap-3 md:grid-cols-[1fr_1.4fr_0.8fr_auto]">
+              <DateInput
+                label="Fecha"
+                value={extraIncomeDraft.date}
+                onChange={(value) => updateExtraIncomeDraft('date', value)}
+              />
+              <label className="text-sm font-medium text-stone-600">
+                Descripción
+                <input
+                  className="mt-1 w-full rounded-md border border-stone-200 bg-white px-3 py-2 outline-none focus:border-sky-500"
+                  type="text"
+                  value={extraIncomeDraft.description}
+                  onChange={(event) => updateExtraIncomeDraft('description', event.target.value)}
+                  placeholder="Devolución, reembolso, venta..."
+                />
+              </label>
+              <MoneyInput label="Monto" value={extraIncomeDraft.amount} onChange={(value) => updateExtraIncomeDraft('amount', value)} />
+              <div className="flex items-end">
+                <button
+                  className="w-full rounded-md bg-stone-950 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-stone-800 md:w-auto"
+                  type="button"
+                  onClick={addExtraIncome}
+                >
+                  Agregar
+                </button>
+              </div>
+            </div>
+
+            {extraIncome.length > 0 ? (
+              <div className="mt-4 grid gap-2">
+                {extraIncome.map((income) => (
+                  <ExtraIncomeRow key={income.id} income={income} onDelete={() => deleteExtraIncome(income.id)} />
+                ))}
+              </div>
+            ) : (
+              <p className="mt-4 rounded-md border border-dashed border-emerald-300 bg-white p-3 text-sm text-emerald-900">
+                Todavía no cargaste ingresos extra para esta semana.
+              </p>
+            )}
           </div>
-        ) : (
-          <p className="mt-4 rounded-md border border-dashed border-emerald-300 bg-white p-3 text-sm text-emerald-900">
-            Todavía no cargaste ingresos extra para esta semana.
-          </p>
-        )}
-      </div>
+        </CollapsiblePanel>
 
-      <div className="mt-4 grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
-        <div className="rounded-lg border border-stone-200 bg-stone-50 p-4">
+        <CollapsiblePanel
+          title="Gastos de la semana"
+          summary={`${variableTransactions.length} gastos · ${formatMoney(actualVariableSpent)}`}
+          defaultOpen
+        >
+          <div className="rounded-lg border border-stone-200 bg-stone-50 p-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
               <h3 className="text-sm font-semibold uppercase tracking-wide text-stone-600">Gastos de la semana</h3>
@@ -680,38 +691,49 @@ export function WeeklyTracker({
               placeholder="Ej: semana con compra grande, gasto inesperado, horas extra..."
             />
           </label>
-        </div>
+          </div>
+        </CollapsiblePanel>
 
-        <div className="rounded-lg border border-sky-200 bg-sky-50 p-4">
-          <p className="text-sm font-semibold uppercase tracking-wide text-sky-700">Resultado real de la semana</p>
-          <MoneyFlowPanel
-            summary={buildMoneyFlowSummary({
-              financeData,
-              record: normalizedActiveWeek,
-              useCurrentBudget: true,
-              weeklySummary,
-            })}
-          />
-        </div>
-      </div>
+        <CollapsiblePanel
+          title="Resultado real de la semana"
+          summary={`${realWeeklyMargin >= 0 ? 'Sobró' : 'Faltó'} ${formatMoney(Math.abs(realWeeklyMargin))}`}
+          defaultOpen={false}
+        >
+          <div className="rounded-lg border border-sky-200 bg-sky-50 p-4">
+            <p className="text-sm font-semibold uppercase tracking-wide text-sky-700">Resultado real de la semana</p>
+            <MoneyFlowPanel
+              summary={buildMoneyFlowSummary({
+                financeData,
+                record: normalizedActiveWeek,
+                useCurrentBudget: true,
+                weeklySummary,
+              })}
+            />
+          </div>
+        </CollapsiblePanel>
 
-      <div className="mt-4 rounded-lg border border-sky-200 bg-sky-50 p-4">
-        <p className="text-sm font-semibold uppercase tracking-wide text-sky-700">Pago elegido esta semana</p>
-        <div className="mt-2 grid gap-3 md:grid-cols-3">
-          <SummaryTile label="Elegido" value={totalPaid} />
-          <SummaryTile
-            label={minimumDifference >= 0 ? 'Sobre el mínimo' : 'Falta para mínimo'}
-            value={Math.abs(minimumDifference)}
-            tone={minimumDifference >= 0 ? 'positive' : 'warning'}
-          />
-          <SummaryTile
-            label={marginAfterChosenPayment >= 0 ? 'Margen después de pagar' : 'Exceso sobre disponible'}
-            value={Math.abs(marginAfterChosenPayment)}
-            tone={marginAfterChosenPayment >= 0 ? 'positive' : 'warning'}
-          />
-        </div>
-        <p className="mt-3 text-sm leading-6 text-sky-950">{chosenPaymentMessage}</p>
-      </div>
+        <CollapsiblePanel
+          title="Pago elegido esta semana"
+          summary={`Pagado a deudas ${formatMoney(totalPaid)}`}
+          defaultOpen={false}
+        >
+          <div className="rounded-lg border border-sky-200 bg-sky-50 p-4">
+            <p className="text-sm font-semibold uppercase tracking-wide text-sky-700">Pago elegido esta semana</p>
+            <div className="mt-2 grid gap-3 md:grid-cols-3">
+              <SummaryTile label="Elegido" value={totalPaid} />
+              <SummaryTile
+                label={minimumDifference >= 0 ? 'Sobre el mínimo' : 'Falta para mínimo'}
+                value={Math.abs(minimumDifference)}
+                tone={minimumDifference >= 0 ? 'positive' : 'warning'}
+              />
+              <SummaryTile
+                label={marginAfterChosenPayment >= 0 ? 'Margen después de pagar' : 'Exceso sobre disponible'}
+                value={Math.abs(marginAfterChosenPayment)}
+                tone={marginAfterChosenPayment >= 0 ? 'positive' : 'warning'}
+              />
+            </div>
+            <p className="mt-3 text-sm leading-6 text-sky-950">{chosenPaymentMessage}</p>
+          </div>
 
       <div className="mt-4 flex flex-wrap gap-2">
         <button
@@ -779,6 +801,8 @@ export function WeeklyTracker({
         >
           Cerrar semana
         </button>
+      </div>
+        </CollapsiblePanel>
       </div>
 
       {savedRecords.length > 0 ? (
@@ -1220,6 +1244,29 @@ function ClosedWeekEditor({
           Guardar cambios
         </button>
       </div>
+    </div>
+  );
+}
+
+function CollapsiblePanel({ title, summary, defaultOpen = false, children }) {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+
+  return (
+    <div className="rounded-lg border border-stone-200 bg-white shadow-sm">
+      <button
+        className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
+        type="button"
+        onClick={() => setIsOpen((currentValue) => !currentValue)}
+      >
+        <span className="min-w-0">
+          <span className="block text-sm font-semibold text-stone-950">{title}</span>
+          <span className="mt-1 block truncate text-sm text-stone-500">{summary}</span>
+        </span>
+        <span className="shrink-0 rounded-full border border-stone-200 bg-stone-50 px-2 py-1 text-xs font-semibold text-stone-700">
+          {isOpen ? 'Ocultar' : 'Ver'}
+        </span>
+      </button>
+      {isOpen ? <div className="border-t border-stone-100 p-4">{children}</div> : null}
     </div>
   );
 }

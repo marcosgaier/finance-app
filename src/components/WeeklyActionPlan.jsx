@@ -35,7 +35,14 @@ export function WeeklyActionPlan({ financeData, weeklySummary }) {
   const totalIncome = usedWeeklyIncome + extraIncomeTotal;
   const fixedReserve = Number(weeklySummary.fixedTotal || 0);
   const variableBudget = Number(weeklySummary.groceries || 0) + Number(weeklySummary.fuel || 0);
-  const debtPayment = Number(weeklySummary.suggestedSafeWeeklyPayment || weeklySummary.recommendedPayment || 0);
+  const weeklyGemBuffer = Number(weeklySummary.gemMinimumSummary?.weeklyBuffer || 0);
+  const minimumSafeWeeklyPayment = Number(weeklySummary.minimumToAvoidExpiry || 0) + weeklyGemBuffer;
+  const extraSuggestedPayment = Math.max(
+    0,
+    Number(weeklySummary.recommendedPayment || 0) - Number(weeklySummary.minimumToAvoidExpiry || 0),
+  );
+  const totalRecommendedPayment = minimumSafeWeeklyPayment + extraSuggestedPayment;
+  const debtPayment = minimumSafeWeeklyPayment;
   const estimatedFree = totalIncome - fixedReserve - variableBudget - debtPayment;
   const transactionTotals = calculateTransactionTotals(activeWeek?.variableTransactions || []);
   const actualDebtPayments = sumAmounts(activeWeek?.payments || []);
@@ -54,7 +61,7 @@ export function WeeklyActionPlan({ financeData, weeklySummary }) {
         </div>
       </div>
 
-      <div className="mt-4 grid gap-3 lg:grid-cols-4">
+      <div className="mt-4 grid gap-3 lg:grid-cols-5">
         <ActionStep
           label="Ingreso usado esta semana"
           value={formatMoney(totalIncome)}
@@ -75,13 +82,15 @@ export function WeeklyActionPlan({ financeData, weeklySummary }) {
           helper={`Supermercado ${formatMoney(weeklySummary.groceries)} + combustible ${formatMoney(weeklySummary.fuel)}.`}
         />
         <ActionStep
-          label="Pagá"
+          label="Pagá mínimo seguro"
           value={formatMoney(debtPayment)}
-          helper={
-            weeklySummary.suggestedSafeWeeklyPayment
-              ? 'Pago seguro: recomendado de deudas + colchón GEM.'
-              : 'Pago recomendado actual para no correr con vencimientos.'
-          }
+          helper={`Base ${formatMoney(weeklySummary.minimumToAvoidExpiry)} + colchón GEM ${formatMoney(weeklyGemBuffer)}.`}
+          tone="warning"
+        />
+        <ActionStep
+          label="Extra opcional"
+          value={formatMoney(extraSuggestedPayment)}
+          helper={`Si hay margen, el ideal total sería ${formatMoney(totalRecommendedPayment)}.`}
         />
       </div>
 
@@ -105,9 +114,14 @@ export function WeeklyActionPlan({ financeData, weeklySummary }) {
   );
 }
 
-function ActionStep({ label, value, helper }) {
+function ActionStep({ label, value, helper, tone = 'default' }) {
+  const toneClass = {
+    default: 'border-stone-200 bg-stone-50',
+    warning: 'border-amber-200 bg-amber-50',
+  }[tone];
+
   return (
-    <div className="rounded-md border border-stone-200 bg-stone-50 p-3">
+    <div className={`rounded-md border p-3 ${toneClass}`}>
       <p className="text-xs font-semibold uppercase tracking-wide text-teal-700">{label}</p>
       <p className="mt-1 text-2xl font-bold text-stone-950">{value}</p>
       <p className="mt-2 text-sm leading-5 text-stone-600">{helper}</p>

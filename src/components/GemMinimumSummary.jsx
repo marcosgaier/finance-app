@@ -22,8 +22,8 @@ export function GemMinimumSummary({ summary }) {
 
       <div className="mt-4 grid gap-4 xl:grid-cols-2">
         <InfoGroup title="Vencimientos interest-free">
-          <Metric label="Mínimo semanal para llegar justo" value={formatMoney(summary.minimumToAvoidExpiry)} />
-          <Metric label="Recomendado interest-free" value={formatMoney(summary.interestFreeRecommendedPayment)} />
+          <Metric label="Mínimo base semanal" value={formatMoney(summary.minimumToAvoidExpiry)} />
+          <Metric label="Extra sugerido" value={formatMoney(summary.extraSuggestedPayment)} />
         </InfoGroup>
 
         <InfoGroup title="Mínimos obligatorios GEM">
@@ -42,7 +42,8 @@ export function GemMinimumSummary({ summary }) {
         </InfoGroup>
 
         <InfoGroup title="Pago semanal seguro">
-          <Metric label="Recomendado interest-free + colchón GEM" value={formatMoney(summary.suggestedSafeWeeklyPayment)} tone="warning" />
+          <Metric label="Mínimo semanal seguro" value={formatMoney(summary.minimumSafeWeeklyPayment)} tone="warning" />
+          <Metric label="Pago recomendado total" value={formatMoney(summary.totalRecommendedPayment)} />
           <p className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm leading-6 text-amber-900">
             GEM puede aplicar parte de tus pagos a planes largos. Este colchón reduce el riesgo de que el pago requerido suba cuando actualices saldos.
           </p>

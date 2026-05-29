@@ -33,6 +33,13 @@ export function Dashboard({ financeData, setFinanceData }) {
     };
   }, [financeData]);
   const weeklySummary = useMemo(() => calculateWeeklyDebtReserve(effectiveFinanceData), [effectiveFinanceData]);
+  const weeklyGemBuffer = Number(weeklySummary.gemMinimumSummary?.weeklyBuffer || 0);
+  const minimumSafeWeeklyPayment = Number(weeklySummary.minimumToAvoidExpiry || 0) + weeklyGemBuffer;
+  const extraSuggestedPayment = Math.max(
+    0,
+    Number(weeklySummary.recommendedPayment || 0) - Number(weeklySummary.minimumToAvoidExpiry || 0),
+  );
+  const totalRecommendedPayment = minimumSafeWeeklyPayment + extraSuggestedPayment;
 
   function updatePlan(planId, patch) {
     setFinanceData((currentData) => ({
@@ -166,11 +173,9 @@ export function Dashboard({ financeData, setFinanceData }) {
             <WeeklyActionPlan financeData={financeData} weeklySummary={weeklySummary} />
             <WeeklyStatus summary={weeklySummary} />
 
-            <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+            <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
               <StatCard label="Ingreso usado esta semana" value={weeklySummary.weeklyIncome} helper="Real cobrado si existe; si no, ingreso base esperado." />
               <StatCard label="Disponible para deudas" value={weeklySummary.availableForDebt} helper="Después de números semanales, servicios, supermercado y combustible." tone="strong" />
-              <StatCard label="Mínimo para no vencer" value={weeklySummary.minimumToAvoidExpiry} helper="Pago escalonado necesario para llegar a cada fecha límite." tone="warning" />
-              <StatCard label="Pago inteligente" value={weeklySummary.recommendedPayment} helper={`${formatMoney(weeklySummary.smartExtraReserve)} extra sugerido sobre el mínimo.`} tone="strong" />
               <StatCard
                 label={weeklySummary.weeklyShortfall > 0 ? 'Faltante semanal' : `Margen de vida: ${weeklySummary.lifeMarginStatus.label}`}
                 value={weeklySummary.weeklyShortfall > 0 ? weeklySummary.weeklyShortfall : weeklySummary.lifeMargin}
@@ -181,6 +186,17 @@ export function Dashboard({ financeData, setFinanceData }) {
                 }
                 tone={weeklySummary.weeklyShortfall > 0 ? 'danger' : weeklySummary.lifeMarginStatus.tone}
               />
+            </section>
+
+            <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
+              <p className="text-sm font-semibold uppercase tracking-wide text-teal-700">Pagos semanales</p>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+                <StatCard label="Mínimo base semanal" value={weeklySummary.minimumToAvoidExpiry} helper="Piso interest-free para llegar a vencimientos." />
+                <StatCard label="Colchón GEM semanal" value={weeklyGemBuffer} helper="Buffer conservador por mínimos GEM." />
+                <StatCard label="Mínimo semanal seguro" value={minimumSafeWeeklyPayment} helper="El piso que conviene tomar en serio." tone="warning" />
+                <StatCard label="Extra sugerido" value={extraSuggestedPayment} helper="Opcional si tenés margen esta semana." />
+                <StatCard label="Pago recomendado total" value={totalRecommendedPayment} helper="Ideal si podés pagar más." tone="strong" />
+              </div>
             </section>
 
             <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
@@ -198,6 +214,10 @@ export function Dashboard({ financeData, setFinanceData }) {
             <GemMinimumSummary
               summary={{
                 ...weeklySummary.gemMinimumSummary,
+                minimumToAvoidExpiry: weeklySummary.minimumToAvoidExpiry,
+                extraSuggestedPayment,
+                minimumSafeWeeklyPayment,
+                totalRecommendedPayment,
                 interestFreeRecommendedPayment: weeklySummary.interestFreeRecommendedPayment,
                 suggestedSafeWeeklyPayment: weeklySummary.suggestedSafeWeeklyPayment,
               }}

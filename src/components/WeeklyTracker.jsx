@@ -235,6 +235,13 @@ export function WeeklyTracker({
   }
 
   function closeWeek() {
+    const budgetSnapshot = createBudgetSnapshot({
+      financeData,
+      weeklySummary,
+      plannedGroceries,
+      plannedFuel,
+      plannedVariableBudget,
+    });
     const closedRecord = {
       ...normalizedActiveWeek,
       id: `week-${Date.now()}`,
@@ -244,6 +251,7 @@ export function WeeklyTracker({
       plannedGroceries,
       plannedFuel,
       plannedVariableBudget,
+      budgetSnapshot,
       minimumToAvoidExpiry: weeklySummary.minimumToAvoidExpiry,
       recommendedPayment: weeklySummary.recommendedPayment,
       closedAt: new Date().toISOString(),
@@ -620,17 +628,18 @@ function normalizeActiveWeek(activeWeek, weeklySummary) {
 function normalizeWeeklyRecord(record, weeklySummary) {
   const variableTransactions = normalizeRecordTransactions(record);
   const totals = calculateTransactionTotals(variableTransactions);
+  const budgetSnapshot = record.budgetSnapshot || null;
   const realIncome = Number(record.realIncome ?? record.income ?? 0);
   const totalPaid = Number(record.totalPaid ?? calculatePaymentTotal(record.payments || []));
-  const plannedGroceries = Number(record.plannedGroceries ?? weeklySummary.groceries ?? 0);
-  const plannedFuel = Number(record.plannedFuel ?? weeklySummary.fuel ?? 0);
+  const plannedGroceries = Number(record.plannedGroceries ?? budgetSnapshot?.plannedGroceries ?? weeklySummary.groceries ?? 0);
+  const plannedFuel = Number(record.plannedFuel ?? budgetSnapshot?.plannedFuel ?? weeklySummary.fuel ?? 0);
   const plannedVariableBudget = plannedGroceries + plannedFuel;
   const variableDifference = plannedVariableBudget - totals.total;
   const realWeeklyMargin = Number(
     record.realWeeklyMargin ??
       realIncome -
-        Number(weeklySummary.weeklyExpensesTotal || 0) -
-        Number(weeklySummary.monthlyReserveWeekly || 0) -
+        Number(budgetSnapshot?.fixedWeeklyExpensesTotal ?? weeklySummary.weeklyExpensesTotal ?? 0) -
+        Number(budgetSnapshot?.monthlyReserveWeekly ?? weeklySummary.monthlyReserveWeekly ?? 0) -
         totals.total -
         totalPaid,
   );
@@ -645,6 +654,36 @@ function normalizeWeeklyRecord(record, weeklySummary) {
     variableDifference,
     realWeeklyMargin,
     note: record.note || '',
+  };
+}
+
+function createBudgetSnapshot({ financeData, weeklySummary, plannedGroceries, plannedFuel, plannedVariableBudget }) {
+  const weeklyExpenses = (financeData.weeklyExpenses || []).map((expense) => ({ ...expense }));
+  const monthlyExpenses = (financeData.monthlyExpenses || []).map((expense) => ({ ...expense }));
+  const fixedWeeklyExpensesTotal = weeklyExpenses.reduce((total, expense) => total + Number(expense.amount || 0), 0);
+  const monthlyExpensesTotal = monthlyExpenses.reduce((total, expense) => total + Number(expense.amount || 0), 0);
+  const argentinaCardReserveWeekly = weeklyExpenses
+    .filter((expense) => expense.id === 'argentina-card' || /argentina/i.test(expense.name || ''))
+    .reduce((total, expense) => total + Number(expense.amount || 0), 0);
+
+  return {
+    weeklyIncome: Number(financeData.weeklyIncome || 0),
+    weeklyExpenses,
+    fixedWeeklyExpensesTotal,
+    argentinaCardReserveWeekly,
+    monthlyExpenses,
+    monthlyExpensesTotal,
+    monthlyReserveWeekly: Number(weeklySummary.monthlyReserveWeekly || 0),
+    variableBudgets: [
+      { id: 'groceries', name: 'Supermercado', amount: Number(plannedGroceries || 0) },
+      { id: 'fuel', name: 'Combustible', amount: Number(plannedFuel || 0) },
+    ],
+    variableBudgetsTotal: Number(plannedVariableBudget || 0),
+    plannedGroceries: Number(plannedGroceries || 0),
+    plannedFuel: Number(plannedFuel || 0),
+    plannedVariableBudget: Number(plannedVariableBudget || 0),
+    minimumToAvoidExpiry: Number(weeklySummary.minimumToAvoidExpiry || 0),
+    recommendedPayment: Number(weeklySummary.recommendedPayment || 0),
   };
 }
 

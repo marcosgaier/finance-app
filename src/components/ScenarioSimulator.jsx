@@ -1,12 +1,23 @@
 import React, { useMemo, useState } from 'react';
-import { formatMoney, simulatePaymentScenario } from '../utils/financeEngine.js';
+import { calculateWeeklyDebtReserve, formatMoney, simulatePaymentScenario } from '../utils/financeEngine.js';
 
 const presetPayments = [200, 280, 350];
 
 export function ScenarioSimulator({ financeData }) {
   const [weeklyPayment, setWeeklyPayment] = useState(280);
   const scenarioPlans = useMemo(() => simulatePaymentScenario(financeData, weeklyPayment), [financeData, weeklyPayment]);
-  const allocatedTotal = scenarioPlans.reduce((total, plan) => total + plan.scenarioPayment, 0);
+  const weeklySummary = useMemo(() => calculateWeeklyDebtReserve(financeData), [financeData]);
+  const weeklyGemBuffer = Number(weeklySummary.gemMinimumSummary?.weeklyBuffer || 0);
+  const minimumSafeWeeklyPayment = Number(weeklySummary.minimumToAvoidExpiry || 0) + weeklyGemBuffer;
+  const extraSuggestedPayment = Math.max(
+    0,
+    Number(weeklySummary.recommendedPayment || 0) - Number(weeklySummary.minimumToAvoidExpiry || 0),
+  );
+  const totalRecommendedPayment = minimumSafeWeeklyPayment + extraSuggestedPayment;
+  const safeMinimumGap = Math.max(0, minimumSafeWeeklyPayment - weeklyPayment);
+  const amountAboveSafeMinimum = Math.max(0, weeklyPayment - minimumSafeWeeklyPayment);
+  const recommendedGap = Math.max(0, totalRecommendedPayment - weeklyPayment);
+  const amountAboveRecommended = Math.max(0, weeklyPayment - totalRecommendedPayment);
 
   return (
     <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
@@ -41,8 +52,25 @@ export function ScenarioSimulator({ financeData }) {
         </div>
       </div>
 
-      <div className="mt-4 rounded-md bg-sky-50 p-3 text-sm text-sky-900">
-        De {formatMoney(weeklyPayment)}, el motor asigna {formatMoney(allocatedTotal)} esta semana y deja {formatMoney(Math.max(0, weeklyPayment - allocatedTotal))} sin usar.
+      <div className="mt-4 rounded-md bg-sky-50 p-3 text-sm leading-6 text-sky-900">
+        <p>
+          Mínimo semanal seguro: <strong>{formatMoney(minimumSafeWeeklyPayment)}</strong>. Extra opcional:{' '}
+          <strong>{formatMoney(extraSuggestedPayment)}</strong>. Pago recomendado total:{' '}
+          <strong>{formatMoney(totalRecommendedPayment)}</strong>.
+        </p>
+        <p className="mt-2">
+          {safeMinimumGap > 0
+            ? `Con ${formatMoney(weeklyPayment)}, te faltarían ${formatMoney(safeMinimumGap)} para cubrir el mínimo semanal seguro.`
+            : `Con ${formatMoney(weeklyPayment)}, cubrirías el mínimo semanal seguro de ${formatMoney(minimumSafeWeeklyPayment)}.`}
+        </p>
+        {safeMinimumGap === 0 ? (
+          <p>Te quedarían {formatMoney(amountAboveSafeMinimum)} por encima del mínimo seguro.</p>
+        ) : null}
+        <p>
+          {recommendedGap > 0
+            ? `Te faltarían ${formatMoney(recommendedGap)} para llegar al recomendado total de ${formatMoney(totalRecommendedPayment)}.`
+            : `Te quedarían ${formatMoney(amountAboveRecommended)} por encima del recomendado total.`}
+        </p>
       </div>
 
       <div className="mt-4 overflow-x-auto">

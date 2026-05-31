@@ -8,6 +8,13 @@ const transactionCategories = [
   { id: 'other', label: 'Otros' },
 ];
 
+const extraIncomeTypes = [
+  { id: 'extra_income', label: 'Ingreso extra' },
+  { id: 'refund', label: 'Devolución / refund' },
+  { id: 'previous_week_rollover', label: 'Arrastre semana anterior' },
+  { id: 'other', label: 'Otro' },
+];
+
 function getTodayIsoDate() {
   return formatIsoDate(new Date());
 }
@@ -43,6 +50,7 @@ function createEmptyTransaction(date = getTodayIsoDate()) {
 function createEmptyExtraIncome(date = getTodayIsoDate()) {
   return {
     date,
+    type: 'extra_income',
     description: '',
     amount: '',
   };
@@ -161,8 +169,8 @@ export function WeeklyTracker({
     Number(weeklySummary.groceries || 0) -
     Number(weeklySummary.fuel || 0) -
     minimumSafeWeeklyPayment;
-  const minimumDifference = totalPaid - weeklySummary.minimumToAvoidExpiry;
-  const recommendedDifference = totalPaid - weeklySummary.recommendedPayment;
+  const minimumDifference = totalPaid - minimumSafeWeeklyPayment;
+  const recommendedDifference = totalPaid - totalRecommendedPayment;
   const realWeeklyMargin =
     totalIncome -
     Number(weeklySummary.weeklyExpensesTotal || 0) -
@@ -177,12 +185,19 @@ export function WeeklyTracker({
     marginAfterChosenPayment,
   });
   const savedRecords = [...(financeData.weeklyRecords || [])].reverse();
+  const gemCardIds = new Set(weeklySummary.gemMinimumSummary?.cardIds || []);
   const cardSummaries = financeData.cards.map((card) => {
     const plans = weeklySummary.plans.filter((plan) => plan.cardId === card.id);
+    const minimumPayment = plans.reduce((total, plan) => total + Number(plan.recommendedPayment || 0), 0);
+    const recommendedPayment = plans.reduce((total, plan) => total + Number(plan.totalRecommendedPayment || 0), 0);
+    const cardGemBuffer = gemCardIds.has(card.id) ? weeklyGemBuffer : 0;
+
     return {
       ...card,
-      minimumPayment: plans.reduce((total, plan) => total + Number(plan.recommendedPayment || 0), 0),
-      recommendedPayment: plans.reduce((total, plan) => total + Number(plan.totalRecommendedPayment || 0), 0),
+      minimumPayment,
+      recommendedPayment,
+      safeMinimumPayment: minimumPayment + cardGemBuffer,
+      safeRecommendedPayment: recommendedPayment + cardGemBuffer,
       paidAmount: payments.find((payment) => payment.cardId === card.id)?.amount || '',
       fundingSource: payments.find((payment) => payment.cardId === card.id)?.fundingSource || 'weekly-income',
     };
@@ -220,12 +235,14 @@ export function WeeklyTracker({
 
   function addExtraIncome() {
     const amount = Number(extraIncomeDraft.amount || 0);
-    const description = extraIncomeDraft.description.trim();
+    const type = normalizeExtraIncomeType(extraIncomeDraft.type);
+    const description = extraIncomeDraft.description.trim() || getExtraIncomeTypeLabel(type);
     if (amount <= 0 || description.length === 0) return;
 
     const nextIncome = {
       id: `extra-income-${Date.now()}`,
       date: extraIncomeDraft.date || normalizedActiveWeek.weekStartDate,
+      type,
       description,
       amount,
     };
@@ -236,6 +253,7 @@ export function WeeklyTracker({
     }));
     setExtraIncomeDraft({
       date: extraIncomeDraft.date || normalizedActiveWeek.weekStartDate,
+      type,
       description: '',
       amount: '',
     });
@@ -445,6 +463,7 @@ export function WeeklyTracker({
         {
           id: `extra-income-${Date.now()}`,
           date: currentDraft.weekDate || getTodayIsoDate(),
+          type: 'extra_income',
           description: '',
           amount: 0,
         },
@@ -625,11 +644,16 @@ export function WeeklyTracker({
               </span>
             </div>
 
-            <div className="mt-3 grid gap-3 md:grid-cols-[1fr_1.4fr_0.8fr_auto]">
+            <div className="mt-3 grid gap-3 md:grid-cols-[1fr_1fr_1.4fr_0.8fr_auto]">
               <DateInput
                 label="Fecha"
                 value={extraIncomeDraft.date}
                 onChange={(value) => updateExtraIncomeDraft('date', value)}
+              />
+              <ExtraIncomeTypeSelect
+                label="Tipo"
+                value={extraIncomeDraft.type}
+                onChange={(value) => updateExtraIncomeDraft('type', value)}
               />
               <label className="text-sm font-medium text-stone-600">
                 Descripción
@@ -638,7 +662,7 @@ export function WeeklyTracker({
                   type="text"
                   value={extraIncomeDraft.description}
                   onChange={(event) => updateExtraIncomeDraft('description', event.target.value)}
-                  placeholder="Devolución, reembolso, venta..."
+                  placeholder="Devolución, arrastre, venta..."
                 />
               </label>
               <MoneyInput label="Monto" value={extraIncomeDraft.amount} onChange={(value) => updateExtraIncomeDraft('amount', value)} />
@@ -790,7 +814,7 @@ export function WeeklyTracker({
               <SummaryTile label="Sale de semana" value={weeklyFundedPaid} />
               <SummaryTile label="Sale de reservas" value={reserveFundedPaid} />
               <SummaryTile
-                label={minimumDifference >= 0 ? 'Sobre el mínimo' : 'Falta para mínimo'}
+                label={minimumDifference >= 0 ? 'Por encima del mínimo seguro' : 'Te falta para mínimo seguro'}
                 value={Math.abs(minimumDifference)}
                 tone={minimumDifference >= 0 ? 'positive' : 'warning'}
               />
@@ -807,16 +831,16 @@ export function WeeklyTracker({
         <button
           className="rounded-md border border-stone-300 bg-white px-3 py-2 text-sm font-semibold text-stone-700 hover:border-stone-500"
           type="button"
-          onClick={() => fillCardPayments('minimumPayment')}
+          onClick={() => fillCardPayments('safeMinimumPayment')}
         >
-          Cargar mínimos
+          Cargar mínimo seguro
         </button>
         <button
           className="rounded-md border border-stone-300 bg-white px-3 py-2 text-sm font-semibold text-stone-700 hover:border-stone-500"
           type="button"
-          onClick={() => fillCardPayments('recommendedPayment')}
+          onClick={() => fillCardPayments('safeRecommendedPayment')}
         >
-          Cargar recomendado
+          Cargar recomendado total
         </button>
       </div>
 
@@ -825,8 +849,8 @@ export function WeeklyTracker({
           <thead>
             <tr className="border-b border-stone-200 text-stone-500">
               <th className="py-2 pr-3 font-semibold">Tarjeta</th>
-              <th className="py-2 pr-3 font-semibold">Mínimo</th>
-              <th className="py-2 pr-3 font-semibold">Recomendado</th>
+              <th className="py-2 pr-3 font-semibold">Mínimo seguro</th>
+              <th className="py-2 pr-3 font-semibold">Recomendado total</th>
               <th className="py-2 pr-3 font-semibold">Pagado esta semana</th>
               <th className="py-2 pr-3 font-semibold">Origen</th>
             </tr>
@@ -835,8 +859,8 @@ export function WeeklyTracker({
             {cardSummaries.map((card) => (
               <tr key={card.id} className="border-b border-stone-100">
                 <td className="py-3 pr-3 font-semibold text-stone-900">{card.name}</td>
-                <td className="py-3 pr-3 text-stone-600">{formatMoney(card.minimumPayment)}</td>
-                <td className="py-3 pr-3 text-stone-600">{formatMoney(card.recommendedPayment)}</td>
+                <td className="py-3 pr-3 text-stone-600">{formatMoney(card.safeMinimumPayment)}</td>
+                <td className="py-3 pr-3 text-stone-600">{formatMoney(card.safeRecommendedPayment)}</td>
                 <td className="py-3 pr-3">
                   <span className="flex max-w-40 items-center gap-2 rounded-md border border-stone-200 px-3 py-2">
                     <span className="text-stone-400">$</span>
@@ -941,7 +965,12 @@ function ExtraIncomeRow({ income, onDelete }) {
   return (
     <div className="grid gap-2 rounded-md border border-emerald-200 bg-white p-3 text-sm sm:grid-cols-[0.9fr_1.7fr_0.8fr_auto] sm:items-center">
       <span className="text-stone-500">{formatDisplayDate(income.date)}</span>
-      <span className="font-semibold text-stone-900">{income.description}</span>
+      <span>
+        <span className="block font-semibold text-stone-900">{income.description}</span>
+        <span className="mt-1 inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-800">
+          {getExtraIncomeTypeLabel(income.type)}
+        </span>
+      </span>
       <span className="font-bold text-emerald-700">{formatMoney(income.amount)}</span>
       <button
         className="w-fit rounded-md border border-red-200 bg-white px-2 py-1 text-xs font-semibold text-red-700 hover:bg-red-50"
@@ -951,6 +980,25 @@ function ExtraIncomeRow({ income, onDelete }) {
         Eliminar
       </button>
     </div>
+  );
+}
+
+function ExtraIncomeTypeSelect({ label, value, onChange }) {
+  return (
+    <label className="text-sm font-medium text-stone-600">
+      {label}
+      <select
+        className="mt-1 w-full rounded-md border border-stone-200 bg-white px-3 py-2 outline-none focus:border-sky-500"
+        value={normalizeExtraIncomeType(value)}
+        onChange={(event) => onChange(event.target.value)}
+      >
+        {extraIncomeTypes.map((type) => (
+          <option key={type.id} value={type.id}>
+            {type.label}
+          </option>
+        ))}
+      </select>
+    </label>
   );
 }
 
@@ -1124,7 +1172,12 @@ function WeeklyRecordItem({
               {previewRecord.extraIncome.map((income) => (
                 <div key={income.id} className="grid gap-1 rounded-md border border-emerald-200 bg-white p-2 sm:grid-cols-[0.8fr_1.4fr_0.7fr] sm:items-center">
                   <span className="text-stone-500">{formatDisplayDate(income.date)}</span>
-                  <span className="font-semibold text-stone-900">{income.description}</span>
+                  <span>
+                    <span className="block font-semibold text-stone-900">{income.description}</span>
+                    <span className="mt-1 inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-800">
+                      {getExtraIncomeTypeLabel(income.type)}
+                    </span>
+                  </span>
                   <span className="font-bold text-emerald-700">{formatMoney(income.amount)}</span>
                 </div>
               ))}
@@ -1204,12 +1257,17 @@ function ClosedWeekEditor({
             draft.extraIncome.map((income) => (
               <div
                 key={income.id}
-                className="grid gap-2 rounded-md border border-emerald-200 bg-emerald-50 p-2 md:grid-cols-[0.9fr_1.5fr_0.8fr_auto] md:items-end"
+                className="grid gap-2 rounded-md border border-emerald-200 bg-emerald-50 p-2 md:grid-cols-[0.9fr_1fr_1.5fr_0.8fr_auto] md:items-end"
               >
                 <DateInput
                   label="Fecha"
                   value={income.date}
                   onChange={(value) => onUpdateExtraIncome(income.id, { date: value })}
+                />
+                <ExtraIncomeTypeSelect
+                  label="Tipo"
+                  value={income.type}
+                  onChange={(value) => onUpdateExtraIncome(income.id, { type: value })}
                 />
                 <label className="text-sm font-medium text-stone-600">
                   Descripción
@@ -1585,6 +1643,7 @@ function sanitizeExtraIncome(extraIncome) {
     .map((income, index) => ({
       id: income.id || `extra-income-${Date.now()}-${index}`,
       date: income.date || getTodayIsoDate(),
+      type: normalizeExtraIncomeType(income.type),
       description: (income.description || '').trim(),
       amount: Number(income.amount || 0),
     }))
@@ -1651,6 +1710,7 @@ function normalizeExtraIncome(record) {
   return record.extraIncome.map((income, index) => ({
     id: income.id || `legacy-extra-income-${record.id || record.weekDate}-${index}`,
     date: income.date || record.weekDate || record.weekStartDate || '',
+    type: normalizeExtraIncomeType(income.type),
     description: income.description || 'Ingreso extra',
     amount: Number(income.amount || 0),
   }));
@@ -1725,6 +1785,15 @@ function calculateExtraIncomeTotal(extraIncome) {
   return extraIncome.reduce((total, income) => total + Number(income.amount || 0), 0);
 }
 
+function normalizeExtraIncomeType(type) {
+  return extraIncomeTypes.some((item) => item.id === type) ? type : 'extra_income';
+}
+
+function getExtraIncomeTypeLabel(type) {
+  const normalizedType = normalizeExtraIncomeType(type);
+  return extraIncomeTypes.find((item) => item.id === normalizedType)?.label || 'Ingreso extra';
+}
+
 function normalizeCategory(category) {
   if (category === 'supermercado' || category === 'grocery') return 'groceries';
   if (category === 'combustible') return 'fuel';
@@ -1743,22 +1812,22 @@ function getFundingSourceLabel(fundingSource, buckets = []) {
 
 function buildChosenPaymentMessage({ totalPaid, minimumDifference, recommendedDifference, marginAfterChosenPayment }) {
   if (totalPaid <= 0) {
-    return 'Cargá cuánto pensás pagar por tarjeta y la app te dice si llegás, si quedás corto o si estás acelerando deuda.';
+    return 'Cargá cuánto pensás pagar por tarjeta y la app te dice si cubriste el mínimo semanal seguro o el pago recomendado total.';
   }
 
   if (minimumDifference < 0) {
-    return `Con ${formatMoney(totalPaid)} quedás ${formatMoney(Math.abs(minimumDifference))} corto para el mínimo. Necesitás compensarlo antes del próximo vencimiento.`;
+    return `Te faltan ${formatMoney(Math.abs(minimumDifference))} para cubrir el mínimo semanal seguro.`;
   }
 
   if (marginAfterChosenPayment < 0) {
-    return `Ese pago cubre el mínimo, pero supera tu disponible para deudas por ${formatMoney(Math.abs(marginAfterChosenPayment))}.`;
+    return `Cubriste el mínimo semanal seguro, pero ese pago supera tu disponible para deudas por ${formatMoney(Math.abs(marginAfterChosenPayment))}.`;
   }
 
   if (recommendedDifference >= 0) {
-    return `Cubrís el mínimo y también el pago inteligente. Te quedan ${formatMoney(marginAfterChosenPayment)} libres después de pagar.`;
+    return `Cubriste el pago recomendado total. Tenés ${formatMoney(recommendedDifference)} por encima.`;
   }
 
-  return `Cubrís el mínimo para no vencer. Estás pagando ${formatMoney(minimumDifference)} extra sobre el mínimo y te quedan ${formatMoney(marginAfterChosenPayment)} libres.`;
+  return `Cubriste el mínimo semanal seguro. Te faltarían ${formatMoney(Math.abs(recommendedDifference))} para llegar al recomendado total.`;
 }
 
 function MoneyInput({ label, value, onChange }) {

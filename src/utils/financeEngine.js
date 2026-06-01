@@ -553,9 +553,13 @@ export function simulatePaymentScenario(financeData, weeklyPayment, referenceDat
 }
 
 export function formatMoney(value) {
+  const amount = Number(value || 0);
+  const hasCents = !Number.isInteger(Math.round(amount * 100) / 100);
+
   return new Intl.NumberFormat('es-NZ', {
     style: 'currency',
     currency: 'NZD',
-    maximumFractionDigits: 0,
-  }).format(Number(value || 0));
+    minimumFractionDigits: hasCents ? 2 : 0,
+    maximumFractionDigits: hasCents ? 2 : 0,
+  }).format(amount);
 }

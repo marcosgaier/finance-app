@@ -194,6 +194,17 @@ export function WeeklyTracker({
     weeklyFundedTransactionTotals.total -
     weeklyFundedPaid -
     weeklyFundedReserveTransfers;
+  const activeWeekMoneyFlowSummary = buildWeeklyMoneyFlowSummary({
+    financeData,
+    record: normalizedActiveWeek,
+    useCurrentBudget: true,
+    weeklySummary,
+  });
+  const activeWeekTotalOutflowMargin = Number(
+    activeWeekMoneyFlowSummary.totalOutflowMargin ?? activeWeekMoneyFlowSummary.margin ?? 0,
+  );
+  const activeWeekResultLabel =
+    activeWeekTotalOutflowMargin > 0 ? 'Sobró' : activeWeekTotalOutflowMargin < 0 ? 'Faltó' : 'Quedó justo';
   const marginAfterChosenPayment = weeklySummary.availableForDebt - weeklyFundedPaid;
   const chosenPaymentMessage = buildChosenPaymentMessage({
     totalPaid,
@@ -804,19 +815,12 @@ export function WeeklyTracker({
 
         <CollapsiblePanel
           title="Resultado real de la semana"
-          summary={`${realWeeklyMargin >= 0 ? 'Sobró' : 'Faltó'} ${formatMoney(Math.abs(realWeeklyMargin))}`}
+          summary={`${activeWeekResultLabel} ${formatMoney(Math.abs(activeWeekTotalOutflowMargin))}`}
           defaultOpen={false}
         >
           <div className="rounded-lg border border-sky-200 bg-sky-50 p-4">
             <p className="text-sm font-semibold uppercase tracking-wide text-sky-700">Resultado real de la semana</p>
-            <MoneyFlowPanel
-              summary={buildWeeklyMoneyFlowSummary({
-                financeData,
-                record: normalizedActiveWeek,
-                useCurrentBudget: true,
-                weeklySummary,
-              })}
-            />
+            <MoneyFlowPanel summary={activeWeekMoneyFlowSummary} />
           </div>
         </CollapsiblePanel>
 
@@ -1446,15 +1450,19 @@ function CollapsiblePanel({ title, summary, defaultOpen = false, children }) {
 }
 
 function MoneyFlowPanel({ summary }) {
+  const totalOutflowMargin = Number(summary.totalOutflowMargin ?? summary.margin ?? 0);
+  const resultLabel = totalOutflowMargin > 0 ? 'Sobró' : totalOutflowMargin < 0 ? 'Faltó' : 'Quedó justo';
+  const resultTone = totalOutflowMargin > 0 ? 'positive' : totalOutflowMargin < 0 ? 'warning' : 'default';
+
   return (
     <div className="mt-3 grid gap-3">
       <div className="grid gap-3 sm:grid-cols-3">
         <SummaryTile label="Ingresó" value={summary.totalIncome} tone="positive" />
         <SummaryTile label="Salió / reservado" value={summary.totalOutflow} tone="warning" />
         <SummaryTile
-          label={summary.margin >= 0 ? 'Sobró' : 'Faltó'}
-          value={Math.abs(summary.margin)}
-          tone={summary.margin >= 0 ? 'positive' : 'warning'}
+          label={resultLabel}
+          value={Math.abs(totalOutflowMargin)}
+          tone={resultTone}
         />
       </div>
 

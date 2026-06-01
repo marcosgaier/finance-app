@@ -140,6 +140,7 @@ export function buildWeeklyMoneyFlowSummary({ financeData, record, useCurrentBud
   const totalOutflow = fixedAndReservedTotal + variableTotals.total + totalPaid + reserveTransferTotal;
   const weeklyIncomeOutflow =
     fixedAndReservedTotal + weeklyFundedVariableTotals.total + weeklyFundedPaid + weeklyFundedReserveTransferTotal;
+  const totalOutflowMargin = totalIncome - totalOutflow;
   const margin = totalIncome - weeklyIncomeOutflow;
 
   return {
@@ -155,6 +156,7 @@ export function buildWeeklyMoneyFlowSummary({ financeData, record, useCurrentBud
     reserveTransferTotal,
     totalPaid,
     totalOutflow,
+    totalOutflowMargin,
     weeklyIncomeOutflow,
     margin,
   };

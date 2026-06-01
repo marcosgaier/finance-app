@@ -1,36 +1,16 @@
 import React from 'react';
+import { isWeeklyIncomeFunded } from '../utils/fundingSourceUtils.js';
 import { formatMoney } from '../utils/financeEngine.js';
-
-function sumAmounts(items = []) {
-  return items.reduce((total, item) => total + Number(item.amount || 0), 0);
-}
-
-function normalizeCategory(category) {
-  if (category === 'supermercado' || category === 'grocery') return 'groceries';
-  if (category === 'combustible') return 'fuel';
-  if (category === 'otros') return 'other';
-  return ['groceries', 'fuel', 'other'].includes(category) ? category : 'other';
-}
-
-function calculateTransactionTotals(transactions = []) {
-  return transactions.reduce(
-    (totals, transaction) => {
-      const category = normalizeCategory(transaction.category);
-      const amount = Number(transaction.amount || 0);
-
-      return {
-        ...totals,
-        [category]: totals[category] + amount,
-        total: totals.total + amount,
-      };
-    },
-    { groceries: 0, fuel: 0, other: 0, total: 0 },
-  );
-}
+import {
+  calculateExtraIncomeTotal,
+  calculatePaymentTotal,
+  calculateReserveMovementTotal,
+  calculateTransactionTotals,
+} from '../utils/weeklyRecordUtils.js';
 
 export function WeeklyActionPlan({ financeData, weeklySummary }) {
   const activeWeek = financeData.activeWeek || null;
-  const extraIncomeTotal = sumAmounts(activeWeek?.extraIncome || []);
+  const extraIncomeTotal = calculateExtraIncomeTotal(activeWeek?.extraIncome || []);
   const baseIncomeUsed = Number(activeWeek?.realIncome || 0) > 0
     ? Number(activeWeek.realIncome || 0)
     : Number(financeData.weeklyIncome || 0);
@@ -54,9 +34,9 @@ export function WeeklyActionPlan({ financeData, weeklySummary }) {
   const weeklyFundedReserveMovements = (activeWeek?.reserveMovements || []).filter((movement) =>
     isWeeklyIncomeFunded(movement),
   );
-  const actualDebtPayments = sumAmounts(activeWeek?.payments || []);
-  const weeklyFundedDebtPayments = sumAmounts(weeklyFundedPayments);
-  const weeklyFundedReserveTransfers = sumAmounts(weeklyFundedReserveMovements);
+  const actualDebtPayments = calculatePaymentTotal(activeWeek?.payments || []);
+  const weeklyFundedDebtPayments = calculatePaymentTotal(weeklyFundedPayments);
+  const weeklyFundedReserveTransfers = calculateReserveMovementTotal(weeklyFundedReserveMovements);
   const actualRemaining =
     totalIncome -
     fixedReserve -
@@ -129,10 +109,6 @@ export function WeeklyActionPlan({ financeData, weeklySummary }) {
       ) : null}
     </section>
   );
-}
-
-function isWeeklyIncomeFunded(item) {
-  return !item?.fundingSource || item.fundingSource === 'weekly-income';
 }
 
 function ActionStep({ label, value, helper, tone = 'default' }) {

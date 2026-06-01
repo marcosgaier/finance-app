@@ -1,6 +1,18 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { formatDisplayDate, formatIsoDate, parseDisplayDate } from '../utils/dateUtils.js';
+import { getFundingSourceLabel, isWeeklyIncomeFunded, WEEKLY_INCOME_SOURCE } from '../utils/fundingSourceUtils.js';
 import { formatMoney } from '../utils/financeEngine.js';
+import {
+  buildWeeklyMoneyFlowSummary,
+  calculateExtraIncomeTotal,
+  calculatePaymentTotal,
+  calculateReserveMovementTotal,
+  calculateTransactionTotals,
+  calculateWeeklyFundedTotal,
+  normalizeTransactionCategory,
+  normalizeWeeklyRecordTransactions,
+  normalizeWeeklyReserveMovements,
+} from '../utils/weeklyRecordUtils.js';
 
 const transactionCategories = [
   { id: 'groceries', label: 'Supermercado' },
@@ -43,7 +55,7 @@ function createEmptyTransaction(date = getTodayIsoDate()) {
     description: '',
     category: 'groceries',
     amount: '',
-    fundingSource: 'weekly-income',
+    fundingSource: WEEKLY_INCOME_SOURCE,
   };
 }
 
@@ -154,9 +166,7 @@ export function WeeklyTracker({
   const variableDifference = plannedVariableBudget - actualVariableSpent;
   const payments = normalizedActiveWeek.payments;
   const totalPaid = payments.reduce((total, payment) => total + Number(payment.amount || 0), 0);
-  const weeklyFundedPaid = payments
-    .filter((payment) => isWeeklyIncomeFunded(payment))
-    .reduce((total, payment) => total + Number(payment.amount || 0), 0);
+  const weeklyFundedPaid = calculateWeeklyFundedTotal(payments);
   const weeklyFundedReserveTransfers = calculateReserveMovementTotal(
     reserveMovements.filter((movement) => isWeeklyIncomeFunded(movement)),
   );
@@ -206,7 +216,7 @@ export function WeeklyTracker({
       safeMinimumPayment: minimumPayment + cardGemBuffer,
       safeRecommendedPayment: recommendedPayment + cardGemBuffer,
       paidAmount: payments.find((payment) => payment.cardId === card.id)?.amount || '',
-      fundingSource: payments.find((payment) => payment.cardId === card.id)?.fundingSource || 'weekly-income',
+      fundingSource: payments.find((payment) => payment.cardId === card.id)?.fundingSource || WEEKLY_INCOME_SOURCE,
     };
   });
   const reserveFundedPaid = totalPaid - weeklyFundedPaid;
@@ -284,20 +294,20 @@ export function WeeklyTracker({
       description,
       category: transactionDraft.category,
       amount,
-      fundingSource: transactionDraft.fundingSource || 'weekly-income',
+      fundingSource: transactionDraft.fundingSource || WEEKLY_INCOME_SOURCE,
     };
 
     applyReserveDelta(null, nextTransaction);
     onUpdateActiveWeek((currentWeek) => ({
       ...currentWeek,
-      variableTransactions: [...normalizeRecordTransactions(currentWeek), nextTransaction],
+      variableTransactions: [...normalizeWeeklyRecordTransactions(currentWeek), nextTransaction],
     }));
     setTransactionDraft({
       date: transactionDraft.date || normalizedActiveWeek.weekStartDate,
       description: '',
       category: transactionDraft.category,
       amount: '',
-      fundingSource: transactionDraft.fundingSource || 'weekly-income',
+      fundingSource: transactionDraft.fundingSource || WEEKLY_INCOME_SOURCE,
     });
   }
 
@@ -306,7 +316,7 @@ export function WeeklyTracker({
     applyReserveDelta(transactionToDelete, null);
     onUpdateActiveWeek((currentWeek) => ({
       ...currentWeek,
-      variableTransactions: normalizeRecordTransactions(currentWeek).filter(
+      variableTransactions: normalizeWeeklyRecordTransactions(currentWeek).filter(
         (transaction) => transaction.id !== transactionId,
       ),
     }));
@@ -315,7 +325,7 @@ export function WeeklyTracker({
   function updateCardPayment(cardId, amount, fundingSource) {
     const nextAmount = Number(amount || 0);
     const currentPayment = payments.find((payment) => payment.cardId === cardId) || null;
-    const nextFundingSource = fundingSource || currentPayment?.fundingSource || 'weekly-income';
+    const nextFundingSource = fundingSource || currentPayment?.fundingSource || WEEKLY_INCOME_SOURCE;
 
     applyReserveDelta(
       currentPayment,
@@ -360,7 +370,7 @@ export function WeeklyTracker({
           cardId: card.id,
           cardName: card.name,
           amount: Number(card[amountKey] || 0),
-          fundingSource: 'weekly-income',
+          fundingSource: WEEKLY_INCOME_SOURCE,
         }))
         .filter((payment) => payment.amount > 0),
     }));
@@ -369,15 +379,15 @@ export function WeeklyTracker({
   function applyReserveDelta(previousItem, nextItem) {
     if (!onReserveBucketBalanceChange) return;
 
-    const previousFundingSource = previousItem?.fundingSource || 'weekly-income';
-    const nextFundingSource = nextItem?.fundingSource || 'weekly-income';
+    const previousFundingSource = previousItem?.fundingSource || WEEKLY_INCOME_SOURCE;
+    const nextFundingSource = nextItem?.fundingSource || WEEKLY_INCOME_SOURCE;
     const previousAmount = Number(previousItem?.amount || 0);
     const nextAmount = Number(nextItem?.amount || 0);
 
-    if (previousFundingSource !== 'weekly-income') {
+    if (previousFundingSource !== WEEKLY_INCOME_SOURCE) {
       onReserveBucketBalanceChange(previousFundingSource, previousAmount);
     }
-    if (nextFundingSource !== 'weekly-income') {
+    if (nextFundingSource !== WEEKLY_INCOME_SOURCE) {
       onReserveBucketBalanceChange(nextFundingSource, -nextAmount);
     }
   }
@@ -749,7 +759,7 @@ export function WeeklyTracker({
             <FundingSourceSelect
               buckets={financeData.reserveBuckets || []}
               label="Origen"
-              value={transactionDraft.fundingSource || 'weekly-income'}
+              value={transactionDraft.fundingSource || WEEKLY_INCOME_SOURCE}
               onChange={(value) => updateTransactionDraft('fundingSource', value)}
             />
             <div className="flex items-end">
@@ -800,7 +810,7 @@ export function WeeklyTracker({
           <div className="rounded-lg border border-sky-200 bg-sky-50 p-4">
             <p className="text-sm font-semibold uppercase tracking-wide text-sky-700">Resultado real de la semana</p>
             <MoneyFlowPanel
-              summary={buildMoneyFlowSummary({
+              summary={buildWeeklyMoneyFlowSummary({
                 financeData,
                 record: normalizedActiveWeek,
                 useCurrentBudget: true,
@@ -1016,10 +1026,10 @@ function FundingSourceSelect({ buckets, label, value, onChange }) {
       {label}
       <select
         className="mt-1 w-full rounded-md border border-stone-200 bg-white px-3 py-2 outline-none focus:border-sky-500"
-        value={value || 'weekly-income'}
+        value={value || WEEKLY_INCOME_SOURCE}
         onChange={(event) => onChange(event.target.value)}
       >
-        <option value="weekly-income">Semana actual</option>
+        <option value={WEEKLY_INCOME_SOURCE}>Semana actual</option>
         {buckets.map((bucket) => (
           <option key={bucket.id} value={bucket.id}>
             {bucket.name}
@@ -1155,7 +1165,7 @@ function WeeklyRecordItem({
       {expanded ? (
         <div className="mt-3 grid gap-2">
           <MoneyFlowPanel
-            summary={buildMoneyFlowSummary({
+            summary={buildWeeklyMoneyFlowSummary({
               financeData,
               record: {
                 ...record,
@@ -1346,7 +1356,7 @@ function ClosedWeekEditor({
                   Categoria
                   <select
                     className="mt-1 w-full rounded-md border border-stone-200 bg-white px-3 py-2 outline-none focus:border-sky-500"
-                    value={normalizeCategory(transaction.category)}
+                    value={normalizeTransactionCategory(transaction.category)}
                     onChange={(event) => onUpdateTransaction(transaction.id, { category: event.target.value })}
                   >
                     {transactionCategories.map((category) => (
@@ -1542,9 +1552,9 @@ function normalizeActiveWeek(activeWeek, weeklySummary) {
     weekStartDate: activeWeek.weekStartDate || activeWeek.weekDate || getCurrentFinancialWeekStartDate(),
     realIncome: Number(activeWeek.realIncome ?? activeWeek.income ?? 0),
     extraIncome: normalizeExtraIncome(activeWeek),
-    variableTransactions: normalizeRecordTransactions(activeWeek),
+    variableTransactions: normalizeWeeklyRecordTransactions(activeWeek),
     payments: activeWeek.payments || [],
-    reserveMovements: normalizeReserveMovements(activeWeek),
+    reserveMovements: normalizeWeeklyReserveMovements(activeWeek),
     note: activeWeek.note || '',
     plannedGroceries,
     plannedFuel,
@@ -1553,8 +1563,8 @@ function normalizeActiveWeek(activeWeek, weeklySummary) {
 }
 
 function normalizeWeeklyRecord(record, weeklySummary) {
-  const variableTransactions = normalizeRecordTransactions(record);
-  const reserveMovements = normalizeReserveMovements(record);
+  const variableTransactions = normalizeWeeklyRecordTransactions(record);
+  const reserveMovements = normalizeWeeklyReserveMovements(record);
   const totals = calculateTransactionTotals(variableTransactions);
   const budgetSnapshot = record.budgetSnapshot || null;
   const realIncome = Number(record.realIncome ?? record.income ?? 0);
@@ -1566,9 +1576,7 @@ function normalizeWeeklyRecord(record, weeklySummary) {
   const weeklyFundedTotals = calculateTransactionTotals(
     variableTransactions.filter((transaction) => isWeeklyIncomeFunded(transaction)),
   );
-  const weeklyFundedPaid = hasPaymentDetails
-    ? calculatePaymentTotal(record.payments.filter((payment) => isWeeklyIncomeFunded(payment)))
-    : totalPaid;
+  const weeklyFundedPaid = hasPaymentDetails ? calculateWeeklyFundedTotal(record.payments) : totalPaid;
   const reserveTransferTotal = calculateReserveMovementTotal(reserveMovements);
   const weeklyFundedReserveTransferTotal = calculateReserveMovementTotal(
     reserveMovements.filter((movement) => isWeeklyIncomeFunded(movement)),
@@ -1603,67 +1611,10 @@ function normalizeWeeklyRecord(record, weeklySummary) {
   };
 }
 
-function buildMoneyFlowSummary({ financeData, record, useCurrentBudget, weeklySummary }) {
-  const budgetSnapshot = useCurrentBudget ? null : record.budgetSnapshot || null;
-  const weeklyExpenseRows = (budgetSnapshot?.weeklyExpenses || financeData.weeklyExpenses || []).map((expense) => ({
-    id: expense.id || expense.name,
-    name: expense.name || 'Gasto semanal',
-    amount: Number(expense.amount || 0),
-  }));
-  const fallbackWeeklyExpensesTotal = weeklyExpenseRows.reduce((total, expense) => total + Number(expense.amount || 0), 0);
-  const fixedWeeklyExpensesTotal = Number(
-    budgetSnapshot?.fixedWeeklyExpensesTotal ??
-      (fallbackWeeklyExpensesTotal > 0 ? fallbackWeeklyExpensesTotal : weeklySummary.weeklyExpensesTotal) ??
-      0,
-  );
-  const monthlyReserveWeekly = Number(budgetSnapshot?.monthlyReserveWeekly ?? weeklySummary.monthlyReserveWeekly ?? 0);
-  const extraIncome = normalizeExtraIncome(record);
-  const extraIncomeTotal = calculateExtraIncomeTotal(extraIncome);
-  const primaryIncome = Number(record.realIncome ?? record.income ?? 0);
-  const totalIncome = primaryIncome + extraIncomeTotal;
-  const variableTransactions = normalizeRecordTransactions(record);
-  const reserveMovements = normalizeReserveMovements(record);
-  const variableTotals = calculateTransactionTotals(variableTransactions);
-  const hasPaymentDetails = Array.isArray(record.payments) && record.payments.length > 0;
-  const totalPaid = hasPaymentDetails ? calculatePaymentTotal(record.payments) : Number(record.totalPaid ?? 0);
-  const weeklyFundedVariableTotals = calculateTransactionTotals(
-    variableTransactions.filter((transaction) => isWeeklyIncomeFunded(transaction)),
-  );
-  const weeklyFundedPaid = hasPaymentDetails
-    ? calculatePaymentTotal(record.payments.filter((payment) => isWeeklyIncomeFunded(payment)))
-    : totalPaid;
-  const reserveTransferTotal = calculateReserveMovementTotal(reserveMovements);
-  const weeklyFundedReserveTransferTotal = calculateReserveMovementTotal(
-    reserveMovements.filter((movement) => isWeeklyIncomeFunded(movement)),
-  );
-  const fixedAndReservedTotal = fixedWeeklyExpensesTotal + monthlyReserveWeekly;
-  const totalOutflow = fixedAndReservedTotal + variableTotals.total + totalPaid + reserveTransferTotal;
-  const weeklyIncomeOutflow =
-    fixedAndReservedTotal + weeklyFundedVariableTotals.total + weeklyFundedPaid + weeklyFundedReserveTransferTotal;
-  const margin = totalIncome - weeklyIncomeOutflow;
-
-  return {
-    primaryIncome,
-    extraIncomeTotal,
-    totalIncome,
-    weeklyExpenseRows,
-    fixedWeeklyExpensesTotal,
-    monthlyReserveWeekly,
-    fixedAndReservedTotal,
-    variableTotals,
-    reserveMovements,
-    reserveTransferTotal,
-    totalPaid,
-    totalOutflow,
-    weeklyIncomeOutflow,
-    margin,
-  };
-}
-
 function activeWeekHasRealData(activeWeek) {
   return (
     normalizeExtraIncome(activeWeek).length > 0 ||
-    normalizeRecordTransactions(activeWeek).length > 0 ||
+    normalizeWeeklyRecordTransactions(activeWeek).length > 0 ||
     (activeWeek.payments || []).length > 0 ||
     Boolean((activeWeek.note || '').trim())
   );
@@ -1674,7 +1625,7 @@ function createEditableRecordDraft(record) {
     weekDate: record.weekDate || record.weekStartDate || getTodayIsoDate(),
     realIncome: Number(record.realIncome ?? record.income ?? 0),
     extraIncome: normalizeExtraIncome(record),
-    variableTransactions: normalizeRecordTransactions(record),
+    variableTransactions: normalizeWeeklyRecordTransactions(record),
     payments: sanitizePayments(record.payments || []),
     note: record.note || '',
   };
@@ -1698,9 +1649,9 @@ function sanitizeTransactions(transactions) {
       id: transaction.id || `transaction-${Date.now()}-${index}`,
       date: transaction.date || getTodayIsoDate(),
       description: (transaction.description || '').trim(),
-      category: normalizeCategory(transaction.category),
+      category: normalizeTransactionCategory(transaction.category),
       amount: Number(transaction.amount || 0),
-      fundingSource: transaction.fundingSource || 'weekly-income',
+      fundingSource: transaction.fundingSource || WEEKLY_INCOME_SOURCE,
     }))
     .filter((transaction) => transaction.amount > 0 || transaction.description.length > 0);
 }
@@ -1711,7 +1662,7 @@ function sanitizePayments(payments) {
       cardId: payment.cardId,
       cardName: payment.cardName || 'Tarjeta',
       amount: Number(payment.amount || 0),
-      fundingSource: payment.fundingSource || 'weekly-income',
+      fundingSource: payment.fundingSource || WEEKLY_INCOME_SOURCE,
     }))
     .filter((payment) => payment.cardId && payment.amount > 0);
 }
@@ -1724,7 +1675,7 @@ function sanitizeReserveMovements(reserveMovements) {
       bucketId: movement.bucketId,
       bucketName: movement.bucketName || 'Reserva',
       type: movement.type || 'deposit',
-      fundingSource: movement.fundingSource || 'weekly-income',
+      fundingSource: movement.fundingSource || WEEKLY_INCOME_SOURCE,
       amount: Number(movement.amount || 0),
       note: movement.note || '',
     }))
@@ -1773,97 +1724,6 @@ function normalizeExtraIncome(record) {
   }));
 }
 
-function normalizeReserveMovements(record) {
-  if (!Array.isArray(record.reserveMovements)) return [];
-
-  return record.reserveMovements.map((movement, index) => ({
-    id: movement.id || `legacy-reserve-transfer-${record.id || record.weekDate}-${index}`,
-    date: movement.date || record.weekDate || record.weekStartDate || '',
-    bucketId: movement.bucketId,
-    bucketName: movement.bucketName || 'Reserva',
-    type: movement.type || 'deposit',
-    fundingSource: movement.fundingSource || 'weekly-income',
-    amount: Number(movement.amount || 0),
-    note: movement.note || '',
-  }));
-}
-
-function normalizeRecordTransactions(record) {
-  if (Array.isArray(record.variableTransactions)) {
-    return record.variableTransactions.map((transaction, index) => ({
-      id: transaction.id || `legacy-transaction-${record.id || record.weekDate}-${index}`,
-      date: transaction.date || record.weekDate || record.weekStartDate || '',
-      description: transaction.description || transaction.merchant || 'Gasto variable',
-      category: normalizeCategory(transaction.category),
-      amount: Number(transaction.amount || 0),
-      fundingSource: transaction.fundingSource || 'weekly-income',
-    }));
-  }
-
-  const legacyTransactions = [
-    {
-      id: `legacy-groceries-${record.id || record.weekDate}`,
-      date: record.weekDate || record.weekStartDate || '',
-      description: 'Supermercado',
-      category: 'groceries',
-      amount: Number(record.realGroceries ?? record.grocerySpent ?? record.groceriesSpent ?? 0),
-      fundingSource: 'weekly-income',
-    },
-    {
-      id: `legacy-fuel-${record.id || record.weekDate}`,
-      date: record.weekDate || record.weekStartDate || '',
-      description: 'Combustible',
-      category: 'fuel',
-      amount: Number(record.realFuel ?? record.fuelSpent ?? 0),
-      fundingSource: 'weekly-income',
-    },
-    {
-      id: `legacy-other-${record.id || record.weekDate}`,
-      date: record.weekDate || record.weekStartDate || '',
-      description: 'Otros gastos',
-      category: 'other',
-      amount: Number(record.otherVariableExpenses ?? record.otherVariableSpent ?? record.otherSpent ?? 0),
-      fundingSource: 'weekly-income',
-    },
-  ];
-
-  return legacyTransactions.filter((transaction) => transaction.amount > 0);
-}
-
-function calculateTransactionTotals(transactions) {
-  return transactions.reduce(
-    (totals, transaction) => {
-      const category = normalizeCategory(transaction.category);
-      const amount = Number(transaction.amount || 0);
-      return {
-        ...totals,
-        [category]: totals[category] + amount,
-        total: totals.total + amount,
-      };
-    },
-    { groceries: 0, fuel: 0, other: 0, total: 0 },
-  );
-}
-
-function calculatePaymentTotal(payments) {
-  return payments.reduce((total, payment) => total + Number(payment.amount || 0), 0);
-}
-
-function calculateReserveMovementTotal(reserveMovements) {
-  return reserveMovements.reduce((total, movement) => {
-    const amount = Number(movement.amount || 0);
-    return total + (movement.type === 'withdrawal' ? -amount : amount);
-  }, 0);
-}
-
-function isWeeklyIncomeFunded(item) {
-  return !item?.fundingSource || item.fundingSource === 'weekly-income';
-}
-
-function calculateExtraIncomeTotal(extraIncome) {
-  return extraIncome.reduce((total, income) => total + Number(income.amount || 0), 0);
-}
-
 function normalizeExtraIncomeType(type) {
   return extraIncomeTypes.some((item) => item.id === type) ? type : 'extra_income';
 }
@@ -1873,20 +1733,8 @@ function getExtraIncomeTypeLabel(type) {
   return extraIncomeTypes.find((item) => item.id === normalizedType)?.label || 'Ingreso extra';
 }
 
-function normalizeCategory(category) {
-  if (category === 'supermercado' || category === 'grocery') return 'groceries';
-  if (category === 'combustible') return 'fuel';
-  if (category === 'otros') return 'other';
-  return ['groceries', 'fuel', 'other'].includes(category) ? category : 'other';
-}
-
 function getCategoryLabel(category) {
-  return transactionCategories.find((item) => item.id === normalizeCategory(category))?.label || 'Otros';
-}
-
-function getFundingSourceLabel(fundingSource, buckets = []) {
-  if (!fundingSource || fundingSource === 'weekly-income') return 'semana actual';
-  return buckets.find((bucket) => bucket.id === fundingSource)?.name || 'reserva';
+  return transactionCategories.find((item) => item.id === normalizeTransactionCategory(category))?.label || 'Otros';
 }
 
 function buildChosenPaymentMessage({ totalPaid, minimumDifference, recommendedDifference, marginAfterChosenPayment }) {

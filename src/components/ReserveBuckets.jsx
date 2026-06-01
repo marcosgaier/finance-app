@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { isReserveFunded } from '../utils/fundingSourceUtils.js';
 import { formatMoney } from '../utils/financeEngine.js';
 
 function getTodayIsoDate() {
@@ -331,10 +332,6 @@ function buildReserveMovementHistory({ activeWeek, buckets, reserveBucketMovemen
   ]
     .filter((movement) => movement.date && Number(movement.amount || 0) !== 0)
     .sort((firstMovement, secondMovement) => String(secondMovement.date).localeCompare(String(firstMovement.date)));
-}
-
-function isReserveFunded(item) {
-  return item?.fundingSource && item.fundingSource !== 'weekly-income';
 }
 
 function formatDisplayDate(dateValue) {

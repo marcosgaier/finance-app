@@ -49,6 +49,10 @@ function calculateDaysBetween(startDate, endDate) {
   return Math.max(0, Math.round((end.getTime() - start.getTime()) / 86400000));
 }
 
+function hasClosedRecordForWeek(weeklyRecords = [], weekStartDate) {
+  return (weeklyRecords || []).some((record) => (record.weekStartDate || record.weekDate) === weekStartDate);
+}
+
 function createEmptyTransaction(date = getTodayIsoDate()) {
   return {
     date,
@@ -86,8 +90,8 @@ function createActiveWeek({ weekStartDate, income, weeklySummary }) {
     id: `active-week-${weekStartDate}`,
     weekStartDate,
     weekDate: weekStartDate,
-    income: Number(income || 0),
-    realIncome: Number(income || 0),
+    income: 0,
+    realIncome: 0,
     extraIncome: [],
     variableTransactions: [],
     payments: [],
@@ -125,16 +129,16 @@ export function WeeklyTracker({
   const [dismissedPendingWeekWarning, setDismissedPendingWeekWarning] = useState(false);
 
   useEffect(() => {
-    if (!activeWeek) {
-      onStartActiveWeek(
-        createActiveWeek({
-          weekStartDate: financialWeekStartDate,
-          income: financeData.weeklyIncome,
-          weeklySummary,
-        }),
-      );
-    }
-  }, [activeWeek, financeData.weeklyIncome, financialWeekStartDate, onStartActiveWeek, weeklySummary]);
+    if (activeWeek) return;
+    if (hasClosedRecordForWeek(financeData.weeklyRecords, financialWeekStartDate)) return;
+
+    onStartActiveWeek(
+      createActiveWeek({
+        weekStartDate: financialWeekStartDate,
+        weeklySummary,
+      }),
+    );
+  }, [activeWeek, financeData.weeklyRecords, financialWeekStartDate, onStartActiveWeek, weeklySummary]);
 
   useEffect(() => {
     setTransactionDraft((currentDraft) => ({
@@ -152,35 +156,28 @@ export function WeeklyTracker({
     }));
   }, [activeWeek?.weekStartDate, financeData.cards, financialWeekStartDate]);
 
-  if (!activeWeek) {
-    return (
-      <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
-        <p className="text-sm font-semibold text-stone-900">Preparando semana actual...</p>
-      </section>
-    );
-  }
-
-  const normalizedActiveWeek = normalizeActiveWeek(activeWeek, weeklySummary);
-  const hasPendingPreviousWeek = normalizedActiveWeek.weekStartDate !== financialWeekStartDate;
-  const pendingWeekDays = calculateDaysBetween(normalizedActiveWeek.weekStartDate, financialWeekStartDate);
+  const currentFinancialWeekClosed = hasClosedRecordForWeek(financeData.weeklyRecords, financialWeekStartDate);
+  const normalizedActiveWeek = activeWeek ? normalizeActiveWeek(activeWeek, weeklySummary) : null;
+  const hasPendingPreviousWeek = Boolean(normalizedActiveWeek && normalizedActiveWeek.weekStartDate !== financialWeekStartDate);
+  const pendingWeekDays = normalizedActiveWeek ? calculateDaysBetween(normalizedActiveWeek.weekStartDate, financialWeekStartDate) : 0;
   const showPendingWeekWarning = hasPendingPreviousWeek && !dismissedPendingWeekWarning;
-  const extraIncome = normalizedActiveWeek.extraIncome;
+  const extraIncome = normalizedActiveWeek?.extraIncome || [];
   const extraIncomeTotal = calculateExtraIncomeTotal(extraIncome);
-  const totalIncome = Number(normalizedActiveWeek.realIncome || 0) + extraIncomeTotal;
-  const variableTransactions = normalizedActiveWeek.variableTransactions;
-  const reserveMovements = normalizedActiveWeek.reserveMovements;
+  const totalIncome = Number(normalizedActiveWeek?.realIncome || 0) + extraIncomeTotal;
+  const variableTransactions = normalizedActiveWeek?.variableTransactions || [];
+  const reserveMovements = normalizedActiveWeek?.reserveMovements || [];
   const transactionTotals = calculateTransactionTotals(variableTransactions);
   const weeklyFundedTransactionTotals = calculateTransactionTotals(
     variableTransactions.filter((transaction) => isWeeklyIncomeFunded(transaction)),
   );
-  const plannedGroceries = normalizedActiveWeek.plannedGroceries;
-  const plannedFuel = normalizedActiveWeek.plannedFuel;
+  const plannedGroceries = normalizedActiveWeek?.plannedGroceries || 0;
+  const plannedFuel = normalizedActiveWeek?.plannedFuel || 0;
   const plannedVariableBudget = plannedGroceries + plannedFuel;
   const actualVariableSpent = transactionTotals.total;
   const groceriesDifference = plannedGroceries - transactionTotals.groceries;
   const fuelDifference = plannedFuel - transactionTotals.fuel;
   const variableDifference = plannedVariableBudget - actualVariableSpent;
-  const payments = normalizedActiveWeek.payments;
+  const payments = normalizedActiveWeek?.payments || [];
   const totalPaid = payments.reduce((total, payment) => total + Number(payment.amount || 0), 0);
   const weeklyFundedPaid = calculateWeeklyFundedTotal(payments);
   const weeklyFundedReserveTransfers = calculateReserveMovementTotal(
@@ -204,13 +201,15 @@ export function WeeklyTracker({
     weeklyFundedTransactionTotals.total -
     weeklyFundedPaid -
     weeklyFundedReserveTransfers;
-  const activeWeekMoneyFlowSummary = buildWeeklyMoneyFlowSummary({
-    financeData,
-    record: normalizedActiveWeek,
-    useCurrentBudget: true,
-    weeklySummary,
-  });
-  const activeWeekWeeklyMargin = Number(activeWeekMoneyFlowSummary.margin ?? 0);
+  const activeWeekMoneyFlowSummary = normalizedActiveWeek
+    ? buildWeeklyMoneyFlowSummary({
+        financeData,
+        record: normalizedActiveWeek,
+        useCurrentBudget: true,
+        weeklySummary,
+      })
+    : null;
+  const activeWeekWeeklyMargin = Number(activeWeekMoneyFlowSummary?.margin ?? 0);
   const activeWeekResultLabel =
     activeWeekWeeklyMargin > 0 ? 'Sobró' : activeWeekWeeklyMargin < 0 ? 'Faltó' : 'Quedó justo';
   const marginAfterChosenPayment = weeklySummary.availableForDebt - weeklyFundedPaid;
@@ -432,7 +431,7 @@ export function WeeklyTracker({
   }
 
   function reopenRecord(record) {
-    if (activeWeekHasRealData(normalizedActiveWeek)) {
+    if (activeWeek && normalizedActiveWeek && activeWeekHasRealData(normalizedActiveWeek)) {
       const confirmed = window.confirm(
         'La semana activa actual tiene datos cargados. Si reabrís esta semana cerrada, la semana activa actual será reemplazada. ¿Querés continuar?',
       );
@@ -574,6 +573,8 @@ export function WeeklyTracker({
   }
 
   function closeWeek() {
+    if (!normalizedActiveWeek) return;
+
     const budgetSnapshot = createBudgetSnapshot({
       financeData,
       weeklySummary,
@@ -644,6 +645,7 @@ export function WeeklyTracker({
         </div>
       ) : null}
 
+      {normalizedActiveWeek ? (
       <div className="grid gap-3">
         <CollapsiblePanel
           title="Control de la semana financiera"
@@ -984,6 +986,21 @@ export function WeeklyTracker({
       </div>
         </CollapsiblePanel>
       </div>
+      ) : (
+        <section className="rounded-lg border border-stone-200 bg-stone-50 p-4">
+          {currentFinancialWeekClosed ? (
+            <>
+              <p className="text-sm font-semibold uppercase tracking-wide text-teal-700">Semana actual cerrada</p>
+              <h2 className="mt-1 text-lg font-semibold text-stone-950">Semana actual cerrada</h2>
+              <p className="mt-2 text-sm leading-6 text-stone-600">
+                La semana financiera del {formatDisplayDate(financialWeekStartDate)} ya fue cerrada. La prÃ³xima semana se abrirÃ¡ automÃ¡ticamente cuando empiece el nuevo ciclo.
+              </p>
+            </>
+          ) : (
+            <p className="text-sm font-semibold text-stone-900">Preparando semana actual...</p>
+          )}
+        </section>
+      )}
 
       {savedRecords.length > 0 ? (
         <div className="mt-5">
@@ -1696,6 +1713,8 @@ function normalizeWeeklyRecord(record, weeklySummary) {
 }
 
 function activeWeekHasRealData(activeWeek) {
+  if (!activeWeek) return false;
+
   return (
     normalizeExtraIncome(activeWeek).length > 0 ||
     normalizeWeeklyRecordTransactions(activeWeek).length > 0 ||

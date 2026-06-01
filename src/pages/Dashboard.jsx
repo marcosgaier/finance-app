@@ -206,6 +206,38 @@ export function Dashboard({ financeData, setFinanceData }) {
     });
   }
 
+  function deleteActiveWeekReserveMovement(movementId) {
+    if (!movementId) return;
+
+    setFinanceData((currentData) => {
+      if (!currentData.activeWeek) return currentData;
+
+      const movementToDelete = (currentData.activeWeek.reserveMovements || []).find(
+        (movement) => movement.id === movementId,
+      );
+      if (!movementToDelete) return currentData;
+
+      const movementAmount = Number(movementToDelete.amount || 0);
+      const balanceDelta = movementToDelete.type === 'withdrawal' ? movementAmount : -movementAmount;
+
+      return {
+        ...currentData,
+        reserveBuckets: (currentData.reserveBuckets || []).map((bucket) =>
+          bucket.id === movementToDelete.bucketId
+            ? { ...bucket, balance: Number(bucket.balance || 0) + balanceDelta }
+            : bucket,
+        ),
+        activeWeek: {
+          ...currentData.activeWeek,
+          reserveMovements: (currentData.activeWeek.reserveMovements || []).filter(
+            (movement) => movement.id !== movementId,
+          ),
+          updatedAt: new Date().toISOString(),
+        },
+      };
+    });
+  }
+
   function adjustReserveBucketBalance(bucketId, delta) {
     if (!bucketId || bucketId === 'weekly-income' || Number(delta || 0) === 0) return;
 
@@ -357,6 +389,7 @@ export function Dashboard({ financeData, setFinanceData }) {
             buckets={financeData.reserveBuckets || []}
             canTransferFromCurrentWeek={Boolean(financeData.activeWeek)}
             onAddMovement={addReserveMovement}
+            onDeleteActiveWeekReserveMovement={deleteActiveWeekReserveMovement}
             onTransferFromCurrentWeek={transferFromCurrentWeekToReserve}
             onUpdateBucket={updateReserveBucket}
             reserveBucketMovements={financeData.reserveBucketMovements || []}

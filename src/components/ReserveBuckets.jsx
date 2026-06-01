@@ -11,6 +11,7 @@ export function ReserveBuckets({
   buckets,
   canTransferFromCurrentWeek = false,
   onAddMovement,
+  onDeleteActiveWeekReserveMovement,
   onTransferFromCurrentWeek,
   onUpdateBucket,
   reserveBucketMovements = [],
@@ -232,7 +233,7 @@ export function ReserveBuckets({
             {recentMovements.map((movement) => (
               <div
                 key={movement.id}
-                className="grid gap-1 rounded-md border border-stone-200 bg-white p-3 text-sm sm:grid-cols-[0.8fr_1.2fr_0.8fr_1fr_1.5fr] sm:items-center"
+                className="grid gap-1 rounded-md border border-stone-200 bg-white p-3 text-sm sm:grid-cols-[0.8fr_1.2fr_0.8fr_1fr_1.5fr_auto] sm:items-center"
               >
                 <span className="text-stone-500">{formatDisplayDate(movement.date)}</span>
                 <span className="font-semibold text-stone-900">{movement.bucketName}</span>
@@ -242,6 +243,17 @@ export function ReserveBuckets({
                 </span>
                 <span className="text-stone-600">{movement.label}</span>
                 <span className="text-stone-500">{movement.note || '-'}</span>
+                {movement.canDelete ? (
+                  <button
+                    className="rounded-md border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100"
+                    type="button"
+                    onClick={() => onDeleteActiveWeekReserveMovement?.(movement.movementId)}
+                  >
+                    Eliminar
+                  </button>
+                ) : (
+                  <span className="hidden sm:block" />
+                )}
               </div>
             ))}
           </div>
@@ -275,8 +287,7 @@ function MoneyInput({ label, value, onChange }) {
 
 function buildReserveMovementHistory({ activeWeek, buckets, reserveBucketMovements, weeklyRecords }) {
   const bucketNameById = Object.fromEntries(buckets.map((bucket) => [bucket.id, bucket.name]));
-  const records = [...(weeklyRecords || [])];
-  if (activeWeek) records.push(activeWeek);
+  const closedRecords = [...(weeklyRecords || [])];
 
   const manualMovements = (reserveBucketMovements || []).map((movement) => ({
     id: movement.id,
@@ -287,7 +298,19 @@ function buildReserveMovementHistory({ activeWeek, buckets, reserveBucketMovemen
     note: movement.note || '',
   }));
 
-  const weeklyReserveMovements = records.flatMap((record) =>
+  const activeWeekReserveMovements = (activeWeek?.reserveMovements || []).map((movement) => ({
+    id: movement.id,
+    movementId: movement.id,
+    date: movement.date || activeWeek.weekDate || activeWeek.weekStartDate,
+    bucketName: movement.bucketName || bucketNameById[movement.bucketId] || 'Reserva',
+    amount: movement.type === 'withdrawal' ? -Number(movement.amount || 0) : Number(movement.amount || 0),
+    label: 'Transferido desde semana actual',
+    note: movement.note || '',
+    source: 'active-week-reserve-transfer',
+    canDelete: true,
+  }));
+
+  const closedWeekReserveMovements = closedRecords.flatMap((record) =>
     (record.reserveMovements || []).map((movement) => ({
       id: movement.id,
       date: movement.date || record.weekDate || record.weekStartDate,
@@ -295,8 +318,13 @@ function buildReserveMovementHistory({ activeWeek, buckets, reserveBucketMovemen
       amount: movement.type === 'withdrawal' ? -Number(movement.amount || 0) : Number(movement.amount || 0),
       label: 'Transferido desde semana actual',
       note: movement.note || '',
+      source: 'closed-week-reserve-transfer',
+      canDelete: false,
     })),
   );
+
+  const records = [...closedRecords];
+  if (activeWeek) records.push(activeWeek);
 
   const reserveFundedExpenses = records.flatMap((record) =>
     (record.variableTransactions || [])
@@ -326,7 +354,8 @@ function buildReserveMovementHistory({ activeWeek, buckets, reserveBucketMovemen
 
   return [
     ...manualMovements,
-    ...weeklyReserveMovements,
+    ...activeWeekReserveMovements,
+    ...closedWeekReserveMovements,
     ...reserveFundedExpenses,
     ...reserveFundedPayments,
   ]

@@ -47,7 +47,6 @@ export function Dashboard({ financeData, setFinanceData }) {
   );
   const totalRecommendedPayment = minimumSafeWeeklyPayment + extraSuggestedPayment;
   const marginAfterMinimumSafe = Number(weeklySummary.availableBeforeDebt || 0) - minimumSafeWeeklyPayment;
-  const marginAfterRecommendedTotal = Number(weeklySummary.availableBeforeDebt || 0) - totalRecommendedPayment;
   const safeWeeklyShortfall = Math.max(0, minimumSafeWeeklyPayment - Number(weeklySummary.availableBeforeDebt || 0));
   const weeklyStatusOverride =
     safeWeeklyShortfall > 0
@@ -61,7 +60,7 @@ export function Dashboard({ financeData, setFinanceData }) {
           tone: marginAfterMinimumSafe < 30 ? 'warning' : 'positive',
           message: `Cubriendo el mínimo semanal seguro de ${formatMoney(minimumSafeWeeklyPayment)}, te quedarían ${formatMoney(marginAfterMinimumSafe)} estimados esta semana.`,
         };
-  const decisionMessage = `Piso seguro esta semana: ${formatMoney(minimumSafeWeeklyPayment)}. Si tenés margen, podés sumar ${formatMoney(extraSuggestedPayment)} extra. Pago recomendado total: ${formatMoney(totalRecommendedPayment)}.`;
+  const decisionMessage = `Piso seguro esta semana: ${formatMoney(minimumSafeWeeklyPayment)}. Si pagás eso, te quedarían ${formatMoney(marginAfterMinimumSafe)} estimados. Podés pagar más manualmente si querés acelerar deuda.`;
 
   function updatePlan(planId, patch) {
     setFinanceData((currentData) => ({
@@ -318,25 +317,23 @@ export function Dashboard({ financeData, setFinanceData }) {
               <StatCard label="Ingreso usado esta semana" value={weeklySummary.weeklyIncome} helper="Ingreso principal usado + ingresos extra de la semana activa." />
               <StatCard label="Disponible para deudas" value={weeklySummary.availableForDebt} helper="Después de números semanales, servicios, supermercado y combustible." tone="strong" />
               <StatCard
-                label={marginAfterRecommendedTotal < 0 ? 'Faltante si pagás recomendado total' : 'Margen si pagás recomendado total'}
-                value={Math.abs(marginAfterRecommendedTotal)}
+                label={marginAfterMinimumSafe < 0 ? 'Faltante para mínimo seguro' : 'Margen después del mínimo seguro'}
+                value={Math.abs(marginAfterMinimumSafe)}
                 helper={
-                  marginAfterRecommendedTotal < 0
-                    ? 'Eso faltaría si intentás pagar el ideal completo esta semana.'
-                    : 'Estimado después del mínimo seguro más el extra opcional.'
+                  marginAfterMinimumSafe < 0
+                    ? 'Eso faltaría para cubrir el piso seguro esta semana.'
+                    : 'Estimado después de pagar lo necesario para estar tranquilo.'
                 }
-                tone={marginAfterRecommendedTotal < 0 ? 'danger' : 'positive'}
+                tone={marginAfterMinimumSafe < 0 ? 'danger' : 'positive'}
               />
             </section>
 
             <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
               <p className="text-sm font-semibold uppercase tracking-wide text-teal-700">Pagos semanales</p>
-              <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+              <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                 <StatCard label="Mínimo base semanal" value={weeklySummary.minimumToAvoidExpiry} helper="Piso interest-free para llegar a vencimientos." />
                 <StatCard label="Colchón GEM semanal" value={weeklyGemBuffer} helper="Buffer conservador por mínimos GEM." />
                 <StatCard label="Mínimo semanal seguro" value={minimumSafeWeeklyPayment} helper="El piso que conviene tomar en serio." tone="warning" />
-                <StatCard label="Extra sugerido" value={extraSuggestedPayment} helper="Opcional si tenés margen esta semana." />
-                <StatCard label="Pago recomendado total" value={totalRecommendedPayment} helper="Ideal si podés pagar más." tone="strong" />
               </div>
             </section>
 

@@ -173,11 +173,6 @@ export function WeeklyTracker({
   const reserveTransferTotal = calculateReserveMovementTotal(reserveMovements);
   const weeklyGemBuffer = Number(weeklySummary.gemMinimumSummary?.weeklyBuffer || 0);
   const minimumSafeWeeklyPayment = Number(weeklySummary.minimumToAvoidExpiry || 0) + weeklyGemBuffer;
-  const optionalExtraPayment = Math.max(
-    0,
-    Number(weeklySummary.recommendedPayment || 0) - Number(weeklySummary.minimumToAvoidExpiry || 0),
-  );
-  const totalRecommendedPayment = minimumSafeWeeklyPayment + optionalExtraPayment;
   const marginAfterMinimumSafe =
     totalIncome -
     Number(weeklySummary.weeklyExpensesTotal || 0) -
@@ -186,7 +181,6 @@ export function WeeklyTracker({
     Number(weeklySummary.fuel || 0) -
     minimumSafeWeeklyPayment;
   const minimumDifference = totalPaid - minimumSafeWeeklyPayment;
-  const recommendedDifference = totalPaid - totalRecommendedPayment;
   const realWeeklyMargin =
     totalIncome -
     Number(weeklySummary.weeklyExpensesTotal || 0) -
@@ -209,7 +203,6 @@ export function WeeklyTracker({
   const chosenPaymentMessage = buildChosenPaymentMessage({
     totalPaid,
     minimumDifference,
-    recommendedDifference,
     marginAfterChosenPayment,
   });
   const savedRecords = [...(financeData.weeklyRecords || [])].reverse();
@@ -217,15 +210,12 @@ export function WeeklyTracker({
   const cardSummaries = financeData.cards.map((card) => {
     const plans = weeklySummary.plans.filter((plan) => plan.cardId === card.id);
     const minimumPayment = plans.reduce((total, plan) => total + Number(plan.recommendedPayment || 0), 0);
-    const recommendedPayment = plans.reduce((total, plan) => total + Number(plan.totalRecommendedPayment || 0), 0);
     const cardGemBuffer = gemCardIds.has(card.id) ? weeklyGemBuffer : 0;
 
     return {
       ...card,
       minimumPayment,
-      recommendedPayment,
       safeMinimumPayment: minimumPayment + cardGemBuffer,
-      safeRecommendedPayment: recommendedPayment + cardGemBuffer,
       paidAmount: payments.find((payment) => payment.cardId === card.id)?.amount || '',
       fundingSource: payments.find((payment) => payment.cardId === card.id)?.fundingSource || WEEKLY_INCOME_SOURCE,
     };
@@ -653,8 +643,6 @@ export function WeeklyTracker({
             <SummaryTile label="Otros ingresos" value={extraIncomeTotal} />
             <SummaryTile label="Total ingresos" value={totalIncome} tone="positive" />
             <SummaryTile label="Mínimo semanal seguro" value={minimumSafeWeeklyPayment} tone="warning" />
-            <SummaryTile label="Extra opcional" value={optionalExtraPayment} />
-            <SummaryTile label="Pago recomendado total" value={totalRecommendedPayment} />
             <SummaryTile
               label="Margen estimado si pago mínimo seguro"
               value={Math.abs(marginAfterMinimumSafe)}
@@ -857,22 +845,14 @@ export function WeeklyTracker({
         >
           Cargar mínimo seguro
         </button>
-        <button
-          className="rounded-md border border-stone-300 bg-white px-3 py-2 text-sm font-semibold text-stone-700 hover:border-stone-500"
-          type="button"
-          onClick={() => fillCardPayments('safeRecommendedPayment')}
-        >
-          Cargar recomendado total
-        </button>
       </div>
 
       <div className="mt-4 overflow-x-auto">
-        <table className="w-full min-w-[680px] border-collapse text-left text-sm">
+        <table className="w-full min-w-[560px] border-collapse text-left text-sm">
           <thead>
             <tr className="border-b border-stone-200 text-stone-500">
               <th className="py-2 pr-3 font-semibold">Tarjeta</th>
               <th className="py-2 pr-3 font-semibold">Mínimo seguro</th>
-              <th className="py-2 pr-3 font-semibold">Recomendado total</th>
               <th className="py-2 pr-3 font-semibold">Pagado esta semana</th>
               <th className="py-2 pr-3 font-semibold">Origen</th>
             </tr>
@@ -882,7 +862,6 @@ export function WeeklyTracker({
               <tr key={card.id} className="border-b border-stone-100">
                 <td className="py-3 pr-3 font-semibold text-stone-900">{card.name}</td>
                 <td className="py-3 pr-3 text-stone-600">{formatMoney(card.safeMinimumPayment)}</td>
-                <td className="py-3 pr-3 text-stone-600">{formatMoney(card.safeRecommendedPayment)}</td>
                 <td className="py-3 pr-3">
                   <span className="flex max-w-40 items-center gap-2 rounded-md border border-stone-200 px-3 py-2">
                     <span className="text-stone-400">$</span>
@@ -1745,9 +1724,9 @@ function getCategoryLabel(category) {
   return transactionCategories.find((item) => item.id === normalizeTransactionCategory(category))?.label || 'Otros';
 }
 
-function buildChosenPaymentMessage({ totalPaid, minimumDifference, recommendedDifference, marginAfterChosenPayment }) {
+function buildChosenPaymentMessage({ totalPaid, minimumDifference, marginAfterChosenPayment }) {
   if (totalPaid <= 0) {
-    return 'Cargá cuánto pensás pagar por tarjeta y la app te dice si cubriste el mínimo semanal seguro o el pago recomendado total.';
+    return 'Cargá cuánto pensás pagar por tarjeta y la app te dice si cubriste el mínimo semanal seguro.';
   }
 
   if (minimumDifference < 0) {
@@ -1758,11 +1737,7 @@ function buildChosenPaymentMessage({ totalPaid, minimumDifference, recommendedDi
     return `Cubriste el mínimo semanal seguro, pero ese pago supera tu disponible para deudas por ${formatMoney(Math.abs(marginAfterChosenPayment))}.`;
   }
 
-  if (recommendedDifference >= 0) {
-    return `Cubriste el pago recomendado total. Tenés ${formatMoney(recommendedDifference)} por encima.`;
-  }
-
-  return `Cubriste el mínimo semanal seguro. Te faltarían ${formatMoney(Math.abs(recommendedDifference))} para llegar al recomendado total.`;
+  return `Cubriste el mínimo semanal seguro. Si querés acelerar deuda, podés pagar más manualmente.`;
 }
 
 function MoneyInput({ label, value, onChange }) {

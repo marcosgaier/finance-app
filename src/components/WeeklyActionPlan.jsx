@@ -19,11 +19,6 @@ export function WeeklyActionPlan({ financeData, weeklySummary }) {
   const variableBudget = Number(weeklySummary.groceries || 0) + Number(weeklySummary.fuel || 0);
   const weeklyGemBuffer = Number(weeklySummary.gemMinimumSummary?.weeklyBuffer || 0);
   const minimumSafeWeeklyPayment = Number(weeklySummary.minimumToAvoidExpiry || 0) + weeklyGemBuffer;
-  const extraSuggestedPayment = Math.max(
-    0,
-    Number(weeklySummary.recommendedPayment || 0) - Number(weeklySummary.minimumToAvoidExpiry || 0),
-  );
-  const totalRecommendedPayment = minimumSafeWeeklyPayment + extraSuggestedPayment;
   const debtPayment = minimumSafeWeeklyPayment;
   const estimatedFree = totalIncome - fixedReserve - variableBudget - debtPayment;
   const transactionTotals = calculateTransactionTotals(activeWeek?.variableTransactions || []);
@@ -57,7 +52,7 @@ export function WeeklyActionPlan({ financeData, weeklySummary }) {
         </div>
       </div>
 
-      <div className="mt-4 grid gap-3 lg:grid-cols-5">
+      <div className="mt-4 grid gap-3 lg:grid-cols-4">
         <ActionStep
           label="Total usado esta semana"
           value={formatMoney(totalIncome)}
@@ -82,11 +77,6 @@ export function WeeklyActionPlan({ financeData, weeklySummary }) {
           value={formatMoney(debtPayment)}
           helper={`Base ${formatMoney(weeklySummary.minimumToAvoidExpiry)} + colchón GEM ${formatMoney(weeklyGemBuffer)}.`}
           tone="warning"
-        />
-        <ActionStep
-          label="Extra opcional"
-          value={formatMoney(extraSuggestedPayment)}
-          helper={`Si hay margen, el ideal total sería ${formatMoney(totalRecommendedPayment)}.`}
         />
       </div>
 

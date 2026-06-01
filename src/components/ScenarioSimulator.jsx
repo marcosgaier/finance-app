@@ -16,15 +16,13 @@ export function ScenarioSimulator({ financeData }) {
   const totalRecommendedPayment = minimumSafeWeeklyPayment + extraSuggestedPayment;
   const safeMinimumGap = Math.max(0, minimumSafeWeeklyPayment - weeklyPayment);
   const amountAboveSafeMinimum = Math.max(0, weeklyPayment - minimumSafeWeeklyPayment);
-  const recommendedGap = Math.max(0, totalRecommendedPayment - weeklyPayment);
-  const amountAboveRecommended = Math.max(0, weeklyPayment - totalRecommendedPayment);
 
   return (
     <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <h2 className="text-lg font-semibold text-stone-950">Simulador</h2>
-          <p className="text-sm text-stone-500">Probá pagos semanales y mirá cómo cubren mínimo y extra sugerido.</p>
+          <p className="text-sm text-stone-500">Probá pagos semanales y mirá si cubren el mínimo seguro.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {presetPayments.map((amount) => (
@@ -54,9 +52,7 @@ export function ScenarioSimulator({ financeData }) {
 
       <div className="mt-4 rounded-md bg-sky-50 p-3 text-sm leading-6 text-sky-900">
         <p>
-          Mínimo semanal seguro: <strong>{formatMoney(minimumSafeWeeklyPayment)}</strong>. Extra opcional:{' '}
-          <strong>{formatMoney(extraSuggestedPayment)}</strong>. Pago recomendado total:{' '}
-          <strong>{formatMoney(totalRecommendedPayment)}</strong>.
+          Mínimo semanal seguro: <strong>{formatMoney(minimumSafeWeeklyPayment)}</strong>.
         </p>
         <p className="mt-2">
           {safeMinimumGap > 0
@@ -66,10 +62,8 @@ export function ScenarioSimulator({ financeData }) {
         {safeMinimumGap === 0 ? (
           <p>Te quedarían {formatMoney(amountAboveSafeMinimum)} por encima del mínimo seguro.</p>
         ) : null}
-        <p>
-          {recommendedGap > 0
-            ? `Te faltarían ${formatMoney(recommendedGap)} para llegar al recomendado total de ${formatMoney(totalRecommendedPayment)}.`
-            : `Te quedarían ${formatMoney(amountAboveRecommended)} por encima del recomendado total.`}
+        <p className="text-xs text-sky-700">
+          Referencia secundaria: extra opcional {formatMoney(extraSuggestedPayment)}; pago recomendado total {formatMoney(totalRecommendedPayment)}.
         </p>
       </div>
 

@@ -22,7 +22,7 @@ export function GemMinimumSummary({ summary }) {
 
       <div className="mt-4 rounded-lg border border-teal-200 bg-teal-50 p-4">
         <p className="text-xs font-semibold uppercase tracking-wide text-teal-700">¿Cuánto debería pagar esta semana?</p>
-        <div className="mt-3 grid gap-3 lg:grid-cols-[1.3fr_1fr_1fr]">
+        <div className="mt-3 grid gap-3 lg:grid-cols-[1.4fr_1fr_1fr]">
           <Metric
             label="Pago semanal seguro"
             value={formatMoney(summary.minimumSafeWeeklyPayment)}
@@ -30,14 +30,14 @@ export function GemMinimumSummary({ summary }) {
             tone="strong"
           />
           <Metric
-            label="Pago recomendado total"
-            value={formatMoney(summary.totalRecommendedPayment)}
-            helper="Ideal si tenés margen."
+            label="Base interest-free"
+            value={formatMoney(summary.minimumToAvoidExpiry)}
+            helper="Para llegar a vencimientos."
           />
           <Metric
-            label="Extra opcional"
-            value={formatMoney(summary.extraSuggestedPayment)}
-            helper="Acelerador, no obligación."
+            label="Colchón GEM"
+            value={formatMoney(summary.weeklyBuffer)}
+            helper="Protege contra desvíos GEM."
           />
         </div>
       </div>
@@ -45,22 +45,22 @@ export function GemMinimumSummary({ summary }) {
       <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm leading-6 text-amber-950">
         <p>
           Se arma con una base interest-free de <strong>{formatMoney(summary.minimumToAvoidExpiry)}</strong>, un colchón GEM de{' '}
-          <strong>{formatMoney(summary.weeklyBuffer)}</strong> y un extra opcional de{' '}
-          <strong>{formatMoney(summary.extraSuggestedPayment)}</strong>.
+          <strong>{formatMoney(summary.weeklyBuffer)}</strong>.
         </p>
         <p className="mt-2">
-          GEM puede aplicar parte de tus pagos a planes largos. Este colchón reduce el riesgo de que el pago requerido suba cuando actualices saldos.
+          GEM puede aplicar parte de tus pagos a planes largos. Este colchón reduce el riesgo de que el pago requerido suba cuando actualices saldos. Si querés acelerar deuda, podés pagar más manualmente.
         </p>
       </div>
 
       <div className="mt-4 grid gap-3">
         <CollapsibleDetail
           title="Detalle interest-free"
-          summary={`Base ${formatMoney(summary.minimumToAvoidExpiry)} · extra ${formatMoney(summary.extraSuggestedPayment)}`}
+          summary={`Base ${formatMoney(summary.minimumToAvoidExpiry)}`}
         >
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-3">
             <Metric label="Mínimo base semanal" value={formatMoney(summary.minimumToAvoidExpiry)} />
-            <Metric label="Extra opcional" value={formatMoney(summary.extraSuggestedPayment)} />
+            <Metric label="Extra opcional" value={formatMoney(summary.extraSuggestedPayment)} helper="Referencia secundaria." />
+            <Metric label="Pago recomendado total" value={formatMoney(summary.totalRecommendedPayment)} helper="Solo si querés acelerar." />
           </div>
         </CollapsibleDetail>
 

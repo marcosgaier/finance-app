@@ -68,6 +68,16 @@ function createEmptyExtraIncome(date = getTodayIsoDate()) {
   };
 }
 
+function createEmptyPayment(date = getTodayIsoDate(), cards = []) {
+  return {
+    date,
+    cardId: cards[0]?.id || '',
+    amount: '',
+    fundingSource: WEEKLY_INCOME_SOURCE,
+    note: '',
+  };
+}
+
 function createActiveWeek({ weekStartDate, income, weeklySummary }) {
   const plannedGroceries = Number(weeklySummary.groceries || 0);
   const plannedFuel = Number(weeklySummary.fuel || 0);
@@ -108,6 +118,7 @@ export function WeeklyTracker({
   const activeWeek = financeData.activeWeek;
   const [transactionDraft, setTransactionDraft] = useState(createEmptyTransaction(financialWeekStartDate));
   const [extraIncomeDraft, setExtraIncomeDraft] = useState(createEmptyExtraIncome(financialWeekStartDate));
+  const [paymentDraft, setPaymentDraft] = useState(createEmptyPayment(financialWeekStartDate, financeData.cards));
   const [expandedRecordIds, setExpandedRecordIds] = useState({});
   const [editingRecordId, setEditingRecordId] = useState(null);
   const [editingRecordDraft, setEditingRecordDraft] = useState(null);
@@ -134,7 +145,12 @@ export function WeeklyTracker({
       ...currentDraft,
       date: currentDraft.date || activeWeek?.weekStartDate || financialWeekStartDate,
     }));
-  }, [activeWeek?.weekStartDate, financialWeekStartDate]);
+    setPaymentDraft((currentDraft) => ({
+      ...currentDraft,
+      cardId: currentDraft.cardId || financeData.cards[0]?.id || '',
+      date: currentDraft.date || activeWeek?.weekStartDate || financialWeekStartDate,
+    }));
+  }, [activeWeek?.weekStartDate, financeData.cards, financialWeekStartDate]);
 
   if (!activeWeek) {
     return (
@@ -214,8 +230,6 @@ export function WeeklyTracker({
       ...card,
       minimumPayment,
       safeMinimumPayment: minimumPayment + cardGemBuffer,
-      paidAmount: payments.find((payment) => payment.cardId === card.id)?.amount || '',
-      fundingSource: payments.find((payment) => payment.cardId === card.id)?.fundingSource || WEEKLY_INCOME_SOURCE,
     };
   });
   const reserveFundedPaid = totalPaid - weeklyFundedPaid;
@@ -321,55 +335,74 @@ export function WeeklyTracker({
     }));
   }
 
-  function updateCardPayment(cardId, amount, fundingSource) {
-    const nextAmount = Number(amount || 0);
-    const currentPayment = payments.find((payment) => payment.cardId === cardId) || null;
-    const nextFundingSource = fundingSource || currentPayment?.fundingSource || WEEKLY_INCOME_SOURCE;
-
-    applyReserveDelta(
-      currentPayment,
-      nextAmount > 0 ? { ...currentPayment, amount: nextAmount, fundingSource: nextFundingSource } : null,
-    );
-    onUpdateActiveWeek((currentWeek) => {
-      const currentPayments = currentWeek.payments || [];
-      const currentCard = financeData.cards.find((card) => card.id === cardId);
-      const otherPayments = currentPayments.filter((payment) => payment.cardId !== cardId);
-      const nextPayments =
-        nextAmount > 0
-          ? [
-              ...otherPayments,
-              {
-                cardId,
-                cardName: currentCard?.name || 'Tarjeta',
-                amount: nextAmount,
-                fundingSource: nextFundingSource,
-              },
-            ]
-          : otherPayments;
-
-      return {
-        ...currentWeek,
-        payments: nextPayments,
-      };
-    });
+  function updatePaymentDraft(field, value) {
+    setPaymentDraft((currentDraft) => ({
+      ...currentDraft,
+      [field]: value,
+    }));
   }
 
-  function updateCardPaymentFundingSource(cardId, fundingSource) {
-    const currentPayment = payments.find((payment) => payment.cardId === cardId);
-    if (!currentPayment) return;
-    updateCardPayment(cardId, currentPayment.amount, fundingSource);
+  function addCardPayment() {
+    const amount = Number(paymentDraft.amount || 0);
+    if (!paymentDraft.cardId || amount <= 0) return;
+
+    const selectedCard = financeData.cards.find((card) => card.id === paymentDraft.cardId);
+    const nextPayment = {
+      id: `payment-${Date.now()}`,
+      date: paymentDraft.date || normalizedActiveWeek.weekStartDate || getTodayIsoDate(),
+      cardId: paymentDraft.cardId,
+      cardName: selectedCard?.name || 'Tarjeta',
+      amount,
+      fundingSource: paymentDraft.fundingSource || WEEKLY_INCOME_SOURCE,
+      note: paymentDraft.note || '',
+    };
+
+    applyReserveDelta(null, nextPayment);
+    onUpdateActiveWeek((currentWeek) => ({
+      ...currentWeek,
+      payments: [...sanitizePayments(currentWeek.payments || [], currentWeek.weekStartDate || currentWeek.weekDate), nextPayment],
+    }));
+    setPaymentDraft((currentDraft) => ({
+      ...currentDraft,
+      date: currentDraft.date || normalizedActiveWeek.weekStartDate || getTodayIsoDate(),
+      amount: '',
+      note: '',
+    }));
+  }
+
+  function deleteCardPayment(paymentId) {
+    const paymentToDelete = payments.find((payment) => payment.id === paymentId);
+    if (!paymentToDelete) return;
+
+    applyReserveDelta(paymentToDelete, null);
+    onUpdateActiveWeek((currentWeek) => ({
+      ...currentWeek,
+      payments: sanitizePayments(currentWeek.payments || [], currentWeek.weekStartDate || currentWeek.weekDate).filter(
+        (payment) => payment.id !== paymentId,
+      ),
+    }));
   }
 
   function fillCardPayments(amountKey) {
+    if (
+      payments.length > 0 &&
+      !window.confirm('Esto reemplaza todos los pagos cargados esta semana por el mínimo seguro automático. ¿Querés continuar?')
+    ) {
+      return;
+    }
+
     payments.forEach((payment) => applyReserveDelta(payment, null));
     onUpdateActiveWeek((currentWeek) => ({
       ...currentWeek,
       payments: cardSummaries
         .map((card) => ({
+          id: `payment-auto-${card.id}-${Date.now()}`,
+          date: normalizedActiveWeek.weekStartDate || getTodayIsoDate(),
           cardId: card.id,
           cardName: card.name,
           amount: Number(card[amountKey] || 0),
           fundingSource: WEEKLY_INCOME_SOURCE,
+          note: 'Mínimo seguro automático',
         }))
         .filter((payment) => payment.amount > 0),
     }));
@@ -524,7 +557,7 @@ export function WeeklyTracker({
 
     const variableTransactions = sanitizeTransactions(editingRecordDraft.variableTransactions);
     const extraIncome = sanitizeExtraIncome(editingRecordDraft.extraIncome);
-    const payments = sanitizePayments(editingRecordDraft.payments);
+    const payments = sanitizePayments(editingRecordDraft.payments, editingRecordDraft.weekDate);
 
     onUpdateWeek(originalRecord.id, (currentRecord) => ({
       ...currentRecord,
@@ -615,7 +648,7 @@ export function WeeklyTracker({
         <CollapsiblePanel
           title="Control de la semana financiera"
           summary={`${formatDisplayDate(normalizedActiveWeek.weekStartDate)} · total ingresos ${formatMoney(totalIncome)}`}
-          defaultOpen
+          defaultOpen={false}
         >
           <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
             <div>
@@ -642,7 +675,8 @@ export function WeeklyTracker({
             <SummaryTile label="Total ingresos" value={totalIncome} tone="positive" />
             <SummaryTile label="Mínimo semanal seguro" value={minimumSafeWeeklyPayment} tone="warning" />
             <SummaryTile
-              label="Margen estimado si pago mínimo seguro"
+              helper="Si pagás el mínimo seguro y usás el presupuesto completo."
+              label="Proyección con presupuesto"
               value={Math.abs(marginAfterMinimumSafe)}
               tone={marginAfterMinimumSafe >= 0 ? 'positive' : 'warning'}
             />
@@ -709,7 +743,7 @@ export function WeeklyTracker({
         <CollapsiblePanel
           title="Gastos de la semana"
           summary={`${variableTransactions.length} gastos · ${formatMoney(actualVariableSpent)}`}
-          defaultOpen
+          defaultOpen={false}
         >
           <div className="rounded-lg border border-stone-200 bg-stone-50 p-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
@@ -845,44 +879,91 @@ export function WeeklyTracker({
         </button>
       </div>
 
-      <div className="mt-4 overflow-x-auto">
-        <table className="w-full min-w-[560px] border-collapse text-left text-sm">
-          <thead>
-            <tr className="border-b border-stone-200 text-stone-500">
-              <th className="py-2 pr-3 font-semibold">Tarjeta</th>
-              <th className="py-2 pr-3 font-semibold">Mínimo seguro</th>
-              <th className="py-2 pr-3 font-semibold">Pagado esta semana</th>
-              <th className="py-2 pr-3 font-semibold">Origen</th>
-            </tr>
-          </thead>
-          <tbody>
-            {cardSummaries.map((card) => (
-              <tr key={card.id} className="border-b border-stone-100">
-                <td className="py-3 pr-3 font-semibold text-stone-900">{card.name}</td>
-                <td className="py-3 pr-3 text-stone-600">{formatMoney(card.safeMinimumPayment)}</td>
-                <td className="py-3 pr-3">
-                  <span className="flex max-w-40 items-center gap-2 rounded-md border border-stone-200 px-3 py-2">
-                    <span className="text-stone-400">$</span>
-                    <input
-                      className="numeric-input min-w-0 flex-1 bg-transparent font-semibold outline-none"
-                      type="number"
-                      min="0"
-                      value={card.paidAmount}
-                      onChange={(event) => updateCardPayment(card.id, event.target.value)}
-                    />
-                  </span>
-                </td>
-                <td className="py-3 pr-3">
-                  <FundingSourceSelect
-                    buckets={financeData.reserveBuckets || []}
-                    value={card.fundingSource}
-                    onChange={(value) => updateCardPaymentFundingSource(card.id, value)}
-                  />
-                </td>
-              </tr>
+      <div className="mt-4 rounded-lg border border-stone-200 bg-white p-3">
+        <p className="text-sm font-semibold uppercase tracking-wide text-stone-600">Agregar pago</p>
+        <div className="mt-3 grid gap-3 md:grid-cols-[0.9fr_1fr_0.8fr_1fr_1.3fr_auto] md:items-end">
+          <DateInput
+            label="Fecha"
+            value={paymentDraft.date}
+            onChange={(value) => updatePaymentDraft('date', value)}
+          />
+          <label className="text-sm font-medium text-stone-600">
+            Tarjeta
+            <select
+              className="mt-1 w-full rounded-md border border-stone-200 bg-white px-3 py-2 outline-none focus:border-sky-500"
+              value={paymentDraft.cardId}
+              onChange={(event) => updatePaymentDraft('cardId', event.target.value)}
+            >
+              {financeData.cards.map((card) => (
+                <option key={card.id} value={card.id}>
+                  {card.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <MoneyInput label="Monto" value={paymentDraft.amount} onChange={(value) => updatePaymentDraft('amount', value)} />
+          <FundingSourceSelect
+            buckets={financeData.reserveBuckets || []}
+            label="Origen"
+            value={paymentDraft.fundingSource}
+            onChange={(value) => updatePaymentDraft('fundingSource', value)}
+          />
+          <label className="text-sm font-medium text-stone-600">
+            Nota
+            <input
+              className="mt-1 w-full rounded-md border border-stone-200 bg-white px-3 py-2 outline-none focus:border-sky-500"
+              type="text"
+              value={paymentDraft.note}
+              onChange={(event) => updatePaymentDraft('note', event.target.value)}
+              placeholder="Pago principal, Cami GEM..."
+            />
+          </label>
+          <button
+            className="rounded-md bg-stone-950 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-stone-800"
+            type="button"
+            onClick={addCardPayment}
+          >
+            Agregar
+          </button>
+        </div>
+      </div>
+
+      <div className="mt-4 rounded-lg border border-stone-200 bg-white p-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-sm font-semibold uppercase tracking-wide text-stone-600">Pagos registrados</p>
+          <span className="rounded-full border border-stone-200 bg-stone-50 px-3 py-1 text-xs font-semibold text-stone-600">
+            {payments.length} pagos
+          </span>
+        </div>
+        {payments.length > 0 ? (
+          <div className="mt-3 grid gap-2">
+            {payments.map((payment) => (
+              <div
+                key={payment.id}
+                className="grid gap-1 rounded-md border border-stone-200 bg-stone-50 p-3 text-sm md:grid-cols-[0.8fr_1fr_0.8fr_1fr_1.4fr_auto] md:items-center"
+              >
+                <span className="text-stone-500">{formatDisplayDate(payment.date)}</span>
+                <span className="font-semibold text-stone-900">
+                  {payment.cardName || financeData.cards.find((card) => card.id === payment.cardId)?.name || 'Tarjeta'}
+                </span>
+                <span className="font-bold text-stone-950">{formatMoney(payment.amount)}</span>
+                <span className="text-stone-600">Salió de {getFundingSourceLabel(payment.fundingSource, financeData.reserveBuckets || [])}</span>
+                <span className="text-stone-500">{payment.note || '-'}</span>
+                <button
+                  className="rounded-md border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100"
+                  type="button"
+                  onClick={() => deleteCardPayment(payment.id)}
+                >
+                  Eliminar
+                </button>
+              </div>
             ))}
-          </tbody>
-        </table>
+          </div>
+        ) : (
+          <p className="mt-3 rounded-md border border-dashed border-stone-300 bg-stone-50 p-3 text-sm text-stone-500">
+            Todavía no cargaste pagos para esta semana.
+          </p>
+        )}
       </div>
 
       <p className="mt-3 rounded-md bg-amber-50 p-3 text-sm leading-6 text-amber-900">
@@ -1556,7 +1637,7 @@ function normalizeActiveWeek(activeWeek, weeklySummary) {
     realIncome: Number(activeWeek.realIncome ?? activeWeek.income ?? 0),
     extraIncome: normalizeExtraIncome(activeWeek),
     variableTransactions: normalizeWeeklyRecordTransactions(activeWeek),
-    payments: activeWeek.payments || [],
+    payments: sanitizePayments(activeWeek.payments || [], activeWeek.weekStartDate || activeWeek.weekDate),
     reserveMovements: normalizeWeeklyReserveMovements(activeWeek),
     note: activeWeek.note || '',
     plannedGroceries,
@@ -1629,7 +1710,7 @@ function createEditableRecordDraft(record) {
     realIncome: Number(record.realIncome ?? record.income ?? 0),
     extraIncome: normalizeExtraIncome(record),
     variableTransactions: normalizeWeeklyRecordTransactions(record),
-    payments: sanitizePayments(record.payments || []),
+    payments: sanitizePayments(record.payments || [], record.weekStartDate || record.weekDate),
     note: record.note || '',
   };
 }
@@ -1659,13 +1740,16 @@ function sanitizeTransactions(transactions) {
     .filter((transaction) => transaction.amount > 0 || transaction.description.length > 0);
 }
 
-function sanitizePayments(payments) {
+function sanitizePayments(payments, fallbackDate = getTodayIsoDate()) {
   return (payments || [])
-    .map((payment) => ({
+    .map((payment, index) => ({
+      id: payment.id || `legacy-payment-${payment.cardId || 'card'}-${fallbackDate || getTodayIsoDate()}-${index}`,
+      date: payment.date || fallbackDate || getTodayIsoDate(),
       cardId: payment.cardId,
       cardName: payment.cardName || 'Tarjeta',
       amount: Number(payment.amount || 0),
       fundingSource: payment.fundingSource || WEEKLY_INCOME_SOURCE,
+      note: payment.note || '',
     }))
     .filter((payment) => payment.cardId && payment.amount > 0);
 }
@@ -1811,7 +1895,7 @@ function DateInput({ label, value, onChange }) {
   );
 }
 
-function SummaryTile({ label, value, tone = 'default' }) {
+function SummaryTile({ label, value, helper, tone = 'default' }) {
   const toneClass = {
     default: 'border-stone-200 bg-stone-50',
     positive: 'border-emerald-200 bg-emerald-50',
@@ -1822,6 +1906,7 @@ function SummaryTile({ label, value, tone = 'default' }) {
     <div className={`rounded-md border p-3 ${toneClass}`}>
       <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">{label}</p>
       <p className="mt-1 text-lg font-bold text-stone-950">{formatMoney(value)}</p>
+      {helper ? <p className="mt-1 text-xs leading-5 text-stone-500">{helper}</p> : null}
     </div>
   );
 }

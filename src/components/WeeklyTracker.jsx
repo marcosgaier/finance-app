@@ -69,6 +69,7 @@ function createActiveWeek({ weekStartDate, income, weeklySummary }) {
     extraIncome: [],
     variableTransactions: [],
     payments: [],
+    reserveMovements: [],
     note: '',
     plannedGroceries,
     plannedFuel,
@@ -139,6 +140,7 @@ export function WeeklyTracker({
   const extraIncomeTotal = calculateExtraIncomeTotal(extraIncome);
   const totalIncome = Number(normalizedActiveWeek.realIncome || 0) + extraIncomeTotal;
   const variableTransactions = normalizedActiveWeek.variableTransactions;
+  const reserveMovements = normalizedActiveWeek.reserveMovements;
   const transactionTotals = calculateTransactionTotals(variableTransactions);
   const weeklyFundedTransactionTotals = calculateTransactionTotals(
     variableTransactions.filter((transaction) => isWeeklyIncomeFunded(transaction)),
@@ -155,6 +157,10 @@ export function WeeklyTracker({
   const weeklyFundedPaid = payments
     .filter((payment) => isWeeklyIncomeFunded(payment))
     .reduce((total, payment) => total + Number(payment.amount || 0), 0);
+  const weeklyFundedReserveTransfers = calculateReserveMovementTotal(
+    reserveMovements.filter((movement) => isWeeklyIncomeFunded(movement)),
+  );
+  const reserveTransferTotal = calculateReserveMovementTotal(reserveMovements);
   const weeklyGemBuffer = Number(weeklySummary.gemMinimumSummary?.weeklyBuffer || 0);
   const minimumSafeWeeklyPayment = Number(weeklySummary.minimumToAvoidExpiry || 0) + weeklyGemBuffer;
   const optionalExtraPayment = Math.max(
@@ -176,7 +182,8 @@ export function WeeklyTracker({
     Number(weeklySummary.weeklyExpensesTotal || 0) -
     Number(weeklySummary.monthlyReserveWeekly || 0) -
     weeklyFundedTransactionTotals.total -
-    weeklyFundedPaid;
+    weeklyFundedPaid -
+    weeklyFundedReserveTransfers;
   const marginAfterChosenPayment = weeklySummary.availableForDebt - weeklyFundedPaid;
   const chosenPaymentMessage = buildChosenPaymentMessage({
     totalPaid,
@@ -538,6 +545,7 @@ export function WeeklyTracker({
       weekDate: normalizedActiveWeek.weekStartDate,
       income: Number(normalizedActiveWeek.realIncome || 0),
       extraIncome: sanitizeExtraIncome(normalizedActiveWeek.extraIncome),
+      reserveMovements: sanitizeReserveMovements(normalizedActiveWeek.reserveMovements),
       totalPaid,
       plannedGroceries,
       plannedFuel,
@@ -1072,7 +1080,7 @@ function WeeklyRecordItem({
             <strong className="text-stone-950">{formatDisplayDate(previewRecord.weekDate)}</strong> · Ingreso principal {formatMoney(previewRecord.realIncome)} · Total ingresos {formatMoney(previewRecord.totalIncome)} · Pagado a deudas {formatMoney(previewRecord.totalPaid)}
           </p>
           <p className="mt-1 text-stone-500">
-            Otros ingresos {formatMoney(previewRecord.extraIncomeTotal)} · Supermercado {formatMoney(previewRecord.totals.groceries)} · Combustible {formatMoney(previewRecord.totals.fuel)} · Otros {formatMoney(previewRecord.totals.other)} · {previewRecord.variableTransactions.length} transacciones
+            Otros ingresos {formatMoney(previewRecord.extraIncomeTotal)} · Supermercado {formatMoney(previewRecord.totals.groceries)} · Combustible {formatMoney(previewRecord.totals.fuel)} · Otros {formatMoney(previewRecord.totals.other)} · Reservas {formatMoney(previewRecord.reserveTransferTotal)} · {previewRecord.variableTransactions.length} transacciones
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -1112,7 +1120,7 @@ function WeeklyRecordItem({
         </div>
       </div>
 
-      <div className="mt-3 grid gap-2 sm:grid-cols-3">
+      <div className="mt-3 grid gap-2 sm:grid-cols-4">
         <SmallResult
           label={previewRecord.variableDifference >= 0 ? 'Gasté de menos' : 'Gasté de más'}
           value={formatMoney(Math.abs(previewRecord.variableDifference))}
@@ -1123,6 +1131,7 @@ function WeeklyRecordItem({
           value={formatMoney(Math.abs(previewRecord.realWeeklyMargin))}
           tone={marginTone}
         />
+        <SmallResult label="Movido a reservas" value={formatMoney(previewRecord.reserveTransferTotal)} />
         <SmallResult label="Gasto variable real" value={formatMoney(previewRecord.totals.total)} />
       </div>
 
@@ -1458,6 +1467,22 @@ function MoneyFlowPanel({ summary }) {
           <MoneyFlowRow label="Total fijo / reservado" value={summary.fixedAndReservedTotal} strong />
         </CollapsibleMoneySection>
 
+        <CollapsibleMoneySection title="Transferido a reservas" total={summary.reserveTransferTotal} defaultOpen>
+          {summary.reserveMovements.length > 0 ? (
+            summary.reserveMovements.map((movement) => (
+              <MoneyFlowRow
+                key={movement.id}
+                label={movement.bucketName}
+                value={movement.amount}
+                tone="positive"
+              />
+            ))
+          ) : (
+            <MoneyFlowRow label="Movido a reservas" value={0} />
+          )}
+          <MoneyFlowRow label="Total movido a reservas" value={summary.reserveTransferTotal} strong tone="positive" />
+        </CollapsibleMoneySection>
+
         <CollapsibleMoneySection title="Gasto real" total={summary.variableTotals.total + summary.totalPaid} defaultOpen>
           <MoneyFlowRow label="Supermercado" value={summary.variableTotals.groceries} />
           <MoneyFlowRow label="Combustible" value={summary.variableTotals.fuel} />
@@ -1519,6 +1544,7 @@ function normalizeActiveWeek(activeWeek, weeklySummary) {
     extraIncome: normalizeExtraIncome(activeWeek),
     variableTransactions: normalizeRecordTransactions(activeWeek),
     payments: activeWeek.payments || [],
+    reserveMovements: normalizeReserveMovements(activeWeek),
     note: activeWeek.note || '',
     plannedGroceries,
     plannedFuel,
@@ -1528,6 +1554,7 @@ function normalizeActiveWeek(activeWeek, weeklySummary) {
 
 function normalizeWeeklyRecord(record, weeklySummary) {
   const variableTransactions = normalizeRecordTransactions(record);
+  const reserveMovements = normalizeReserveMovements(record);
   const totals = calculateTransactionTotals(variableTransactions);
   const budgetSnapshot = record.budgetSnapshot || null;
   const realIncome = Number(record.realIncome ?? record.income ?? 0);
@@ -1542,6 +1569,10 @@ function normalizeWeeklyRecord(record, weeklySummary) {
   const weeklyFundedPaid = hasPaymentDetails
     ? calculatePaymentTotal(record.payments.filter((payment) => isWeeklyIncomeFunded(payment)))
     : totalPaid;
+  const reserveTransferTotal = calculateReserveMovementTotal(reserveMovements);
+  const weeklyFundedReserveTransferTotal = calculateReserveMovementTotal(
+    reserveMovements.filter((movement) => isWeeklyIncomeFunded(movement)),
+  );
   const plannedGroceries = Number(record.plannedGroceries ?? budgetSnapshot?.plannedGroceries ?? weeklySummary.groceries ?? 0);
   const plannedFuel = Number(record.plannedFuel ?? budgetSnapshot?.plannedFuel ?? weeklySummary.fuel ?? 0);
   const plannedVariableBudget = plannedGroceries + plannedFuel;
@@ -1551,7 +1582,8 @@ function normalizeWeeklyRecord(record, weeklySummary) {
     Number(budgetSnapshot?.fixedWeeklyExpensesTotal ?? weeklySummary.weeklyExpensesTotal ?? 0) -
     Number(budgetSnapshot?.monthlyReserveWeekly ?? weeklySummary.monthlyReserveWeekly ?? 0) -
     weeklyFundedTotals.total -
-    weeklyFundedPaid;
+    weeklyFundedPaid -
+    weeklyFundedReserveTransferTotal;
 
   return {
     weekDate: record.weekDate || record.weekStartDate,
@@ -1562,6 +1594,8 @@ function normalizeWeeklyRecord(record, weeklySummary) {
     totalPaid,
     plannedVariableBudget,
     variableTransactions,
+    reserveMovements,
+    reserveTransferTotal,
     totals,
     variableDifference,
     realWeeklyMargin,
@@ -1588,6 +1622,7 @@ function buildMoneyFlowSummary({ financeData, record, useCurrentBudget, weeklySu
   const primaryIncome = Number(record.realIncome ?? record.income ?? 0);
   const totalIncome = primaryIncome + extraIncomeTotal;
   const variableTransactions = normalizeRecordTransactions(record);
+  const reserveMovements = normalizeReserveMovements(record);
   const variableTotals = calculateTransactionTotals(variableTransactions);
   const hasPaymentDetails = Array.isArray(record.payments) && record.payments.length > 0;
   const totalPaid = hasPaymentDetails ? calculatePaymentTotal(record.payments) : Number(record.totalPaid ?? 0);
@@ -1597,9 +1632,14 @@ function buildMoneyFlowSummary({ financeData, record, useCurrentBudget, weeklySu
   const weeklyFundedPaid = hasPaymentDetails
     ? calculatePaymentTotal(record.payments.filter((payment) => isWeeklyIncomeFunded(payment)))
     : totalPaid;
+  const reserveTransferTotal = calculateReserveMovementTotal(reserveMovements);
+  const weeklyFundedReserveTransferTotal = calculateReserveMovementTotal(
+    reserveMovements.filter((movement) => isWeeklyIncomeFunded(movement)),
+  );
   const fixedAndReservedTotal = fixedWeeklyExpensesTotal + monthlyReserveWeekly;
-  const totalOutflow = fixedAndReservedTotal + variableTotals.total + totalPaid;
-  const weeklyIncomeOutflow = fixedAndReservedTotal + weeklyFundedVariableTotals.total + weeklyFundedPaid;
+  const totalOutflow = fixedAndReservedTotal + variableTotals.total + totalPaid + reserveTransferTotal;
+  const weeklyIncomeOutflow =
+    fixedAndReservedTotal + weeklyFundedVariableTotals.total + weeklyFundedPaid + weeklyFundedReserveTransferTotal;
   const margin = totalIncome - weeklyIncomeOutflow;
 
   return {
@@ -1611,6 +1651,8 @@ function buildMoneyFlowSummary({ financeData, record, useCurrentBudget, weeklySu
     monthlyReserveWeekly,
     fixedAndReservedTotal,
     variableTotals,
+    reserveMovements,
+    reserveTransferTotal,
     totalPaid,
     totalOutflow,
     weeklyIncomeOutflow,
@@ -1674,6 +1716,21 @@ function sanitizePayments(payments) {
     .filter((payment) => payment.cardId && payment.amount > 0);
 }
 
+function sanitizeReserveMovements(reserveMovements) {
+  return (reserveMovements || [])
+    .map((movement, index) => ({
+      id: movement.id || `reserve-transfer-${Date.now()}-${index}`,
+      date: movement.date || getTodayIsoDate(),
+      bucketId: movement.bucketId,
+      bucketName: movement.bucketName || 'Reserva',
+      type: movement.type || 'deposit',
+      fundingSource: movement.fundingSource || 'weekly-income',
+      amount: Number(movement.amount || 0),
+      note: movement.note || '',
+    }))
+    .filter((movement) => movement.bucketId && movement.amount > 0);
+}
+
 function createBudgetSnapshot({ financeData, weeklySummary, plannedGroceries, plannedFuel, plannedVariableBudget }) {
   const weeklyExpenses = (financeData.weeklyExpenses || []).map((expense) => ({ ...expense }));
   const monthlyExpenses = (financeData.monthlyExpenses || []).map((expense) => ({ ...expense }));
@@ -1713,6 +1770,21 @@ function normalizeExtraIncome(record) {
     type: normalizeExtraIncomeType(income.type),
     description: income.description || 'Ingreso extra',
     amount: Number(income.amount || 0),
+  }));
+}
+
+function normalizeReserveMovements(record) {
+  if (!Array.isArray(record.reserveMovements)) return [];
+
+  return record.reserveMovements.map((movement, index) => ({
+    id: movement.id || `legacy-reserve-transfer-${record.id || record.weekDate}-${index}`,
+    date: movement.date || record.weekDate || record.weekStartDate || '',
+    bucketId: movement.bucketId,
+    bucketName: movement.bucketName || 'Reserva',
+    type: movement.type || 'deposit',
+    fundingSource: movement.fundingSource || 'weekly-income',
+    amount: Number(movement.amount || 0),
+    note: movement.note || '',
   }));
 }
 
@@ -1775,6 +1847,13 @@ function calculateTransactionTotals(transactions) {
 
 function calculatePaymentTotal(payments) {
   return payments.reduce((total, payment) => total + Number(payment.amount || 0), 0);
+}
+
+function calculateReserveMovementTotal(reserveMovements) {
+  return reserveMovements.reduce((total, movement) => {
+    const amount = Number(movement.amount || 0);
+    return total + (movement.type === 'withdrawal' ? -amount : amount);
+  }, 0);
 }
 
 function isWeeklyIncomeFunded(item) {

@@ -141,9 +141,69 @@ export function Dashboard({ financeData, setFinanceData }) {
     }));
   }
 
-  function addReserveMovement({ bucketId, type, amount }) {
-    const signedAmount = type === 'deposit' ? Number(amount || 0) : -Number(amount || 0);
-    adjustReserveBucketBalance(bucketId, signedAmount);
+  function addReserveMovement({ bucketId, type, amount, note }) {
+    const movementAmount = Number(amount || 0);
+    if (!bucketId || movementAmount <= 0) return;
+
+    setFinanceData((currentData) => {
+      const targetBucket = (currentData.reserveBuckets || []).find((bucket) => bucket.id === bucketId);
+      const signedAmount = type === 'deposit' ? movementAmount : -movementAmount;
+      const movement = {
+        id: `reserve-manual-${Date.now()}`,
+        date: new Date().toISOString().slice(0, 10),
+        bucketId,
+        bucketName: targetBucket?.name || 'Reserva',
+        type,
+        amount: movementAmount,
+        note: note || '',
+        source: 'manual',
+      };
+
+      return {
+        ...currentData,
+        reserveBuckets: (currentData.reserveBuckets || []).map((bucket) =>
+          bucket.id === bucketId
+            ? { ...bucket, balance: Number(bucket.balance || 0) + signedAmount }
+            : bucket,
+        ),
+        reserveBucketMovements: [...(currentData.reserveBucketMovements || []), movement],
+      };
+    });
+  }
+
+  function transferFromCurrentWeekToReserve({ bucketId, date, amount, note }) {
+    const transferAmount = Number(amount || 0);
+    if (!bucketId || transferAmount <= 0) return;
+
+    setFinanceData((currentData) => {
+      if (!currentData.activeWeek) return currentData;
+
+      const targetBucket = (currentData.reserveBuckets || []).find((bucket) => bucket.id === bucketId);
+      const movement = {
+        id: `reserve-transfer-${Date.now()}`,
+        date,
+        bucketId,
+        bucketName: targetBucket?.name || 'Reserva',
+        type: 'deposit',
+        fundingSource: 'weekly-income',
+        amount: transferAmount,
+        note: note || '',
+      };
+
+      return {
+        ...currentData,
+        reserveBuckets: (currentData.reserveBuckets || []).map((bucket) =>
+          bucket.id === bucketId
+            ? { ...bucket, balance: Number(bucket.balance || 0) + transferAmount }
+            : bucket,
+        ),
+        activeWeek: {
+          ...currentData.activeWeek,
+          reserveMovements: [...(currentData.activeWeek.reserveMovements || []), movement],
+          updatedAt: new Date().toISOString(),
+        },
+      };
+    });
   }
 
   function adjustReserveBucketBalance(bucketId, delta) {
@@ -293,9 +353,14 @@ export function Dashboard({ financeData, setFinanceData }) {
 
         {activeTab === 'reserves' && (
           <ReserveBuckets
+            activeWeek={financeData.activeWeek || null}
             buckets={financeData.reserveBuckets || []}
+            canTransferFromCurrentWeek={Boolean(financeData.activeWeek)}
             onAddMovement={addReserveMovement}
+            onTransferFromCurrentWeek={transferFromCurrentWeekToReserve}
             onUpdateBucket={updateReserveBucket}
+            reserveBucketMovements={financeData.reserveBucketMovements || []}
+            weeklyRecords={financeData.weeklyRecords || []}
           />
         )}
 

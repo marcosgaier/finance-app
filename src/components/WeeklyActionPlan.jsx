@@ -51,13 +51,18 @@ export function WeeklyActionPlan({ financeData, weeklySummary }) {
     isWeeklyIncomeFunded(transaction),
   );
   const weeklyFundedPayments = (activeWeek?.payments || []).filter((payment) => isWeeklyIncomeFunded(payment));
+  const weeklyFundedReserveMovements = (activeWeek?.reserveMovements || []).filter((movement) =>
+    isWeeklyIncomeFunded(movement),
+  );
   const actualDebtPayments = sumAmounts(activeWeek?.payments || []);
   const weeklyFundedDebtPayments = sumAmounts(weeklyFundedPayments);
+  const weeklyFundedReserveTransfers = sumAmounts(weeklyFundedReserveMovements);
   const actualRemaining =
     totalIncome -
     fixedReserve -
     calculateTransactionTotals(weeklyFundedTransactions).total -
-    weeklyFundedDebtPayments;
+    weeklyFundedDebtPayments -
+    weeklyFundedReserveTransfers;
 
   return (
     <section className="rounded-lg border border-teal-200 bg-white p-4 shadow-sm">
@@ -111,7 +116,7 @@ export function WeeklyActionPlan({ financeData, weeklySummary }) {
             <div>
               <p className="text-sm font-semibold text-stone-900">Ya registrado esta semana</p>
               <p className="mt-1 text-sm text-stone-600">
-                Super {formatMoney(transactionTotals.groceries)} · combustible {formatMoney(transactionTotals.fuel)} · otros {formatMoney(transactionTotals.other)} · deudas {formatMoney(actualDebtPayments)}
+                Super {formatMoney(transactionTotals.groceries)} · combustible {formatMoney(transactionTotals.fuel)} · otros {formatMoney(transactionTotals.other)} · deudas {formatMoney(actualDebtPayments)} · reservas {formatMoney(weeklyFundedReserveTransfers)}
               </p>
               <p className="mt-1 text-xs text-stone-500">El margen descuenta solo lo que salió de semana actual.</p>
             </div>

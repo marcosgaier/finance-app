@@ -12,6 +12,7 @@ export function ReserveBuckets({
   canTransferFromCurrentWeek = false,
   onAddMovement,
   onDeleteActiveWeekReserveMovement,
+  onDeleteManualReserveMovement,
   onTransferFromCurrentWeek,
   onUpdateBucket,
   reserveBucketMovements = [],
@@ -247,7 +248,14 @@ export function ReserveBuckets({
                   <button
                     className="rounded-md border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100"
                     type="button"
-                    onClick={() => onDeleteActiveWeekReserveMovement?.(movement.movementId)}
+                    onClick={() => {
+                      if (movement.source === 'manual-reserve-movement') {
+                        onDeleteManualReserveMovement?.(movement.movementId);
+                        return;
+                      }
+
+                      onDeleteActiveWeekReserveMovement?.(movement.movementId);
+                    }}
                   >
                     Eliminar
                   </button>
@@ -291,11 +299,14 @@ function buildReserveMovementHistory({ activeWeek, buckets, reserveBucketMovemen
 
   const manualMovements = (reserveBucketMovements || []).map((movement) => ({
     id: movement.id,
+    movementId: movement.id,
     date: movement.date,
     bucketName: movement.bucketName || bucketNameById[movement.bucketId] || 'Reserva',
     amount: movement.type === 'withdrawal' ? -Number(movement.amount || 0) : Number(movement.amount || 0),
     label: movement.type === 'withdrawal' ? 'Retiro manual' : 'Depósito manual',
     note: movement.note || '',
+    source: 'manual-reserve-movement',
+    canDelete: true,
   }));
 
   const activeWeekReserveMovements = (activeWeek?.reserveMovements || []).map((movement) => ({

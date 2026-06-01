@@ -194,11 +194,9 @@ export function WeeklyTracker({
     useCurrentBudget: true,
     weeklySummary,
   });
-  const activeWeekTotalOutflowMargin = Number(
-    activeWeekMoneyFlowSummary.totalOutflowMargin ?? activeWeekMoneyFlowSummary.margin ?? 0,
-  );
+  const activeWeekWeeklyMargin = Number(activeWeekMoneyFlowSummary.margin ?? 0);
   const activeWeekResultLabel =
-    activeWeekTotalOutflowMargin > 0 ? 'Sobró' : activeWeekTotalOutflowMargin < 0 ? 'Faltó' : 'Quedó justo';
+    activeWeekWeeklyMargin > 0 ? 'Sobró' : activeWeekWeeklyMargin < 0 ? 'Faltó' : 'Quedó justo';
   const marginAfterChosenPayment = weeklySummary.availableForDebt - weeklyFundedPaid;
   const chosenPaymentMessage = buildChosenPaymentMessage({
     totalPaid,
@@ -803,7 +801,7 @@ export function WeeklyTracker({
 
         <CollapsiblePanel
           title="Resultado real de la semana"
-          summary={`${activeWeekResultLabel} ${formatMoney(Math.abs(activeWeekTotalOutflowMargin))}`}
+          summary={`${activeWeekResultLabel} ${formatMoney(Math.abs(activeWeekWeeklyMargin))}`}
           defaultOpen={false}
         >
           <div className="rounded-lg border border-sky-200 bg-sky-50 p-4">
@@ -1429,18 +1427,19 @@ function CollapsiblePanel({ title, summary, defaultOpen = false, children }) {
 }
 
 function MoneyFlowPanel({ summary }) {
-  const totalOutflowMargin = Number(summary.totalOutflowMargin ?? summary.margin ?? 0);
-  const resultLabel = totalOutflowMargin > 0 ? 'Sobró' : totalOutflowMargin < 0 ? 'Faltó' : 'Quedó justo';
-  const resultTone = totalOutflowMargin > 0 ? 'positive' : totalOutflowMargin < 0 ? 'warning' : 'default';
+  const weeklyMargin = Number(summary.margin ?? 0);
+  const resultLabel = weeklyMargin > 0 ? 'Sobró' : weeklyMargin < 0 ? 'Faltó' : 'Quedó justo';
+  const resultTone = weeklyMargin > 0 ? 'positive' : weeklyMargin < 0 ? 'warning' : 'default';
+  const totalOutflowMargin = Number(summary.totalOutflowMargin ?? 0);
 
   return (
     <div className="mt-3 grid gap-3">
       <div className="grid gap-3 sm:grid-cols-3">
         <SummaryTile label="Ingresó" value={summary.totalIncome} tone="positive" />
-        <SummaryTile label="Salió / reservado" value={summary.totalOutflow} tone="warning" />
+        <SummaryTile label="Salió de semana actual" value={summary.weeklyIncomeOutflow} tone="warning" />
         <SummaryTile
           label={resultLabel}
-          value={Math.abs(totalOutflowMargin)}
+          value={Math.abs(weeklyMargin)}
           tone={resultTone}
         />
       </div>
@@ -1486,6 +1485,23 @@ function MoneyFlowPanel({ summary }) {
           <MoneyFlowRow label="Otros variables" value={summary.variableTotals.other} />
           <MoneyFlowRow label="Pagos a deudas" value={summary.totalPaid} />
           <MoneyFlowRow label="Total gasto real" value={summary.variableTotals.total + summary.totalPaid} strong tone="warning" />
+        </CollapsibleMoneySection>
+
+        <CollapsibleMoneySection title="Usado desde reservas" total={summary.reserveFundedTotal} defaultOpen={summary.reserveFundedTotal > 0}>
+          <MoneyFlowRow label="Supermercado desde reservas" value={summary.reserveFundedVariableTotals.groceries} />
+          <MoneyFlowRow label="Combustible desde reservas" value={summary.reserveFundedVariableTotals.fuel} />
+          <MoneyFlowRow label="Otros desde reservas" value={summary.reserveFundedVariableTotals.other} />
+          <MoneyFlowRow label="Pagos a deudas desde reservas" value={summary.reserveFundedPaid} />
+          <MoneyFlowRow label="Total usado desde reservas" value={summary.reserveFundedTotal} strong tone="warning" />
+        </CollapsibleMoneySection>
+
+        <CollapsibleMoneySection title="Movimiento total registrado" total={summary.totalOutflow} defaultOpen={false}>
+          <MoneyFlowRow label="Salida total incluyendo reservas" value={summary.totalOutflow} strong tone="warning" />
+          <MoneyFlowRow
+            label={totalOutflowMargin >= 0 ? 'Diferencia total registrada' : 'Exceso total registrado'}
+            value={Math.abs(totalOutflowMargin)}
+            tone={totalOutflowMargin >= 0 ? 'positive' : 'warning'}
+          />
         </CollapsibleMoneySection>
       </div>
     </div>

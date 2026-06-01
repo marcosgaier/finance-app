@@ -131,7 +131,10 @@ export function buildWeeklyMoneyFlowSummary({ financeData, record, useCurrentBud
   const hasPaymentDetails = Array.isArray(record.payments) && record.payments.length > 0;
   const totalPaid = hasPaymentDetails ? calculatePaymentTotal(record.payments) : Number(record.totalPaid ?? 0);
   const weeklyFundedVariableTotals = calculateTransactionTotals(variableTransactions.filter((transaction) => isWeeklyIncomeFunded(transaction)));
+  const reserveFundedVariableTotals = calculateTransactionTotals(variableTransactions.filter((transaction) => isReserveFunded(transaction)));
   const weeklyFundedPaid = hasPaymentDetails ? calculateWeeklyFundedTotal(record.payments) : totalPaid;
+  const reserveFundedPaid = hasPaymentDetails ? calculateReserveFundedTotal(record.payments) : 0;
+  const reserveFundedTotal = reserveFundedVariableTotals.total + reserveFundedPaid;
   const reserveTransferTotal = calculateReserveMovementTotal(reserveMovements);
   const weeklyFundedReserveTransferTotal = calculateReserveMovementTotal(
     reserveMovements.filter((movement) => isWeeklyIncomeFunded(movement)),
@@ -152,6 +155,9 @@ export function buildWeeklyMoneyFlowSummary({ financeData, record, useCurrentBud
     monthlyReserveWeekly,
     fixedAndReservedTotal,
     variableTotals,
+    reserveFundedVariableTotals,
+    reserveFundedPaid,
+    reserveFundedTotal,
     reserveMovements,
     reserveTransferTotal,
     totalPaid,

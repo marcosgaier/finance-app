@@ -4,6 +4,7 @@ import { formatMoney } from '../utils/financeEngine.js';
 import {
   calculateExtraIncomeTotal,
   calculatePaymentTotal,
+  calculateReserveFundedTotal,
   calculateReserveMovementTotal,
   calculateTransactionTotals,
 } from '../utils/weeklyRecordUtils.js';
@@ -21,7 +22,6 @@ export function WeeklyActionPlan({ financeData, weeklySummary }) {
   const minimumSafeWeeklyPayment = Number(weeklySummary.minimumToAvoidExpiry || 0) + weeklyGemBuffer;
   const debtPayment = minimumSafeWeeklyPayment;
   const estimatedFree = totalIncome - fixedReserve - variableBudget - debtPayment;
-  const transactionTotals = calculateTransactionTotals(activeWeek?.variableTransactions || []);
   const weeklyFundedTransactions = (activeWeek?.variableTransactions || []).filter((transaction) =>
     isWeeklyIncomeFunded(transaction),
   );
@@ -29,13 +29,18 @@ export function WeeklyActionPlan({ financeData, weeklySummary }) {
   const weeklyFundedReserveMovements = (activeWeek?.reserveMovements || []).filter((movement) =>
     isWeeklyIncomeFunded(movement),
   );
-  const actualDebtPayments = calculatePaymentTotal(activeWeek?.payments || []);
+  const weeklyFundedTransactionTotals = calculateTransactionTotals(weeklyFundedTransactions);
+  const reserveFundedTransactionTotals = calculateTransactionTotals(
+    (activeWeek?.variableTransactions || []).filter((transaction) => !isWeeklyIncomeFunded(transaction)),
+  );
   const weeklyFundedDebtPayments = calculatePaymentTotal(weeklyFundedPayments);
+  const reserveFundedDebtPayments = calculateReserveFundedTotal(activeWeek?.payments || []);
+  const reserveFundedTotal = reserveFundedTransactionTotals.total + reserveFundedDebtPayments;
   const weeklyFundedReserveTransfers = calculateReserveMovementTotal(weeklyFundedReserveMovements);
   const actualRemaining =
     totalIncome -
     fixedReserve -
-    calculateTransactionTotals(weeklyFundedTransactions).total -
+    weeklyFundedTransactionTotals.total -
     weeklyFundedDebtPayments -
     weeklyFundedReserveTransfers;
 
@@ -47,7 +52,7 @@ export function WeeklyActionPlan({ financeData, weeklySummary }) {
           <h2 className="mt-1 text-xl font-bold text-stone-950">Hoy cobré. ¿Qué hago con la plata?</h2>
         </div>
         <div className={`rounded-md border px-3 py-2 ${estimatedFree >= 0 ? 'border-emerald-200 bg-emerald-50' : 'border-amber-200 bg-amber-50'}`}>
-          <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">Te queda estimado</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">Planificado: te quedaría</p>
           <p className="text-lg font-bold text-stone-950">{formatMoney(estimatedFree)}</p>
         </div>
       </div>
@@ -86,12 +91,15 @@ export function WeeklyActionPlan({ financeData, weeklySummary }) {
             <div>
               <p className="text-sm font-semibold text-stone-900">Ya registrado esta semana</p>
               <p className="mt-1 text-sm text-stone-600">
-                Super {formatMoney(transactionTotals.groceries)} · combustible {formatMoney(transactionTotals.fuel)} · otros {formatMoney(transactionTotals.other)} · deudas {formatMoney(actualDebtPayments)} · reservas {formatMoney(weeklyFundedReserveTransfers)}
+                Super {formatMoney(weeklyFundedTransactionTotals.groceries)} · combustible {formatMoney(weeklyFundedTransactionTotals.fuel)} · otros {formatMoney(weeklyFundedTransactionTotals.other)} · deudas {formatMoney(weeklyFundedDebtPayments)} · reservas {formatMoney(weeklyFundedReserveTransfers)}
               </p>
+              {reserveFundedTotal > 0 ? (
+                <p className="mt-1 text-sm text-stone-500">Usado desde reservas: {formatMoney(reserveFundedTotal)}</p>
+              ) : null}
               <p className="mt-1 text-xs text-stone-500">El margen descuenta solo lo que salió de semana actual.</p>
             </div>
             <div className={`rounded-md border px-3 py-2 ${actualRemaining >= 0 ? 'border-emerald-200 bg-white' : 'border-amber-200 bg-amber-50'}`}>
-              <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">Margen aproximado</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">Real hasta ahora</p>
               <p className="text-base font-bold text-stone-950">{formatMoney(actualRemaining)}</p>
             </div>
           </div>

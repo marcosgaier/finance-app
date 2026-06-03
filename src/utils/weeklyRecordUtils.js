@@ -1,5 +1,8 @@
 import { isReserveFunded, isWeeklyIncomeFunded, WEEKLY_INCOME_SOURCE } from './fundingSourceUtils.js';
 
+const BBVA_WEEKLY_EXPENSE_ID = 'argentina-card';
+const BBVA_RESERVE_BUCKET_ID = 'bbva';
+
 export function calculateExtraIncomeTotal(extraIncome = []) {
   return extraIncome.reduce((total, income) => total + Number(income.amount || 0), 0);
 }
@@ -48,6 +51,42 @@ export function calculateReserveMovementTotal(reserveMovements = []) {
     const amount = Number(movement.amount || 0);
     return total + (movement.type === 'withdrawal' ? -amount : amount);
   }, 0);
+}
+
+export function calculateAdjustedWeeklyExpenseRows(weeklyExpenses = [], reserveMovements = []) {
+  const normalizedRows = (weeklyExpenses || []).map((expense) => ({
+    id: expense.id || expense.name,
+    name: expense.name || 'Gasto semanal',
+    amount: Number(expense.amount || 0),
+  }));
+  let bbvaCoverageRemaining = (reserveMovements || [])
+    .filter(
+      (movement) =>
+        movement.bucketId === BBVA_RESERVE_BUCKET_ID &&
+        movement.type !== 'withdrawal' &&
+        isWeeklyIncomeFunded(movement),
+    )
+    .reduce((total, movement) => total + Number(movement.amount || 0), 0);
+
+  const weeklyExpenseRows = normalizedRows.map((expense) => {
+    if (expense.id !== BBVA_WEEKLY_EXPENSE_ID || bbvaCoverageRemaining <= 0) {
+      return expense;
+    }
+
+    const coveredAmount = Math.min(expense.amount, bbvaCoverageRemaining);
+    bbvaCoverageRemaining -= coveredAmount;
+
+    return {
+      ...expense,
+      amount: Math.max(0, expense.amount - coveredAmount),
+    };
+  });
+  const fixedWeeklyExpensesTotal = weeklyExpenseRows.reduce((total, expense) => total + Number(expense.amount || 0), 0);
+
+  return {
+    weeklyExpenseRows,
+    fixedWeeklyExpensesTotal,
+  };
 }
 
 export function normalizeWeeklyRecordTransactions(record = {}) {
@@ -109,24 +148,24 @@ export function normalizeWeeklyReserveMovements(record = {}) {
 
 export function buildWeeklyMoneyFlowSummary({ financeData, record, useCurrentBudget, weeklySummary }) {
   const budgetSnapshot = useCurrentBudget ? null : record.budgetSnapshot || null;
-  const weeklyExpenseRows = (budgetSnapshot?.weeklyExpenses || financeData.weeklyExpenses || []).map((expense) => ({
-    id: expense.id || expense.name,
-    name: expense.name || 'Gasto semanal',
-    amount: Number(expense.amount || 0),
-  }));
-  const fallbackWeeklyExpensesTotal = weeklyExpenseRows.reduce((total, expense) => total + Number(expense.amount || 0), 0);
-  const fixedWeeklyExpensesTotal = Number(
-    budgetSnapshot?.fixedWeeklyExpensesTotal ??
-      (fallbackWeeklyExpensesTotal > 0 ? fallbackWeeklyExpensesTotal : weeklySummary.weeklyExpensesTotal) ??
-      0,
-  );
-  const monthlyReserveWeekly = Number(budgetSnapshot?.monthlyReserveWeekly ?? weeklySummary.monthlyReserveWeekly ?? 0);
   const extraIncome = Array.isArray(record.extraIncome) ? record.extraIncome : [];
   const extraIncomeTotal = calculateExtraIncomeTotal(extraIncome);
   const primaryIncome = Number(record.realIncome ?? record.income ?? 0);
   const totalIncome = primaryIncome + extraIncomeTotal;
   const variableTransactions = normalizeWeeklyRecordTransactions(record);
   const reserveMovements = normalizeWeeklyReserveMovements(record);
+  const adjustedWeeklyExpenses = calculateAdjustedWeeklyExpenseRows(
+    budgetSnapshot?.weeklyExpenses || financeData.weeklyExpenses || [],
+    reserveMovements,
+  );
+  const weeklyExpenseRows = adjustedWeeklyExpenses.weeklyExpenseRows;
+  const fallbackWeeklyExpensesTotal = weeklyExpenseRows.reduce((total, expense) => total + Number(expense.amount || 0), 0);
+  const fixedWeeklyExpensesTotal = Number(
+    weeklyExpenseRows.length > 0
+      ? adjustedWeeklyExpenses.fixedWeeklyExpensesTotal
+      : budgetSnapshot?.fixedWeeklyExpensesTotal ?? weeklySummary.weeklyExpensesTotal ?? 0,
+  );
+  const monthlyReserveWeekly = Number(budgetSnapshot?.monthlyReserveWeekly ?? weeklySummary.monthlyReserveWeekly ?? 0);
   const variableTotals = calculateTransactionTotals(variableTransactions);
   const hasPaymentDetails = Array.isArray(record.payments) && record.payments.length > 0;
   const totalPaid = hasPaymentDetails ? calculatePaymentTotal(record.payments) : Number(record.totalPaid ?? 0);

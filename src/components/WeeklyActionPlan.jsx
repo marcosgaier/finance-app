@@ -2,6 +2,7 @@ import React from 'react';
 import { isWeeklyIncomeFunded } from '../utils/fundingSourceUtils.js';
 import { formatMoney } from '../utils/financeEngine.js';
 import {
+  calculateAdjustedWeeklyExpenseRows,
   calculateExtraIncomeTotal,
   calculatePaymentTotal,
   calculateReserveFundedTotal,
@@ -16,7 +17,15 @@ export function WeeklyActionPlan({ financeData, weeklySummary }) {
     ? Number(activeWeek.realIncome || 0)
     : Number(financeData.weeklyIncome || 0);
   const totalIncome = Number(weeklySummary.weeklyIncome || 0);
-  const fixedReserve = Number(weeklySummary.fixedTotal || 0);
+  const adjustedWeeklyExpenses = calculateAdjustedWeeklyExpenseRows(
+    financeData.weeklyExpenses || [],
+    activeWeek?.reserveMovements || [],
+  );
+  const fixedWeeklyExpensesTotal =
+    adjustedWeeklyExpenses.weeklyExpenseRows.length > 0
+      ? adjustedWeeklyExpenses.fixedWeeklyExpensesTotal
+      : Number(weeklySummary.weeklyExpensesTotal || 0);
+  const fixedReserve = fixedWeeklyExpensesTotal + Number(weeklySummary.monthlyReserveWeekly || 0);
   const variableBudget = Number(weeklySummary.groceries || 0) + Number(weeklySummary.fuel || 0);
   const weeklyGemBuffer = Number(weeklySummary.gemMinimumSummary?.weeklyBuffer || 0);
   const minimumSafeWeeklyPayment = Number(weeklySummary.minimumToAvoidExpiry || 0) + weeklyGemBuffer;

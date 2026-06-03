@@ -90,6 +90,7 @@ function createActiveWeek({ weekStartDate, income, weeklySummary }) {
     id: `active-week-${weekStartDate}`,
     weekStartDate,
     weekDate: weekStartDate,
+    openingBalance: 0,
     income: 0,
     realIncome: 0,
     extraIncome: [],
@@ -127,6 +128,7 @@ export function WeeklyTracker({
   const [editingRecordId, setEditingRecordId] = useState(null);
   const [editingRecordDraft, setEditingRecordDraft] = useState(null);
   const [dismissedPendingWeekWarning, setDismissedPendingWeekWarning] = useState(false);
+  const [showOpeningBalanceInput, setShowOpeningBalanceInput] = useState(false);
 
   useEffect(() => {
     if (activeWeek) return;
@@ -161,9 +163,11 @@ export function WeeklyTracker({
   const hasPendingPreviousWeek = Boolean(normalizedActiveWeek && normalizedActiveWeek.weekStartDate !== financialWeekStartDate);
   const pendingWeekDays = normalizedActiveWeek ? calculateDaysBetween(normalizedActiveWeek.weekStartDate, financialWeekStartDate) : 0;
   const showPendingWeekWarning = hasPendingPreviousWeek && !dismissedPendingWeekWarning;
+  const openingBalance = Number(normalizedActiveWeek?.openingBalance || 0);
+  const showOpeningBalanceControl = showOpeningBalanceInput || openingBalance > 0;
   const extraIncome = normalizedActiveWeek?.extraIncome || [];
   const extraIncomeTotal = calculateExtraIncomeTotal(extraIncome);
-  const totalIncome = Number(normalizedActiveWeek?.realIncome || 0) + extraIncomeTotal;
+  const totalIncome = openingBalance + Number(normalizedActiveWeek?.realIncome || 0) + extraIncomeTotal;
   const variableTransactions = normalizedActiveWeek?.variableTransactions || [];
   const reserveMovements = normalizedActiveWeek?.reserveMovements || [];
   const transactionTotals = calculateTransactionTotals(variableTransactions);
@@ -245,6 +249,12 @@ export function WeeklyTracker({
     updateActiveWeek({
       income: nextIncome,
       realIncome: nextIncome,
+    });
+  }
+
+  function updateOpeningBalance(amount) {
+    updateActiveWeek({
+      openingBalance: Number(amount || 0),
     });
   }
 
@@ -586,6 +596,7 @@ export function WeeklyTracker({
       ...normalizedActiveWeek,
       id: `week-${Date.now()}`,
       weekDate: normalizedActiveWeek.weekStartDate,
+      openingBalance: Number(normalizedActiveWeek.openingBalance || 0),
       income: Number(normalizedActiveWeek.realIncome || 0),
       extraIncome: sanitizeExtraIncome(normalizedActiveWeek.extraIncome),
       reserveMovements: sanitizeReserveMovements(normalizedActiveWeek.reserveMovements),
@@ -649,7 +660,7 @@ export function WeeklyTracker({
       <div className="grid gap-3">
         <CollapsiblePanel
           title="Control de la semana financiera"
-          summary={`${formatDisplayDate(normalizedActiveWeek.weekStartDate)} · total ingresos ${formatMoney(totalIncome)}`}
+          summary={`${formatDisplayDate(normalizedActiveWeek.weekStartDate)} · total disponible ${formatMoney(totalIncome)}`}
           defaultOpen={false}
         >
           <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
@@ -671,10 +682,36 @@ export function WeeklyTracker({
             </div>
           </div>
 
+          <div className="mt-4">
+            {showOpeningBalanceControl ? (
+              <div className="rounded-lg border border-sky-200 bg-sky-50 p-3">
+                <MoneyInput
+                  label="Saldo inicial / arrastre anterior"
+                  value={normalizedActiveWeek.openingBalance}
+                  onChange={updateOpeningBalance}
+                />
+                <p className="mt-2 text-xs text-sky-800">
+                  Plata que ya venía de semanas anteriores. No cuenta como ingreso nuevo.
+                </p>
+              </div>
+            ) : (
+              <button
+                className="rounded-md border border-sky-200 bg-white px-3 py-2 text-sm font-semibold text-sky-700 hover:bg-sky-50"
+                type="button"
+                onClick={() => setShowOpeningBalanceInput(true)}
+              >
+                Agregar saldo inicial / arrastre anterior
+              </button>
+            )}
+          </div>
+
           <div className="mt-4 grid gap-3 md:grid-cols-3">
+            {openingBalance > 0 ? (
+              <SummaryTile label="Saldo inicial" value={openingBalance} tone="positive" />
+            ) : null}
             <SummaryTile label="Ingreso principal" value={normalizedActiveWeek.realIncome} />
             <SummaryTile label="Otros ingresos" value={extraIncomeTotal} />
-            <SummaryTile label="Total ingresos" value={totalIncome} tone="positive" />
+            <SummaryTile label="Total disponible" value={totalIncome} tone="positive" />
             <SummaryTile label="Mínimo semanal seguro" value={minimumSafeWeeklyPayment} tone="warning" />
             <SummaryTile
               helper="Si pagás el mínimo seguro y usás el presupuesto completo."
@@ -1166,10 +1203,10 @@ function WeeklyRecordItem({
       <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <p>
-            <strong className="text-stone-950">{formatDisplayDate(previewRecord.weekDate)}</strong> · Ingreso principal {formatMoney(previewRecord.realIncome)} · Total ingresos {formatMoney(previewRecord.totalIncome)} · Pagado a deudas {formatMoney(previewRecord.totalPaid)}
+            <strong className="text-stone-950">{formatDisplayDate(previewRecord.weekDate)}</strong> · Ingreso principal {formatMoney(previewRecord.realIncome)} · Total disponible {formatMoney(previewRecord.totalIncome)} · Pagado a deudas {formatMoney(previewRecord.totalPaid)}
           </p>
           <p className="mt-1 text-stone-500">
-            Otros ingresos {formatMoney(previewRecord.extraIncomeTotal)} · Supermercado {formatMoney(previewRecord.totals.groceries)} · Combustible {formatMoney(previewRecord.totals.fuel)} · Otros {formatMoney(previewRecord.totals.other)} · Reservas {formatMoney(previewRecord.reserveTransferTotal)} · {previewRecord.variableTransactions.length} transacciones
+            {previewRecord.openingBalance > 0 ? `Saldo inicial ${formatMoney(previewRecord.openingBalance)} · ` : ''}Otros ingresos {formatMoney(previewRecord.extraIncomeTotal)} · Supermercado {formatMoney(previewRecord.totals.groceries)} · Combustible {formatMoney(previewRecord.totals.fuel)} · Otros {formatMoney(previewRecord.totals.other)} · Reservas {formatMoney(previewRecord.reserveTransferTotal)} · {previewRecord.variableTransactions.length} transacciones
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -1248,6 +1285,7 @@ function WeeklyRecordItem({
               financeData,
               record: {
                 ...record,
+                openingBalance: previewRecord.openingBalance,
                 income: previewRecord.realIncome,
                 realIncome: previewRecord.realIncome,
                 extraIncome: previewRecord.extraIncome,
@@ -1262,8 +1300,11 @@ function WeeklyRecordItem({
           />
           <div className="grid gap-2 sm:grid-cols-3">
             <SmallResult label="Ingreso principal" value={formatMoney(previewRecord.realIncome)} />
+            {previewRecord.openingBalance > 0 ? (
+              <SmallResult label="Saldo inicial" value={formatMoney(previewRecord.openingBalance)} tone="positive" />
+            ) : null}
             <SmallResult label="Otros ingresos" value={formatMoney(previewRecord.extraIncomeTotal)} tone={previewRecord.extraIncomeTotal > 0 ? 'positive' : 'default'} />
-            <SmallResult label="Total ingresos" value={formatMoney(previewRecord.totalIncome)} tone="positive" />
+            <SmallResult label="Total disponible" value={formatMoney(previewRecord.totalIncome)} tone="positive" />
           </div>
           {previewRecord.extraIncome.length > 0 ? (
             <div className="grid gap-2">
@@ -1544,9 +1585,12 @@ function MoneyFlowPanel({ summary }) {
 
       <div className="grid gap-3">
         <CollapsibleMoneySection title="Ingresos" total={summary.totalIncome} defaultOpen={false}>
+          {summary.openingBalance > 0 ? (
+            <MoneyFlowRow label="Saldo inicial / arrastre anterior" value={summary.openingBalance} tone="positive" />
+          ) : null}
           <MoneyFlowRow label="Ingreso principal" value={summary.primaryIncome} tone="positive" />
           <MoneyFlowRow label="Otros ingresos" value={summary.extraIncomeTotal} tone={summary.extraIncomeTotal > 0 ? 'positive' : 'default'} />
-          <MoneyFlowRow label="Total ingresos" value={summary.totalIncome} strong tone="positive" />
+          <MoneyFlowRow label="Total disponible" value={summary.totalIncome} strong tone="positive" />
         </CollapsibleMoneySection>
 
         <CollapsibleMoneySection title="Dinero comprometido" total={summary.fixedAndReservedTotal} defaultOpen>
@@ -1651,6 +1695,7 @@ function normalizeActiveWeek(activeWeek, weeklySummary) {
   return {
     ...activeWeek,
     weekStartDate: activeWeek.weekStartDate || activeWeek.weekDate || getCurrentFinancialWeekStartDate(),
+    openingBalance: Number(activeWeek.openingBalance || 0),
     realIncome: Number(activeWeek.realIncome ?? activeWeek.income ?? 0),
     extraIncome: normalizeExtraIncome(activeWeek),
     variableTransactions: normalizeWeeklyRecordTransactions(activeWeek),
@@ -1668,10 +1713,11 @@ function normalizeWeeklyRecord(record, weeklySummary) {
   const reserveMovements = normalizeWeeklyReserveMovements(record);
   const totals = calculateTransactionTotals(variableTransactions);
   const budgetSnapshot = record.budgetSnapshot || null;
+  const openingBalance = Number(record.openingBalance || 0);
   const realIncome = Number(record.realIncome ?? record.income ?? 0);
   const extraIncome = normalizeExtraIncome(record);
   const extraIncomeTotal = calculateExtraIncomeTotal(extraIncome);
-  const totalIncome = realIncome + extraIncomeTotal;
+  const totalIncome = openingBalance + realIncome + extraIncomeTotal;
   const hasPaymentDetails = Array.isArray(record.payments) && record.payments.length > 0;
   const totalPaid = hasPaymentDetails ? calculatePaymentTotal(record.payments) : Number(record.totalPaid ?? 0);
   const weeklyFundedTotals = calculateTransactionTotals(
@@ -1696,6 +1742,7 @@ function normalizeWeeklyRecord(record, weeklySummary) {
 
   return {
     weekDate: record.weekDate || record.weekStartDate,
+    openingBalance,
     realIncome,
     extraIncome,
     extraIncomeTotal,
@@ -1717,6 +1764,7 @@ function activeWeekHasRealData(activeWeek) {
 
   return (
     normalizeExtraIncome(activeWeek).length > 0 ||
+    Number(activeWeek.openingBalance || 0) > 0 ||
     normalizeWeeklyRecordTransactions(activeWeek).length > 0 ||
     (activeWeek.payments || []).length > 0 ||
     Boolean((activeWeek.note || '').trim())
@@ -1726,6 +1774,7 @@ function activeWeekHasRealData(activeWeek) {
 function createEditableRecordDraft(record) {
   return {
     weekDate: record.weekDate || record.weekStartDate || getTodayIsoDate(),
+    openingBalance: Number(record.openingBalance || 0),
     realIncome: Number(record.realIncome ?? record.income ?? 0),
     extraIncome: normalizeExtraIncome(record),
     variableTransactions: normalizeWeeklyRecordTransactions(record),

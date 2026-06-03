@@ -26,16 +26,20 @@ const dashboardTabs = [
 export function Dashboard({ financeData, setFinanceData }) {
   const [activeTab, setActiveTab] = useState('dashboard');
   const effectiveFinanceData = useMemo(() => {
+    const activeOpeningBalance = Number(financeData.activeWeek?.openingBalance || 0);
     const activeRealIncome = Number(financeData.activeWeek?.realIncome || 0);
     const activeExtraIncome = (financeData.activeWeek?.extraIncome || []).reduce(
       (total, income) => total + Number(income.amount || 0),
       0,
     );
-    if (activeRealIncome <= 0 && activeExtraIncome <= 0) return financeData;
+    if (activeOpeningBalance <= 0 && activeRealIncome <= 0 && activeExtraIncome <= 0) return financeData;
 
     return {
       ...financeData,
-      weeklyIncome: (activeRealIncome > 0 ? activeRealIncome : Number(financeData.weeklyIncome || 0)) + activeExtraIncome,
+      weeklyIncome:
+        activeOpeningBalance +
+        (activeRealIncome > 0 ? activeRealIncome : Number(financeData.weeklyIncome || 0)) +
+        activeExtraIncome,
     };
   }, [financeData]);
   const weeklySummary = useMemo(() => calculateWeeklyDebtReserve(effectiveFinanceData), [effectiveFinanceData]);
@@ -340,7 +344,7 @@ export function Dashboard({ financeData, setFinanceData }) {
             <WeeklyStatus summary={weeklySummary} statusOverride={weeklyStatusOverride} />
 
             <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-              <StatCard label="Ingreso usado esta semana" value={weeklySummary.weeklyIncome} helper="Ingreso principal usado + ingresos extra de la semana activa." />
+              <StatCard label="Ingreso usado esta semana" value={weeklySummary.weeklyIncome} helper="Saldo inicial + ingreso principal usado + ingresos extra de la semana activa." />
               <StatCard label="Disponible para deudas" value={weeklySummary.availableForDebt} helper="Después de números semanales, servicios, supermercado y combustible." tone="strong" />
               <StatCard
                 label={marginAfterMinimumSafe < 0 ? 'Faltante para mínimo seguro' : 'Margen después del mínimo seguro'}

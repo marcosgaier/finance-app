@@ -150,8 +150,9 @@ export function buildWeeklyMoneyFlowSummary({ financeData, record, useCurrentBud
   const budgetSnapshot = useCurrentBudget ? null : record.budgetSnapshot || null;
   const extraIncome = Array.isArray(record.extraIncome) ? record.extraIncome : [];
   const extraIncomeTotal = calculateExtraIncomeTotal(extraIncome);
+  const openingBalance = Number(record.openingBalance || 0);
   const primaryIncome = Number(record.realIncome ?? record.income ?? 0);
-  const totalIncome = primaryIncome + extraIncomeTotal;
+  const totalIncome = openingBalance + primaryIncome + extraIncomeTotal;
   const variableTransactions = normalizeWeeklyRecordTransactions(record);
   const reserveMovements = normalizeWeeklyReserveMovements(record);
   const adjustedWeeklyExpenses = calculateAdjustedWeeklyExpenseRows(
@@ -187,6 +188,7 @@ export function buildWeeklyMoneyFlowSummary({ financeData, record, useCurrentBud
 
   return {
     primaryIncome,
+    openingBalance,
     extraIncomeTotal,
     totalIncome,
     weeklyExpenseRows,

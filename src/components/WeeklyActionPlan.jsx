@@ -12,6 +12,7 @@ import {
 
 export function WeeklyActionPlan({ financeData, weeklySummary }) {
   const activeWeek = financeData.activeWeek || null;
+  const openingBalance = Number(activeWeek?.openingBalance || 0);
   const extraIncomeTotal = calculateExtraIncomeTotal(activeWeek?.extraIncome || []);
   const baseIncomeUsed = Number(activeWeek?.realIncome || 0) > 0
     ? Number(activeWeek.realIncome || 0)
@@ -68,12 +69,14 @@ export function WeeklyActionPlan({ financeData, weeklySummary }) {
 
       <div className="mt-4 grid gap-3 lg:grid-cols-4">
         <ActionStep
-          label="Total usado esta semana"
+          label="Total disponible"
           value={formatMoney(totalIncome)}
           helper={
-            extraIncomeTotal > 0
-              ? `Ingreso principal ${formatMoney(baseIncomeUsed)} + extras ${formatMoney(extraIncomeTotal)}.`
-              : 'Ingreso real cobrado si existe; si no, ingreso base esperado.'
+            openingBalance > 0
+              ? `Saldo inicial ${formatMoney(openingBalance)} + ingreso principal ${formatMoney(baseIncomeUsed)}${extraIncomeTotal > 0 ? ` + extras ${formatMoney(extraIncomeTotal)}` : ''}.`
+              : extraIncomeTotal > 0
+                ? `Ingreso principal ${formatMoney(baseIncomeUsed)} + extras ${formatMoney(extraIncomeTotal)}.`
+                : 'Ingreso real cobrado si existe; si no, ingreso base esperado.'
           }
         />
         <ActionStep

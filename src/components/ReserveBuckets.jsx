@@ -31,6 +31,12 @@ export function ReserveBuckets({
     amount: '',
     note: '',
   });
+  const [movementFilters, setMovementFilters] = useState({
+    dateFrom: '',
+    dateTo: '',
+    bucketId: 'all',
+  });
+  const [showAllMovements, setShowAllMovements] = useState(false);
   const totalReserved = buckets.reduce((total, bucket) => total + Number(bucket.balance || 0), 0);
   const recentMovements = buildReserveMovementHistory({
     activeWeek,
@@ -38,6 +44,14 @@ export function ReserveBuckets({
     reserveBucketMovements,
     weeklyRecords,
   });
+  const filteredMovements = recentMovements.filter((movement) => {
+    if (movementFilters.dateFrom && String(movement.date) < movementFilters.dateFrom) return false;
+    if (movementFilters.dateTo && String(movement.date) > movementFilters.dateTo) return false;
+    if (movementFilters.bucketId !== 'all' && movement.bucketId !== movementFilters.bucketId) return false;
+    return true;
+  });
+  const visibleMovements = showAllMovements ? filteredMovements : filteredMovements.slice(0, 10);
+  const hasHiddenMovements = filteredMovements.length > 10;
 
   function updateMovementDraft(patch) {
     setMovementDraft((currentDraft) => ({ ...currentDraft, ...patch }));
@@ -45,6 +59,20 @@ export function ReserveBuckets({
 
   function updateTransferDraft(patch) {
     setTransferDraft((currentDraft) => ({ ...currentDraft, ...patch }));
+  }
+
+  function updateMovementFilters(patch) {
+    setMovementFilters((currentFilters) => ({ ...currentFilters, ...patch }));
+    setShowAllMovements(false);
+  }
+
+  function clearMovementFilters() {
+    setMovementFilters({
+      dateFrom: '',
+      dateTo: '',
+      bucketId: 'all',
+    });
+    setShowAllMovements(false);
   }
 
   function addMovement() {
@@ -226,13 +254,56 @@ export function ReserveBuckets({
             <p className="mt-1 text-sm text-stone-500">Entradas, salidas y usos de tus sobres.</p>
           </div>
           <span className="rounded-full border border-stone-200 bg-white px-3 py-1 text-xs font-semibold text-stone-600">
-            {recentMovements.length} movimientos
+            Mostrando {visibleMovements.length} de {filteredMovements.length} movimientos
           </span>
         </div>
 
-        {recentMovements.length > 0 ? (
+        <div className="mt-3 grid gap-3 rounded-md border border-stone-200 bg-white p-3 md:grid-cols-[1fr_1fr_1fr_auto] md:items-end">
+          <label className="text-sm font-medium text-stone-600">
+            Desde
+            <input
+              className="mt-1 w-full rounded-md border border-stone-200 bg-white px-3 py-2 outline-none focus:border-sky-500"
+              type="date"
+              value={movementFilters.dateFrom}
+              onChange={(event) => updateMovementFilters({ dateFrom: event.target.value })}
+            />
+          </label>
+          <label className="text-sm font-medium text-stone-600">
+            Hasta
+            <input
+              className="mt-1 w-full rounded-md border border-stone-200 bg-white px-3 py-2 outline-none focus:border-sky-500"
+              type="date"
+              value={movementFilters.dateTo}
+              onChange={(event) => updateMovementFilters({ dateTo: event.target.value })}
+            />
+          </label>
+          <label className="text-sm font-medium text-stone-600">
+            Sobre
+            <select
+              className="mt-1 w-full rounded-md border border-stone-200 bg-white px-3 py-2 outline-none focus:border-sky-500"
+              value={movementFilters.bucketId}
+              onChange={(event) => updateMovementFilters({ bucketId: event.target.value })}
+            >
+              <option value="all">Todos los sobres</option>
+              {buckets.map((bucket) => (
+                <option key={bucket.id} value={bucket.id}>
+                  {bucket.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button
+            className="rounded-md border border-stone-300 bg-stone-50 px-3 py-2 text-sm font-semibold text-stone-700 hover:bg-stone-100"
+            type="button"
+            onClick={clearMovementFilters}
+          >
+            Limpiar filtros
+          </button>
+        </div>
+
+        {filteredMovements.length > 0 ? (
           <div className="mt-3 grid gap-2">
-            {recentMovements.map((movement) => (
+            {visibleMovements.map((movement) => (
               <div
                 key={movement.id}
                 className="grid gap-1 rounded-md border border-stone-200 bg-white p-3 text-sm sm:grid-cols-[0.8fr_1.2fr_0.8fr_1fr_1.5fr_auto] sm:items-center"
@@ -265,10 +336,19 @@ export function ReserveBuckets({
                 )}
               </div>
             ))}
+            {hasHiddenMovements ? (
+              <button
+                className="w-fit rounded-md border border-stone-300 bg-white px-3 py-2 text-sm font-semibold text-stone-700 hover:bg-stone-100"
+                type="button"
+                onClick={() => setShowAllMovements((currentValue) => !currentValue)}
+              >
+                {showAllMovements ? 'Ver menos' : 'Ver todos'}
+              </button>
+            ) : null}
           </div>
         ) : (
           <p className="mt-3 rounded-md border border-dashed border-stone-300 bg-white p-3 text-sm text-stone-500">
-            Todavía no hay movimientos de reservas para mostrar.
+            No hay movimientos de reservas para mostrar con estos filtros.
           </p>
         )}
       </div>
@@ -302,6 +382,7 @@ function buildReserveMovementHistory({ activeWeek, buckets, reserveBucketMovemen
     id: movement.id,
     movementId: movement.id,
     date: movement.date,
+    bucketId: movement.bucketId,
     bucketName: movement.bucketName || bucketNameById[movement.bucketId] || 'Reserva',
     amount: movement.type === 'withdrawal' ? -Number(movement.amount || 0) : Number(movement.amount || 0),
     label: movement.type === 'withdrawal' ? 'Retiro manual' : 'Depósito manual',
@@ -314,6 +395,7 @@ function buildReserveMovementHistory({ activeWeek, buckets, reserveBucketMovemen
     id: movement.id,
     movementId: movement.id,
     date: movement.date || activeWeek.weekDate || activeWeek.weekStartDate,
+    bucketId: movement.bucketId,
     bucketName: movement.bucketName || bucketNameById[movement.bucketId] || 'Reserva',
     amount: movement.type === 'withdrawal' ? -Number(movement.amount || 0) : Number(movement.amount || 0),
     label: 'Transferido desde semana actual',
@@ -326,6 +408,7 @@ function buildReserveMovementHistory({ activeWeek, buckets, reserveBucketMovemen
     (record.reserveMovements || []).map((movement) => ({
       id: movement.id,
       date: movement.date || record.weekDate || record.weekStartDate,
+      bucketId: movement.bucketId,
       bucketName: movement.bucketName || bucketNameById[movement.bucketId] || 'Reserva',
       amount: movement.type === 'withdrawal' ? -Number(movement.amount || 0) : Number(movement.amount || 0),
       label: 'Transferido desde semana actual',
@@ -344,6 +427,7 @@ function buildReserveMovementHistory({ activeWeek, buckets, reserveBucketMovemen
       .map((transaction) => ({
         id: transaction.id,
         date: transaction.date || record.weekDate || record.weekStartDate,
+        bucketId: transaction.fundingSource,
         bucketName: bucketNameById[transaction.fundingSource] || 'Reserva',
         amount: -Number(transaction.amount || 0),
         label: 'Usado en gasto',
@@ -357,6 +441,7 @@ function buildReserveMovementHistory({ activeWeek, buckets, reserveBucketMovemen
       .map((payment, index) => ({
         id: `${record.id || record.weekDate || 'week'}-${payment.cardId || index}-reserve-payment`,
         date: record.weekDate || record.weekStartDate,
+        bucketId: payment.fundingSource,
         bucketName: bucketNameById[payment.fundingSource] || 'Reserva',
         amount: -Number(payment.amount || 0),
         label: 'Usado en pago de deuda',

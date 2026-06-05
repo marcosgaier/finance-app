@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
+import { formatDisplayDate, formatIsoDate } from '../utils/dateUtils.js';
 import { isReserveFunded } from '../utils/fundingSourceUtils.js';
 import { formatMoney } from '../utils/financeEngine.js';
 
 function getTodayIsoDate() {
-  return new Date().toISOString().slice(0, 10);
+  return formatIsoDate(new Date());
 }
 
 export function ReserveBuckets({
@@ -372,11 +373,4 @@ function buildReserveMovementHistory({ activeWeek, buckets, reserveBucketMovemen
   ]
     .filter((movement) => movement.date && Number(movement.amount || 0) !== 0)
     .sort((firstMovement, secondMovement) => String(secondMovement.date).localeCompare(String(firstMovement.date)));
-}
-
-function formatDisplayDate(dateValue) {
-  if (!dateValue) return '';
-  const [year, month, day] = String(dateValue).split('T')[0].split('-');
-  if (!year || !month || !day) return dateValue;
-  return `${day}/${month}/${year}`;
 }

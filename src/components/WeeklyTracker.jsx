@@ -121,9 +121,9 @@ export function WeeklyTracker({
 }) {
   const financialWeekStartDate = useMemo(() => getCurrentFinancialWeekStartDate(), []);
   const activeWeek = financeData.activeWeek;
-  const [transactionDraft, setTransactionDraft] = useState(createEmptyTransaction(financialWeekStartDate));
-  const [extraIncomeDraft, setExtraIncomeDraft] = useState(createEmptyExtraIncome(financialWeekStartDate));
-  const [paymentDraft, setPaymentDraft] = useState(createEmptyPayment(financialWeekStartDate, financeData.cards));
+  const [transactionDraft, setTransactionDraft] = useState(createEmptyTransaction(getTodayIsoDate()));
+  const [extraIncomeDraft, setExtraIncomeDraft] = useState(createEmptyExtraIncome(getTodayIsoDate()));
+  const [paymentDraft, setPaymentDraft] = useState(createEmptyPayment(getTodayIsoDate(), financeData.cards));
   const [expandedRecordIds, setExpandedRecordIds] = useState({});
   const [editingRecordId, setEditingRecordId] = useState(null);
   const [editingRecordDraft, setEditingRecordDraft] = useState(null);
@@ -145,18 +145,18 @@ export function WeeklyTracker({
   useEffect(() => {
     setTransactionDraft((currentDraft) => ({
       ...currentDraft,
-      date: currentDraft.date || activeWeek?.weekStartDate || financialWeekStartDate,
+      date: currentDraft.date || getTodayIsoDate(),
     }));
     setExtraIncomeDraft((currentDraft) => ({
       ...currentDraft,
-      date: currentDraft.date || activeWeek?.weekStartDate || financialWeekStartDate,
+      date: currentDraft.date || getTodayIsoDate(),
     }));
     setPaymentDraft((currentDraft) => ({
       ...currentDraft,
       cardId: currentDraft.cardId || financeData.cards[0]?.id || '',
-      date: currentDraft.date || activeWeek?.weekStartDate || financialWeekStartDate,
+      date: currentDraft.date || getTodayIsoDate(),
     }));
-  }, [activeWeek?.weekStartDate, financeData.cards, financialWeekStartDate]);
+  }, [financeData.cards]);
 
   const currentFinancialWeekClosed = hasClosedRecordForWeek(financeData.weeklyRecords, financialWeekStartDate);
   const normalizedActiveWeek = activeWeek ? normalizeActiveWeek(activeWeek, weeklySummary) : null;
@@ -280,7 +280,7 @@ export function WeeklyTracker({
 
     const nextIncome = {
       id: `extra-income-${Date.now()}`,
-      date: extraIncomeDraft.date || normalizedActiveWeek.weekStartDate,
+      date: extraIncomeDraft.date || getTodayIsoDate(),
       type,
       description,
       amount,
@@ -291,7 +291,7 @@ export function WeeklyTracker({
       extraIncome: [...normalizeExtraIncome(currentWeek), nextIncome],
     }));
     setExtraIncomeDraft({
-      date: extraIncomeDraft.date || normalizedActiveWeek.weekStartDate,
+      date: getTodayIsoDate(),
       type,
       description: '',
       amount: '',
@@ -312,7 +312,7 @@ export function WeeklyTracker({
 
     const nextTransaction = {
       id: `transaction-${Date.now()}`,
-      date: transactionDraft.date || normalizedActiveWeek.weekStartDate,
+      date: transactionDraft.date || getTodayIsoDate(),
       description,
       category: transactionDraft.category,
       amount,
@@ -325,7 +325,7 @@ export function WeeklyTracker({
       variableTransactions: [...normalizeWeeklyRecordTransactions(currentWeek), nextTransaction],
     }));
     setTransactionDraft({
-      date: transactionDraft.date || normalizedActiveWeek.weekStartDate,
+      date: getTodayIsoDate(),
       description: '',
       category: transactionDraft.category,
       amount: '',
@@ -358,7 +358,7 @@ export function WeeklyTracker({
     const selectedCard = financeData.cards.find((card) => card.id === paymentDraft.cardId);
     const nextPayment = {
       id: `payment-${Date.now()}`,
-      date: paymentDraft.date || normalizedActiveWeek.weekStartDate || getTodayIsoDate(),
+      date: paymentDraft.date || getTodayIsoDate(),
       cardId: paymentDraft.cardId,
       cardName: selectedCard?.name || 'Tarjeta',
       amount,
@@ -373,7 +373,7 @@ export function WeeklyTracker({
     }));
     setPaymentDraft((currentDraft) => ({
       ...currentDraft,
-      date: currentDraft.date || normalizedActiveWeek.weekStartDate || getTodayIsoDate(),
+      date: getTodayIsoDate(),
       amount: '',
       note: '',
     }));
@@ -406,7 +406,7 @@ export function WeeklyTracker({
       payments: cardSummaries
         .map((card) => ({
           id: `payment-auto-${card.id}-${Date.now()}`,
-          date: normalizedActiveWeek.weekStartDate || getTodayIsoDate(),
+          date: getTodayIsoDate(),
           cardId: card.id,
           cardName: card.name,
           amount: Number(card[amountKey] || 0),
@@ -613,8 +613,8 @@ export function WeeklyTracker({
     };
 
     onCloseWeek(closedRecord);
-    setTransactionDraft(createEmptyTransaction(getCurrentFinancialWeekStartDate()));
-    setExtraIncomeDraft(createEmptyExtraIncome(getCurrentFinancialWeekStartDate()));
+    setTransactionDraft(createEmptyTransaction(getTodayIsoDate()));
+    setExtraIncomeDraft(createEmptyExtraIncome(getTodayIsoDate()));
   }
 
   return (
@@ -1030,7 +1030,7 @@ export function WeeklyTracker({
               <p className="text-sm font-semibold uppercase tracking-wide text-teal-700">Semana actual cerrada</p>
               <h2 className="mt-1 text-lg font-semibold text-stone-950">Semana actual cerrada</h2>
               <p className="mt-2 text-sm leading-6 text-stone-600">
-                La semana financiera del {formatDisplayDate(financialWeekStartDate)} ya fue cerrada. La prÃ³xima semana se abrirÃ¡ automÃ¡ticamente cuando empiece el nuevo ciclo.
+                La semana financiera del {formatDisplayDate(financialWeekStartDate)} ya fue cerrada. La próxima semana se abrirá automáticamente cuando empiece el nuevo ciclo.
               </p>
             </>
           ) : (

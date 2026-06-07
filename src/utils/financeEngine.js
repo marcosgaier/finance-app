@@ -39,6 +39,10 @@ const smartExtraAllocationRatio = 0.65;
 const gemCardNamePattern = /gem/i;
 const approximateWeeksPerMonthlyCycle = 30 / 7;
 
+export function isPlanCompleted(plan) {
+  return Number(plan?.balance || 0) <= 0;
+}
+
 export function calculateUrgency(weeksUntilDue) {
   if (weeksUntilDue < 0) return 'overdue';
   if (weeksUntilDue <= 4) return 'urgent';
@@ -222,12 +226,15 @@ export function buildRecommendationExplanation(urgency, weeksUntilDue, baseWeekl
 }
 
 export function enrichPaymentPlans(financeData, referenceDate = new Date()) {
-  const budget = calculateWeeklyAvailable(financeData);
-  const cardsById = Object.fromEntries(financeData.cards.map((card) => [card.id, card]));
+  const normalizedData = normalizeFinanceData(financeData);
+  const budget = calculateWeeklyAvailable(normalizedData);
+  const cardsById = Object.fromEntries(normalizedData.cards.map((card) => [card.id, card]));
 
-  const standalonePlans = financeData.paymentPlans
+  const standalonePlans = normalizedData.paymentPlans
+    .filter((plan) => !isPlanCompleted(plan))
     .map((plan) => ({
       ...plan,
+      isCompleted: false,
       card: cardsById[plan.cardId],
       ...calculateRecommendedWeeklyPayment(plan, budget.availableBeforeDebt, referenceDate),
     }))
@@ -362,6 +369,15 @@ export function sortPlansByPriority(planA, planB) {
 export function calculateWeeklyDebtReserve(financeData, referenceDate = new Date()) {
   const budget = calculateWeeklyAvailable(financeData);
   const minimumPlans = enrichPaymentPlans(financeData, referenceDate);
+  const normalizedData = normalizeFinanceData(financeData);
+  const cardsById = Object.fromEntries(normalizedData.cards.map((card) => [card.id, card]));
+  const completedPlans = normalizedData.paymentPlans
+    .filter((plan) => isPlanCompleted(plan))
+    .map((plan) => ({
+      ...plan,
+      isCompleted: true,
+      card: cardsById[plan.cardId],
+    }));
   const priorityPlans = minimumPlans.filter((plan) => plan.urgency !== 'calm');
   const calmPlans = minimumPlans.filter((plan) => plan.urgency === 'calm');
   const priorityReserve = priorityPlans.reduce((total, plan) => total + plan.recommendedPayment, 0);
@@ -385,6 +401,8 @@ export function calculateWeeklyDebtReserve(financeData, referenceDate = new Date
   const summary = {
     ...budget,
     plans,
+    activePlans: plans,
+    completedPlans,
     cardSummaries,
     priorityReserve,
     calmReserve,
@@ -450,7 +468,7 @@ export function calculateGemMinimumSummary(financeData, referenceDate = new Date
   const gemCardIds = new Set(gemCards.map((card) => card.id));
   const cycle = getGemBillingCycle(referenceDate);
   const plans = normalizedData.paymentPlans
-    .filter((plan) => gemCardIds.has(plan.cardId))
+    .filter((plan) => gemCardIds.has(plan.cardId) && !isPlanCompleted(plan))
     .map((plan) => ({
       id: plan.id,
       name: plan.name,
@@ -535,7 +553,7 @@ export function calculateCardSummaries(cards, plans) {
 }
 
 export function simulatePaymentScenario(financeData, weeklyPayment, referenceDate = new Date()) {
-  const plans = enrichPaymentPlans(financeData, referenceDate);
+  const plans = enrichPaymentPlans(financeData, referenceDate).filter((plan) => !isPlanCompleted(plan));
   let remainingPayment = Number(weeklyPayment || 0);
 
   return plans.map((plan) => {

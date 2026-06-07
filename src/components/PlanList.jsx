@@ -9,10 +9,11 @@ const urgencyStyles = {
   calm: 'border-emerald-200 bg-emerald-50 text-emerald-800',
 };
 
-export function PlanList({ plans, cards, onAddPlan, onDeletePlan, onUpdatePlan }) {
+export function PlanList({ plans = [], completedPlans = [], cards, onAddPlan, onDeletePlan, onUpdatePlan }) {
   const [expandedPlanIds, setExpandedPlanIds] = useState({});
   const [editingPlanIds, setEditingPlanIds] = useState({});
   const [priorityDetailsInitialized, setPriorityDetailsInitialized] = useState(false);
+  const [completedPlansOpen, setCompletedPlansOpen] = useState(false);
 
   useEffect(() => {
     if (priorityDetailsInitialized || plans.length === 0) return;
@@ -26,6 +27,7 @@ export function PlanList({ plans, cards, onAddPlan, onDeletePlan, onUpdatePlan }
   function collapseAll() {
     setExpandedPlanIds({});
     setEditingPlanIds({});
+    setCompletedPlansOpen(false);
   }
 
   function expandPriorityPlans() {
@@ -53,8 +55,8 @@ export function PlanList({ plans, cards, onAddPlan, onDeletePlan, onUpdatePlan }
     <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-stone-950">Próximos vencimientos</h2>
-          <p className="text-sm text-stone-500">Ordenados por urgencia y fecha.</p>
+          <h2 className="text-lg font-semibold text-stone-950">Planes activos</h2>
+          <p className="text-sm text-stone-500">Vencimientos ordenados por urgencia y fecha.</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <button
@@ -146,6 +148,90 @@ export function PlanList({ plans, cards, onAddPlan, onDeletePlan, onUpdatePlan }
             </article>
           );
         })}
+        {plans.length === 0 ? (
+          <p className="rounded-md border border-dashed border-emerald-300 bg-emerald-50 p-4 text-sm text-emerald-900">
+            No hay planes activos pendientes.
+          </p>
+        ) : null}
+      </div>
+
+      <div className="mt-5 rounded-lg border border-stone-200 bg-stone-50">
+        <button
+          className="flex w-full items-center justify-between gap-3 p-4 text-left"
+          type="button"
+          onClick={() => setCompletedPlansOpen((currentValue) => !currentValue)}
+        >
+          <span>
+            <span className="block text-sm font-semibold uppercase tracking-wide text-stone-700">Planes completados</span>
+            <span className="mt-1 block text-sm text-stone-500">
+              {completedPlans.length} plan{completedPlans.length === 1 ? '' : 'es'} con saldo en cero.
+            </span>
+          </span>
+          <span className="shrink-0 rounded-full border border-stone-300 bg-white px-2.5 py-1 text-xs font-semibold text-stone-700">
+            {completedPlansOpen ? 'Ocultar' : 'Ver'}
+          </span>
+        </button>
+
+        {completedPlansOpen ? (
+          <div className="grid gap-3 border-t border-stone-200 p-4">
+            {completedPlans.length > 0 ? (
+              completedPlans.map((plan) => {
+                const editorVisible = Boolean(editingPlanIds[plan.id]);
+
+                return (
+                  <article key={plan.id} className="rounded-lg border border-emerald-200 bg-white p-4">
+                    <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="text-base font-semibold text-stone-950">{plan.name}</h3>
+                          <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-800">
+                            Completado
+                          </span>
+                        </div>
+                        <p className="mt-1 text-sm text-stone-500">{plan.card?.name || 'Sin tarjeta'}</p>
+                      </div>
+
+                      <div className="grid gap-2 sm:grid-cols-3 lg:min-w-[420px]">
+                        <Metric label="Tarjeta" value={plan.card?.name || 'Sin tarjeta'} />
+                        <Metric label="Saldo actual" value={formatMoney(plan.balance)} />
+                        <Metric label="Estado" value="Completado" strong />
+                      </div>
+                    </div>
+
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <button
+                        className="rounded-md border border-sky-200 bg-sky-50 px-3 py-2 text-sm font-semibold text-sky-800 hover:border-sky-400"
+                        type="button"
+                        onClick={() => togglePlanEditor(plan.id)}
+                      >
+                        {editorVisible ? 'Cerrar edición' : 'Editar'}
+                      </button>
+                      <button
+                        className="rounded-md border border-red-200 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50"
+                        type="button"
+                        onClick={() => onDeletePlan(plan.id)}
+                      >
+                        Eliminar
+                      </button>
+                    </div>
+
+                    {editorVisible ? (
+                      <PlanEditor
+                        cards={cards}
+                        plan={plan}
+                        onUpdatePlan={(patch) => onUpdatePlan(plan.id, patch)}
+                      />
+                    ) : null}
+                  </article>
+                );
+              })
+            ) : (
+              <p className="rounded-md border border-dashed border-stone-300 bg-white p-4 text-sm text-stone-500">
+                Todavía no hay planes completados.
+              </p>
+            )}
+          </div>
+        ) : null}
       </div>
     </section>
   );

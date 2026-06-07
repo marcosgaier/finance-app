@@ -372,7 +372,7 @@ export function Dashboard({ financeData, setFinanceData }) {
               <p className="mt-2 text-base leading-7 text-stone-800">{decisionMessage}</p>
             </section>
 
-            <UpcomingDueSummary plans={weeklySummary.plans} />
+            <UpcomingDueSummary plans={weeklySummary.activePlans} />
           </div>
         )}
 
@@ -390,7 +390,14 @@ export function Dashboard({ financeData, setFinanceData }) {
                 suggestedSafeWeeklyPayment: weeklySummary.suggestedSafeWeeklyPayment,
               }}
             />
-            <PlanList plans={weeklySummary.plans} cards={financeData.cards} onAddPlan={addPlan} onDeletePlan={deletePlan} onUpdatePlan={updatePlan} />
+            <PlanList
+              plans={weeklySummary.activePlans}
+              completedPlans={weeklySummary.completedPlans}
+              cards={financeData.cards}
+              onAddPlan={addPlan}
+              onDeletePlan={deletePlan}
+              onUpdatePlan={updatePlan}
+            />
           </div>
         )}
 

@@ -10,7 +10,8 @@ const urgencyStyles = {
 };
 
 export function UpcomingDueSummary({ plans }) {
-  const upcomingPlans = plans.slice(0, 4);
+  const activePlans = (plans || []).filter((plan) => !plan.isCompleted && Number(plan.balance || 0) > 0);
+  const upcomingPlans = activePlans.slice(0, 4);
 
   return (
     <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
@@ -20,7 +21,7 @@ export function UpcomingDueSummary({ plans }) {
           <p className="text-sm text-stone-500">Resumen corto de lo más cercano.</p>
         </div>
         <span className="rounded-full border border-stone-200 bg-stone-50 px-3 py-1 text-xs font-semibold text-stone-600">
-          {plans.length} planes
+          {activePlans.length} planes
         </span>
       </div>
 

@@ -1,11 +1,14 @@
 import React, { useMemo, useState } from 'react';
-import { calculateWeeklyDebtReserve, formatMoney, simulatePaymentScenario } from '../utils/financeEngine.js';
+import { calculateWeeklyDebtReserve, formatMoney, isPlanCompleted, simulatePaymentScenario } from '../utils/financeEngine.js';
 
 const presetPayments = [200, 280, 350];
 
 export function ScenarioSimulator({ financeData }) {
   const [weeklyPayment, setWeeklyPayment] = useState(280);
-  const scenarioPlans = useMemo(() => simulatePaymentScenario(financeData, weeklyPayment), [financeData, weeklyPayment]);
+  const scenarioPlans = useMemo(
+    () => simulatePaymentScenario(financeData, weeklyPayment).filter((plan) => !isPlanCompleted(plan)),
+    [financeData, weeklyPayment],
+  );
   const weeklySummary = useMemo(() => calculateWeeklyDebtReserve(financeData), [financeData]);
   const weeklyGemBuffer = Number(weeklySummary.gemMinimumSummary?.weeklyBuffer || 0);
   const minimumSafeWeeklyPayment = Number(weeklySummary.minimumToAvoidExpiry || 0) + weeklyGemBuffer;

@@ -6,6 +6,7 @@ import { GemMinimumSummary } from '../components/GemMinimumSummary.jsx';
 import { PlanList } from '../components/PlanList.jsx';
 import { ReserveBuckets } from '../components/ReserveBuckets.jsx';
 import { ScenarioSimulator } from '../components/ScenarioSimulator.jsx';
+import { SettingsPanel } from '../components/SettingsPanel.jsx';
 import { StatCard } from '../components/StatCard.jsx';
 import { UpcomingDueSummary } from '../components/UpcomingDueSummary.jsx';
 import { WeeklyTracker } from '../components/WeeklyTracker.jsx';
@@ -435,13 +436,7 @@ export function Dashboard({ financeData, setFinanceData }) {
         {activeTab === 'simulator' && <ScenarioSimulator financeData={effectiveFinanceData} />}
 
         {activeTab === 'settings' && (
-          <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
-            <p className="text-sm font-semibold uppercase tracking-wide text-teal-700">Ajustes</p>
-            <h2 className="mt-2 text-lg font-semibold text-stone-950">Funciones futuras</h2>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-stone-600">
-              Acá vamos a poder agregar exportar/importar datos, resetear la app y preparar sincronización cuando pasemos de localStorage a una base online.
-            </p>
-          </section>
+          <SettingsPanel financeData={financeData} onReplaceFinanceData={setFinanceData} />
         )}
       </div>
     </main>

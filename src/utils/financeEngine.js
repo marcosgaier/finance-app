@@ -581,3 +581,14 @@ export function formatMoney(value) {
     maximumFractionDigits: hasCents ? 2 : 0,
   }).format(amount);
 }
+
+export function formatActionMoney(value) {
+  const amount = Number(value || 0);
+
+  return new Intl.NumberFormat('es-NZ', {
+    style: 'currency',
+    currency: 'NZD',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount);
+}

@@ -1,6 +1,6 @@
 import React from 'react';
 import { isWeeklyIncomeFunded } from '../utils/fundingSourceUtils.js';
-import { formatMoney } from '../utils/financeEngine.js';
+import { formatActionMoney } from '../utils/financeEngine.js';
 import {
   calculateAdjustedWeeklyExpenseRows,
   calculateExtraIncomeTotal,
@@ -63,36 +63,36 @@ export function WeeklyActionPlan({ financeData, weeklySummary }) {
         </div>
         <div className={`rounded-md border px-3 py-2 ${estimatedFree >= 0 ? 'border-emerald-200 bg-emerald-50' : 'border-amber-200 bg-amber-50'}`}>
           <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">Planificado: te quedaría</p>
-          <p className="text-lg font-bold text-stone-950">{formatMoney(estimatedFree)}</p>
+          <p className="text-lg font-bold text-stone-950">{formatActionMoney(estimatedFree)}</p>
         </div>
       </div>
 
       <div className="mt-4 grid gap-3 lg:grid-cols-4">
         <ActionStep
           label="Total disponible"
-          value={formatMoney(totalIncome)}
+          value={formatActionMoney(totalIncome)}
           helper={
             openingBalance > 0
-              ? `Saldo inicial ${formatMoney(openingBalance)} + ingreso principal ${formatMoney(baseIncomeUsed)}${extraIncomeTotal > 0 ? ` + extras ${formatMoney(extraIncomeTotal)}` : ''}.`
+              ? `Saldo inicial ${formatActionMoney(openingBalance)} + ingreso principal ${formatActionMoney(baseIncomeUsed)}${extraIncomeTotal > 0 ? ` + extras ${formatActionMoney(extraIncomeTotal)}` : ''}.`
               : extraIncomeTotal > 0
-                ? `Ingreso principal ${formatMoney(baseIncomeUsed)} + extras ${formatMoney(extraIncomeTotal)}.`
+                ? `Ingreso principal ${formatActionMoney(baseIncomeUsed)} + extras ${formatActionMoney(extraIncomeTotal)}.`
                 : 'Ingreso real cobrado si existe; si no, ingreso base esperado.'
           }
         />
         <ActionStep
           label="Separá"
-          value={formatMoney(fixedReserve)}
-          helper={`Gastos semanales + servicios mensuales prorrateados (${formatMoney(weeklySummary.monthlyReserveWeekly)}).`}
+          value={formatActionMoney(fixedReserve)}
+          helper={`Gastos semanales + servicios mensuales prorrateados (${formatActionMoney(weeklySummary.monthlyReserveWeekly)}).`}
         />
         <ActionStep
           label="Separá"
-          value={formatMoney(variableBudget)}
-          helper={`Supermercado ${formatMoney(weeklySummary.groceries)} + combustible ${formatMoney(weeklySummary.fuel)}.`}
+          value={formatActionMoney(variableBudget)}
+          helper={`Supermercado ${formatActionMoney(weeklySummary.groceries)} + combustible ${formatActionMoney(weeklySummary.fuel)}.`}
         />
         <ActionStep
           label="Pagá mínimo seguro"
-          value={formatMoney(debtPayment)}
-          helper={`Base ${formatMoney(weeklySummary.minimumToAvoidExpiry)} + colchón GEM ${formatMoney(weeklyGemBuffer)}.`}
+          value={formatActionMoney(debtPayment)}
+          helper={`Base ${formatActionMoney(weeklySummary.minimumToAvoidExpiry)} + colchón GEM ${formatActionMoney(weeklyGemBuffer)}.`}
           tone="warning"
         />
       </div>
@@ -103,16 +103,16 @@ export function WeeklyActionPlan({ financeData, weeklySummary }) {
             <div>
               <p className="text-sm font-semibold text-stone-900">Ya registrado esta semana</p>
               <p className="mt-1 text-sm text-stone-600">
-                Super {formatMoney(weeklyFundedTransactionTotals.groceries)} · combustible {formatMoney(weeklyFundedTransactionTotals.fuel)} · otros {formatMoney(weeklyFundedTransactionTotals.other)} · deudas {formatMoney(weeklyFundedDebtPayments)} · reservas {formatMoney(weeklyFundedReserveTransfers)}
+                Super {formatActionMoney(weeklyFundedTransactionTotals.groceries)} · combustible {formatActionMoney(weeklyFundedTransactionTotals.fuel)} · otros {formatActionMoney(weeklyFundedTransactionTotals.other)} · deudas {formatActionMoney(weeklyFundedDebtPayments)} · reservas {formatActionMoney(weeklyFundedReserveTransfers)}
               </p>
               {reserveFundedTotal > 0 ? (
-                <p className="mt-1 text-sm text-stone-500">Usado desde reservas: {formatMoney(reserveFundedTotal)}</p>
+                <p className="mt-1 text-sm text-stone-500">Usado desde reservas: {formatActionMoney(reserveFundedTotal)}</p>
               ) : null}
               <p className="mt-1 text-xs text-stone-500">El margen descuenta solo lo que salió de semana actual.</p>
             </div>
             <div className={`rounded-md border px-3 py-2 ${actualRemaining >= 0 ? 'border-emerald-200 bg-white' : 'border-amber-200 bg-amber-50'}`}>
               <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">Real hasta ahora</p>
-              <p className="text-base font-bold text-stone-950">{formatMoney(actualRemaining)}</p>
+              <p className="text-base font-bold text-stone-950">{formatActionMoney(actualRemaining)}</p>
             </div>
           </div>
         </div>

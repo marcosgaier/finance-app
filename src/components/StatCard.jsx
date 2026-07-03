@@ -1,7 +1,7 @@
 import React from 'react';
-import { formatMoney } from '../utils/financeEngine.js';
+import { formatActionMoney, formatMoney } from '../utils/financeEngine.js';
 
-export function StatCard({ label, value, helper, tone = 'default' }) {
+export function StatCard({ label, value, helper, tone = 'default', actionAmount = false }) {
   const toneClass = {
     default: 'border-stone-200 bg-white',
     positive: 'border-emerald-200 bg-emerald-50',
@@ -13,7 +13,9 @@ export function StatCard({ label, value, helper, tone = 'default' }) {
   return (
     <section className={`rounded-lg border p-4 shadow-sm ${toneClass}`}>
       <p className="text-sm font-medium text-stone-500">{label}</p>
-      <p className="mt-2 text-2xl font-semibold text-stone-950">{typeof value === 'number' ? formatMoney(value) : value}</p>
+      <p className="mt-2 text-2xl font-semibold text-stone-950">
+        {typeof value === 'number' ? (actionAmount ? formatActionMoney(value) : formatMoney(value)) : value}
+      </p>
       {helper ? <p className="mt-2 text-sm leading-5 text-stone-600">{helper}</p> : null}
     </section>
   );

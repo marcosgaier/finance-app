@@ -12,7 +12,7 @@ import { UpcomingDueSummary } from '../components/UpcomingDueSummary.jsx';
 import { WeeklyTracker } from '../components/WeeklyTracker.jsx';
 import { WeeklyActionPlan } from '../components/WeeklyActionPlan.jsx';
 import { WeeklyStatus } from '../components/WeeklyStatus.jsx';
-import { calculateWeeklyDebtReserve, formatMoney } from '../utils/financeEngine.js';
+import { calculateWeeklyDebtReserve, formatActionMoney } from '../utils/financeEngine.js';
 
 const dashboardTabs = [
   { id: 'dashboard', label: 'Dashboard' },
@@ -58,14 +58,14 @@ export function Dashboard({ financeData, setFinanceData }) {
       ? {
           label: 'No llegás al mínimo seguro',
           tone: 'danger',
-          message: `Esta semana no llegás al mínimo semanal seguro de ${formatMoney(minimumSafeWeeklyPayment)}. Te faltarían ${formatMoney(safeWeeklyShortfall)}.`,
+          message: `Esta semana no llegás al mínimo semanal seguro de ${formatActionMoney(minimumSafeWeeklyPayment)}. Te faltarían ${formatActionMoney(safeWeeklyShortfall)}.`,
         }
       : {
           label: marginAfterMinimumSafe < 30 ? 'Llegás muy justo' : 'Llegás al mínimo seguro',
           tone: marginAfterMinimumSafe < 30 ? 'warning' : 'positive',
-          message: `Cubriendo el mínimo semanal seguro de ${formatMoney(minimumSafeWeeklyPayment)}, te quedarían ${formatMoney(marginAfterMinimumSafe)} estimados esta semana.`,
+          message: `Cubriendo el mínimo semanal seguro de ${formatActionMoney(minimumSafeWeeklyPayment)}, te quedarían ${formatActionMoney(marginAfterMinimumSafe)} estimados esta semana.`,
         };
-  const decisionMessage = `Piso seguro esta semana: ${formatMoney(minimumSafeWeeklyPayment)}. Si pagás eso, te quedarían ${formatMoney(marginAfterMinimumSafe)} estimados. Podés pagar más manualmente si querés acelerar deuda.`;
+  const decisionMessage = `Piso seguro esta semana: ${formatActionMoney(minimumSafeWeeklyPayment)}. Si pagás eso, te quedarían ${formatActionMoney(marginAfterMinimumSafe)} estimados. Podés pagar más manualmente si querés acelerar deuda.`;
 
   function updatePlan(planId, patch) {
     setFinanceData((currentData) => ({
@@ -345,8 +345,8 @@ export function Dashboard({ financeData, setFinanceData }) {
             <WeeklyStatus summary={weeklySummary} statusOverride={weeklyStatusOverride} />
 
             <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-              <StatCard label="Ingreso usado esta semana" value={weeklySummary.weeklyIncome} helper="Saldo inicial + ingreso principal usado + ingresos extra de la semana activa." />
-              <StatCard label="Disponible para deudas" value={weeklySummary.availableForDebt} helper="Después de números semanales, servicios, supermercado y combustible." tone="strong" />
+              <StatCard label="Ingreso usado esta semana" value={weeklySummary.weeklyIncome} helper="Saldo inicial + ingreso principal usado + ingresos extra de la semana activa." actionAmount />
+              <StatCard label="Disponible para deudas" value={weeklySummary.availableForDebt} helper="Después de números semanales, servicios, supermercado y combustible." tone="strong" actionAmount />
               <StatCard
                 label={marginAfterMinimumSafe < 0 ? 'Faltante para mínimo seguro' : 'Margen después del mínimo seguro'}
                 value={Math.abs(marginAfterMinimumSafe)}
@@ -356,15 +356,16 @@ export function Dashboard({ financeData, setFinanceData }) {
                     : 'Estimado después de pagar lo necesario para estar tranquilo.'
                 }
                 tone={marginAfterMinimumSafe < 0 ? 'danger' : 'positive'}
+                actionAmount
               />
             </section>
 
             <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
               <p className="text-sm font-semibold uppercase tracking-wide text-teal-700">Pagos semanales</p>
               <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                <StatCard label="Mínimo base semanal" value={weeklySummary.minimumToAvoidExpiry} helper="Piso interest-free para llegar a vencimientos." />
-                <StatCard label="Colchón GEM semanal" value={weeklyGemBuffer} helper="Buffer conservador por mínimos GEM." />
-                <StatCard label="Mínimo semanal seguro" value={minimumSafeWeeklyPayment} helper="El piso que conviene tomar en serio." tone="warning" />
+                <StatCard label="Mínimo base semanal" value={weeklySummary.minimumToAvoidExpiry} helper="Piso interest-free para llegar a vencimientos." actionAmount />
+                <StatCard label="Colchón GEM semanal" value={weeklyGemBuffer} helper="Buffer conservador por mínimos GEM." actionAmount />
+                <StatCard label="Mínimo semanal seguro" value={minimumSafeWeeklyPayment} helper="El piso que conviene tomar en serio." tone="warning" actionAmount />
               </div>
             </section>
 

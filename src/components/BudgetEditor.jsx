@@ -1,5 +1,5 @@
 import React from 'react';
-import { normalizeFinanceData } from '../utils/financeEngine.js';
+import { formatActionMoney, normalizeFinanceData } from '../utils/financeEngine.js';
 
 export function BudgetEditor({ financeData, onChange }) {
   function updateField(path, value) {
@@ -109,7 +109,7 @@ export function BudgetEditor({ financeData, onChange }) {
             <div className="flex flex-wrap items-center gap-2">
               <div className="rounded-md border border-sky-200 bg-sky-50 px-3 py-2 text-right">
                 <p className="text-xs font-semibold uppercase tracking-wide text-sky-700">Guardar por semana</p>
-                <p className="text-base font-bold text-sky-950">${Math.round(monthlyWeeklyReserve)}</p>
+                <p className="text-base font-bold text-sky-950">{formatActionMoney(monthlyWeeklyReserve)}</p>
               </div>
               <button
                 className="rounded-md border border-stone-300 bg-white px-3 py-2 text-xs font-semibold text-stone-700 hover:border-stone-500"

@@ -1,4 +1,4 @@
-import { calculateWeeksUntilDue } from './dateUtils.js';
+﻿import { calculateWeeksUntilDue } from './dateUtils.js';
 
 const urgencyRank = {
   overdue: 0,
@@ -10,15 +10,23 @@ const urgencyRank = {
 const urgencyLabels = {
   overdue: 'Atrasado',
   urgent: 'Urgente',
-  attention: 'Atención',
+  attention: 'AtenciÃ³n',
   calm: 'Tranquilo',
 };
 
 const urgencyDescriptions = {
-  overdue: 'La fecha ya pasó, conviene resolverlo antes de nuevos planes.',
+  overdue: 'La fecha ya pasÃ³, conviene resolverlo antes de nuevos planes.',
   urgent: 'Vence en 4 semanas o menos, por eso toma prioridad alta.',
   attention: 'Vence dentro de 5 a 12 semanas, ya necesita una reserva consistente.',
-  calm: 'Vence en más de 12 semanas, se mantiene visible sin presionar de más.',
+  calm: 'Vence en mÃ¡s de 12 semanas, se mantiene visible sin presionar de mÃ¡s.',
+};
+
+const coverageLabels = {
+  covered: 'Cubierto',
+  tight: 'Justo',
+  'at-risk': 'En riesgo',
+  overdue: 'Vencido',
+  unknown: 'Sin fecha válida',
 };
 
 const monthlyServiceTemplates = [
@@ -184,9 +192,10 @@ function normalizeMonthlyServices(monthlyExpenses = []) {
 }
 
 export function calculateBaseWeeklyPayment(plan, referenceDate = new Date()) {
-  const weeksUntilDue = calculateWeeksUntilDue(plan.dueDate, referenceDate);
+  const hasValidDueDate = Boolean(normalizeDueDate(plan.dueDate));
+  const weeksUntilDue = hasValidDueDate ? calculateWeeksUntilDue(plan.dueDate, referenceDate) : null;
   const adjustedBalance = Math.max(0, Number(plan.balance || 0) - Number(plan.thirdPartyContribution || 0));
-  const payableWeeks = Math.max(1, weeksUntilDue);
+  const payableWeeks = Math.max(1, weeksUntilDue ?? 1);
 
   return {
     adjustedBalance,
@@ -197,7 +206,7 @@ export function calculateBaseWeeklyPayment(plan, referenceDate = new Date()) {
 
 export function calculateRecommendedWeeklyPayment(plan, weeklyAvailable, referenceDate = new Date()) {
   const base = calculateBaseWeeklyPayment(plan, referenceDate);
-  const urgency = calculateUrgency(base.weeksUntilDue);
+  const urgency = base.weeksUntilDue === null ? 'calm' : calculateUrgency(base.weeksUntilDue);
   const requiredWeeklyPayment = Math.min(base.adjustedBalance, Math.max(0, base.baseWeeklyPayment));
 
   return {
@@ -211,18 +220,229 @@ export function calculateRecommendedWeeklyPayment(plan, weeklyAvailable, referen
   };
 }
 
+export function isPastDueDate(dueDate, referenceDate = new Date()) {
+  const due = parseLocalDate(dueDate);
+  const reference = getLocalStartOfDay(referenceDate);
+
+  if (!due || Number.isNaN(reference.getTime())) return false;
+  return due.getTime() < reference.getTime();
+}
+
+export function groupPlansByDueDate(plans = []) {
+  const groupsByDate = new Map();
+
+  plans
+    .filter((plan) => Number(plan.adjustedBalance || 0) > 0)
+    .forEach((plan) => {
+      const dueDate = normalizeDueDate(plan.dueDate);
+      if (!dueDate) return;
+
+      const currentGroup = groupsByDate.get(dueDate) || {
+        dueDate,
+        plans: [],
+        groupAdjustedBalance: 0,
+      };
+
+      currentGroup.plans.push(plan);
+      currentGroup.groupAdjustedBalance += Number(plan.adjustedBalance || 0);
+      groupsByDate.set(dueDate, currentGroup);
+    });
+
+  return [...groupsByDate.values()].sort(
+    (groupA, groupB) => parseLocalDate(groupA.dueDate).getTime() - parseLocalDate(groupB.dueDate).getTime(),
+  );
+}
+
+export function classifyCoverageStatus({
+  adjustedBalance,
+  isPastDue,
+  coverageGap,
+  surplusWeeks,
+  paymentOpportunities,
+}) {
+  if (Number(adjustedBalance || 0) <= 0) {
+    return {
+      coverageStatus: 'covered',
+      coverageLabel: coverageLabels.covered,
+      coverageReason: 'third-party-covered',
+    };
+  }
+
+  if (isPastDue) {
+    return {
+      coverageStatus: 'overdue',
+      coverageLabel: coverageLabels.overdue,
+      coverageReason: 'past-due',
+    };
+  }
+
+  if (Number(coverageGap || 0) > 0) {
+    return {
+      coverageStatus: 'at-risk',
+      coverageLabel: coverageLabels['at-risk'],
+      coverageReason: 'capacity-gap',
+    };
+  }
+
+  if (Number(paymentOpportunities || 0) > 1 && surplusWeeks !== null && Number(surplusWeeks) < 1) {
+    return {
+      coverageStatus: 'tight',
+      coverageLabel: coverageLabels.tight,
+      coverageReason: 'less-than-one-week-surplus',
+    };
+  }
+
+  return {
+    coverageStatus: 'covered',
+    coverageLabel: coverageLabels.covered,
+    coverageReason: 'covered',
+  };
+}
+
+export function buildCoverageTimeline({
+  plans = [],
+  affordableWeeklyCapacity,
+  currentDebtFunds = 0,
+  referenceDate = new Date(),
+}) {
+  const effectiveAffordableCapacity = Math.max(0, Number(affordableWeeklyCapacity || 0));
+  let requiredCumulativeByDue = 0;
+
+  return groupPlansByDueDate(plans).map((group) => {
+    requiredCumulativeByDue += group.groupAdjustedBalance;
+
+    const weeksUntilDue = calculateWeeksUntilDue(group.dueDate, referenceDate);
+    const pastDue = isPastDueDate(group.dueDate, referenceDate);
+    const paymentOpportunities = pastDue ? 0 : Math.max(1, weeksUntilDue);
+    const projectedFundsByDue =
+      Number(currentDebtFunds || 0) + effectiveAffordableCapacity * paymentOpportunities;
+    const coverageSurplus = projectedFundsByDue - requiredCumulativeByDue;
+    const coverageGap = Math.max(0, requiredCumulativeByDue - projectedFundsByDue);
+    const surplusWeeks =
+      effectiveAffordableCapacity > 0 ? coverageSurplus / effectiveAffordableCapacity : null;
+    const groupStatus = classifyCoverageStatus({
+      adjustedBalance: group.groupAdjustedBalance,
+      isPastDue: isPastDueDate(group.dueDate, referenceDate),
+      coverageGap,
+      surplusWeeks,
+      paymentOpportunities,
+    });
+
+    return {
+      ...group,
+      weeksUntilDue,
+      paymentOpportunities,
+      requiredCumulativeByDue,
+      projectedFundsByDue,
+      coverageGap,
+      coverageSurplus,
+      coverageRatio: requiredCumulativeByDue > 0 ? projectedFundsByDue / requiredCumulativeByDue : null,
+      surplusWeeks,
+      coverageStatus: groupStatus.coverageStatus,
+      coverageLabel: groupStatus.coverageLabel,
+      coverageReason: groupStatus.coverageReason,
+      coverageGroupPlanIds: group.plans.map((plan) => plan.id),
+    };
+  });
+}
+
+export function applyCoverageStatusToPlans({
+  plans = [],
+  affordableWeeklyCapacity,
+  currentDebtFunds = 0,
+  referenceDate = new Date(),
+}) {
+  const coverageTimeline = buildCoverageTimeline({
+    plans,
+    affordableWeeklyCapacity,
+    currentDebtFunds,
+    referenceDate,
+  });
+  const coverageByPlanId = new Map();
+
+  coverageTimeline.forEach((group) => {
+    group.coverageGroupPlanIds.forEach((planId) => {
+      coverageByPlanId.set(planId, group);
+    });
+  });
+
+  const coveredPlans = plans.map((plan) => {
+    const adjustedBalance = Number(plan.adjustedBalance || 0);
+
+    if (adjustedBalance <= 0) {
+      const status = classifyCoverageStatus({ adjustedBalance });
+
+      return {
+        ...plan,
+        coverageStatus: status.coverageStatus,
+        coverageLabel: status.coverageLabel,
+        coverageReason: status.coverageReason,
+        coverageGap: 0,
+        coverageSurplus: null,
+        coverageRatio: null,
+        surplusWeeks: null,
+        requiredCumulativeByDue: null,
+        projectedFundsByDue: null,
+        coverageDueDate: normalizeDueDate(plan.dueDate),
+        coverageGroupPlanIds: [plan.id],
+      };
+    }
+
+    if (!normalizeDueDate(plan.dueDate)) {
+      return {
+        ...plan,
+        coverageStatus: 'unknown',
+        coverageLabel: coverageLabels.unknown,
+        coverageReason: 'invalid-due-date',
+        coverageGap: null,
+        coverageSurplus: null,
+        coverageRatio: null,
+        surplusWeeks: null,
+        requiredCumulativeByDue: null,
+        projectedFundsByDue: null,
+        coverageDueDate: '',
+        coverageGroupPlanIds: [plan.id],
+      };
+    }
+
+    const coverageGroup = coverageByPlanId.get(plan.id);
+    if (!coverageGroup) return plan;
+
+    return {
+      ...plan,
+      coverageStatus: coverageGroup.coverageStatus,
+      coverageLabel: coverageGroup.coverageLabel,
+      coverageReason: coverageGroup.coverageReason,
+      coverageGap: coverageGroup.coverageGap,
+      coverageSurplus: coverageGroup.coverageSurplus,
+      coverageRatio: coverageGroup.coverageRatio,
+      surplusWeeks: coverageGroup.surplusWeeks,
+      requiredCumulativeByDue: coverageGroup.requiredCumulativeByDue,
+      projectedFundsByDue: coverageGroup.projectedFundsByDue,
+      coverageDueDate: coverageGroup.dueDate,
+      coverageGroupPlanIds: coverageGroup.coverageGroupPlanIds,
+      paymentOpportunities: coverageGroup.paymentOpportunities,
+    };
+  });
+
+  return {
+    plans: coveredPlans,
+    coverageTimeline,
+  };
+}
+
 export function buildRecommendationExplanation(urgency, weeksUntilDue, baseWeeklyPayment, recommendedPayment, rolloverPressure) {
-  const weekText = weeksUntilDue < 0 ? 'ya venció' : `faltan ${weeksUntilDue} semana${weeksUntilDue === 1 ? '' : 's'}`;
-  const standaloneText = `Si este plan estuviera solo, pediría ${formatMoney(baseWeeklyPayment)} por semana.`;
+  const weekText = weeksUntilDue < 0 ? 'ya venciÃ³' : `faltan ${weeksUntilDue} semana${weeksUntilDue === 1 ? '' : 's'}`;
+  const standaloneText = `Si este plan estuviera solo, pedirÃ­a ${formatMoney(baseWeeklyPayment)} por semana.`;
 
   if (recommendedPayment < baseWeeklyPayment) {
-    return `${urgencyDescriptions[urgency]} ${standaloneText} Como los pagos de vencimientos anteriores se liberan después, esta semana alcanza con sumar ${formatMoney(recommendedPayment)} para sostener una reserva total de ${formatMoney(rolloverPressure)}.`;
+    return `${urgencyDescriptions[urgency]} ${standaloneText} Como los pagos de vencimientos anteriores se liberan despuÃ©s, esta semana alcanza con sumar ${formatMoney(recommendedPayment)} para sostener una reserva total de ${formatMoney(rolloverPressure)}.`;
   }
 
   if (urgency === 'calm') {
     return `${urgencyDescriptions[urgency]} ${standaloneText} Para llegar sin correr al final, conviene sumar ${formatMoney(recommendedPayment)} a la reserva semanal.`;
   }
-  return `${urgencyDescriptions[urgency]} Como ${weekText}, necesitás reservar ${formatMoney(recommendedPayment)} por semana para cubrirlo a tiempo.`;
+  return `${urgencyDescriptions[urgency]} Como ${weekText}, necesitÃ¡s reservar ${formatMoney(recommendedPayment)} por semana para cubrirlo a tiempo.`;
 }
 
 export function enrichPaymentPlans(financeData, referenceDate = new Date()) {
@@ -273,62 +493,62 @@ export function applyRolloverRecommendations(plans) {
 }
 
 export function classifyLifeMargin(lifeMargin) {
-  if (lifeMargin < 0) return { key: 'critical', label: 'Crítico', tone: 'danger' };
+  if (lifeMargin < 0) return { key: 'critical', label: 'CrÃ­tico', tone: 'danger' };
   if (lifeMargin < 30) return { key: 'very-tight', label: 'Muy justo', tone: 'warning' };
   if (lifeMargin < 75) return { key: 'tight', label: 'Ajustado', tone: 'warning' };
   if (lifeMargin < 150) return { key: 'manageable', label: 'Manejable', tone: 'positive' };
-  return { key: 'comfortable', label: 'Cómodo', tone: 'positive' };
+  return { key: 'comfortable', label: 'CÃ³modo', tone: 'positive' };
 }
 
 export function buildDecisionMessage(summary) {
   if (summary.weeklyShortfall > 0) {
-    return `Esta semana quedás ${formatMoney(summary.weeklyShortfall)} corto para no vencer. Necesitás compensarlo antes del próximo vencimiento.`;
+    return `Esta semana quedÃ¡s ${formatMoney(summary.weeklyShortfall)} corto para no vencer. NecesitÃ¡s compensarlo antes del prÃ³ximo vencimiento.`;
   }
 
   if (summary.smartExtraReserve > 0) {
-    return `Llegás a los vencimientos. Pagar ${formatMoney(summary.recommendedPayment)} esta semana suma ${formatMoney(summary.smartExtraReserve)} extra para acelerar deuda y te deja ${formatMoney(summary.lifeMargin)} de margen.`;
+    return `LlegÃ¡s a los vencimientos. Pagar ${formatMoney(summary.recommendedPayment)} esta semana suma ${formatMoney(summary.smartExtraReserve)} extra para acelerar deuda y te deja ${formatMoney(summary.lifeMargin)} de margen.`;
   }
 
-  return `Llegás a los vencimientos con el mínimo de ${formatMoney(summary.minimumToAvoidExpiry)}. No sugiero extra porque conviene proteger tu margen de vida.`;
+  return `LlegÃ¡s a los vencimientos con el mÃ­nimo de ${formatMoney(summary.minimumToAvoidExpiry)}. No sugiero extra porque conviene proteger tu margen de vida.`;
 }
 
 export function buildWeeklyStatus(summary) {
   if (summary.weeklyShortfall > 0) {
     return {
-      label: 'Semana crítica',
+      label: 'Semana crÃ­tica',
       tone: 'danger',
-      message: `Te faltan ${formatMoney(summary.weeklyShortfall)} para cubrir el mínimo y no caer en vencimientos.`,
+      message: `Te faltan ${formatMoney(summary.weeklyShortfall)} para cubrir el mÃ­nimo y no caer en vencimientos.`,
     };
   }
 
   if (summary.lifeMargin < 30) {
     return {
-      label: 'Llegás muy justo',
+      label: 'LlegÃ¡s muy justo',
       tone: 'warning',
-      message: `Cubrirías el mínimo, pero quedarías con solo ${formatMoney(summary.lifeMargin)} libres esta semana.`,
+      message: `CubrirÃ­as el mÃ­nimo, pero quedarÃ­as con solo ${formatMoney(summary.lifeMargin)} libres esta semana.`,
     };
   }
 
   if (summary.lifeMargin < 75) {
     return {
-      label: 'Llegás ajustado',
+      label: 'LlegÃ¡s ajustado',
       tone: 'warning',
-      message: `Llegás a los vencimientos y te quedan ${formatMoney(summary.lifeMargin)} de margen.`,
+      message: `LlegÃ¡s a los vencimientos y te quedan ${formatMoney(summary.lifeMargin)} de margen.`,
     };
   }
 
   if (summary.smartExtraReserve > 0) {
     return {
-      label: 'Llegás y acelerás',
+      label: 'LlegÃ¡s y acelerÃ¡s',
       tone: 'positive',
-      message: `Podés cubrir el mínimo, pagar ${formatMoney(summary.smartExtraReserve)} extra y quedar con ${formatMoney(summary.lifeMargin)} libres.`,
+      message: `PodÃ©s cubrir el mÃ­nimo, pagar ${formatMoney(summary.smartExtraReserve)} extra y quedar con ${formatMoney(summary.lifeMargin)} libres.`,
     };
   }
 
   return {
-    label: 'Llegás bien',
+    label: 'LlegÃ¡s bien',
     tone: 'positive',
-    message: `Cubriendo el mínimo de ${formatMoney(summary.minimumToAvoidExpiry)}, te quedan ${formatMoney(summary.lifeMargin)} libres.`,
+    message: `Cubriendo el mÃ­nimo de ${formatMoney(summary.minimumToAvoidExpiry)}, te quedan ${formatMoney(summary.lifeMargin)} libres.`,
   };
 }
 
@@ -386,7 +606,14 @@ export function calculateWeeklyDebtReserve(financeData, referenceDate = new Date
   const freeAfterMinimum = budget.availableBeforeDebt - minimumToAvoidExpiry;
   const extraCapacity = Math.max(0, budget.availableForDebt - minimumToAvoidExpiry);
   const smartExtraBudget = extraCapacity * smartExtraAllocationRatio;
-  const plans = applySmartExtraPayments(minimumPlans, smartExtraBudget);
+  const plansWithSmartExtra = applySmartExtraPayments(minimumPlans, smartExtraBudget);
+  const coverage = applyCoverageStatusToPlans({
+    plans: plansWithSmartExtra,
+    affordableWeeklyCapacity: budget.availableForDebt,
+    currentDebtFunds: 0,
+    referenceDate,
+  });
+  const plans = coverage.plans;
   const cardSummaries = calculateCardSummaries(financeData.cards, plans);
   const smartExtraReserve = plans.reduce((total, plan) => total + plan.smartExtraPayment, 0);
   const weeklyShortfall = Math.max(0, minimumToAvoidExpiry - budget.availableBeforeDebt);
@@ -398,11 +625,21 @@ export function calculateWeeklyDebtReserve(financeData, referenceDate = new Date
   const suggestedSafeWeeklyPayment = recommendedPayment + gemMinimumSummary.weeklyBuffer;
   const lifeMargin = budget.availableBeforeDebt - recommendedPayment;
   const lifeMarginStatus = classifyLifeMargin(lifeMargin);
+  const requiredWeeklyPressure = minimumToAvoidExpiry;
+  const affordableWeeklyCapacityRaw = budget.availableForDebt;
+  const effectiveAffordableCapacity = Math.max(0, affordableWeeklyCapacityRaw);
+  const weeklyCapacityGap = affordableWeeklyCapacityRaw - requiredWeeklyPressure;
   const summary = {
     ...budget,
     plans,
     activePlans: plans,
     completedPlans,
+    coverageTimeline: coverage.coverageTimeline,
+    currentDebtFunds: 0,
+    requiredWeeklyPressure,
+    affordableWeeklyCapacityRaw,
+    effectiveAffordableCapacity,
+    weeklyCapacityGap,
     cardSummaries,
     priorityReserve,
     calmReserve,
@@ -523,6 +760,26 @@ function getLocalStartOfDay(date = new Date()) {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
 
+function parseLocalDate(dateValue) {
+  if (!dateValue) return null;
+  const [datePart] = String(dateValue).split('T');
+  const [year, month, day] = datePart.split('-').map((part) => Number(part));
+
+  if (!year || !month || !day) {
+    const parsedDate = new Date(dateValue);
+    if (Number.isNaN(parsedDate.getTime())) return null;
+    return getLocalStartOfDay(parsedDate);
+  }
+
+  return new Date(year, month - 1, day);
+}
+
+function normalizeDueDate(dateValue) {
+  const parsedDate = parseLocalDate(dateValue);
+  if (!parsedDate) return '';
+  return toIsoDate(parsedDate);
+}
+
 function toIsoDate(date) {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -556,7 +813,7 @@ export function simulatePaymentScenario(financeData, weeklyPayment, referenceDat
   const plans = enrichPaymentPlans(financeData, referenceDate).filter((plan) => !isPlanCompleted(plan));
   let remainingPayment = Number(weeklyPayment || 0);
 
-  return plans.map((plan) => {
+  const scenarioPlans = plans.map((plan) => {
     const suggested = Math.min(plan.adjustedBalance, remainingPayment, plan.totalRecommendedPayment);
     remainingPayment -= suggested;
     const projectedBalance = Math.max(0, plan.adjustedBalance - suggested);
@@ -568,6 +825,13 @@ export function simulatePaymentScenario(financeData, weeklyPayment, referenceDat
       coveredThisWeek: suggested >= Math.min(plan.adjustedBalance, plan.recommendedPayment),
     };
   });
+
+  return applyCoverageStatusToPlans({
+    plans: scenarioPlans,
+    affordableWeeklyCapacity: Number(weeklyPayment || 0),
+    currentDebtFunds: 0,
+    referenceDate,
+  }).plans;
 }
 
 export function formatMoney(value) {

@@ -3,6 +3,14 @@ import { calculateWeeklyDebtReserve, formatMoney, isPlanCompleted, simulatePayme
 
 const presetPayments = [200, 280, 350];
 
+const coverageStyles = {
+  covered: 'bg-emerald-100 text-emerald-800',
+  tight: 'bg-amber-100 text-amber-800',
+  'at-risk': 'bg-orange-100 text-orange-800',
+  overdue: 'bg-red-100 text-red-800',
+  unknown: 'bg-stone-100 text-stone-700',
+};
+
 export function ScenarioSimulator({ financeData }) {
   const [weeklyPayment, setWeeklyPayment] = useState(280);
   const scenarioPlans = useMemo(
@@ -71,14 +79,15 @@ export function ScenarioSimulator({ financeData }) {
       </div>
 
       <div className="mt-4 overflow-x-auto">
-        <table className="w-full min-w-[640px] border-collapse text-left text-sm">
+        <table className="w-full min-w-[760px] border-collapse text-left text-sm">
           <thead>
             <tr className="border-b border-stone-200 text-stone-500">
               <th className="py-2 pr-3 font-semibold">Plan</th>
-              <th className="py-2 pr-3 font-semibold">Estado</th>
+              <th className="py-2 pr-3 font-semibold">Tiempo</th>
+              <th className="py-2 pr-3 font-semibold">Cobertura al vencimiento</th>
               <th className="py-2 pr-3 font-semibold">Pago simulado</th>
               <th className="py-2 pr-3 font-semibold">Saldo proyectado</th>
-              <th className="py-2 pr-3 font-semibold">Cobertura</th>
+              <th className="py-2 pr-3 font-semibold">Pago esta semana</th>
             </tr>
           </thead>
           <tbody>
@@ -86,6 +95,14 @@ export function ScenarioSimulator({ financeData }) {
               <tr key={plan.id} className="border-b border-stone-100">
                 <td className="py-3 pr-3 font-semibold text-stone-900">{plan.name}</td>
                 <td className="py-3 pr-3 text-stone-600">{plan.urgencyLabel}</td>
+                <td className="py-3 pr-3">
+                  <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${coverageStyles[plan.coverageStatus] || 'bg-stone-100 text-stone-700'}`}>
+                    {plan.coverageLabel || 'Sin datos'}
+                  </span>
+                  {plan.coverageGap > 0 ? (
+                    <p className="mt-1 text-xs text-stone-500">Faltan {formatMoney(plan.coverageGap)} acumulados.</p>
+                  ) : null}
+                </td>
                 <td className="py-3 pr-3 text-stone-900">{formatMoney(plan.scenarioPayment)}</td>
                 <td className="py-3 pr-3 text-stone-600">{formatMoney(plan.projectedBalance)}</td>
                 <td className="py-3 pr-3">

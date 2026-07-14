@@ -1,8 +1,10 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import {
   applyCoverageStatusToPlans,
   buildCoverageTimeline,
   calculateWeeklyDebtReserve,
+  hasValidDueDate,
   isPastDueDate,
 } from '../src/utils/financeEngine.js';
 
@@ -47,6 +49,20 @@ function getPlan(summary, planId) {
 
 function assertStatus(summary, planId, expectedStatus) {
   assert.equal(getPlan(summary, planId).coverageStatus, expectedStatus);
+}
+
+function assertFiniteNumbers(value, path = 'value') {
+  if (typeof value === 'number') {
+    assert.equal(Number.isNaN(value), false, `${path} is NaN`);
+    assert.equal(Number.isFinite(value), true, `${path} is not finite`);
+    return;
+  }
+
+  if (!value || typeof value !== 'object') return;
+
+  Object.entries(value).forEach(([key, entry]) => {
+    assertFiniteNumbers(entry, `${path}.${key}`);
+  });
 }
 
 function buildSingleTimeline({ dueDate, balance = 100, capacity = 300 }) {
@@ -102,7 +118,15 @@ assert.equal(isPastDueDate('2026-07-15', referenceDate), false);
   const plan = getPlan(invalidDate, 'invalid-date');
   assert.equal(plan.coverageStatus, 'unknown');
   assert.equal(plan.coverageReason, 'invalid-due-date');
+  assert.equal(plan.coverageLabel, 'Sin fecha válida');
+  assert.equal(plan.recommendedPayment, 0);
+  assert.equal(plan.smartExtraPayment, 0);
+  assert.equal(plan.rolloverPressure, 0);
+  assert.equal(invalidDate.minimumToAvoidExpiry, 0);
+  assert.equal(invalidDate.requiredWeeklyPressure, 0);
+  assert.equal(invalidDate.coverageTimeline.length, 0);
   assert.equal(Number.isNaN(plan.recommendedPayment), false);
+  assertFiniteNumbers(invalidDate);
 }
 
 {
@@ -114,6 +138,43 @@ assert.equal(isPastDueDate('2026-07-15', referenceDate), false);
   const plan = getPlan(noDueDate, 'no-due-date');
   assert.equal(plan.coverageStatus, 'unknown');
   assert.equal(plan.coverageReason, 'invalid-due-date');
+  assert.equal(plan.recommendedPayment, 0);
+  assert.equal(plan.smartExtraPayment, 0);
+  assert.equal(plan.rolloverPressure, 0);
+  assert.equal(noDueDate.minimumToAvoidExpiry, 0);
+  assert.equal(noDueDate.coverageTimeline.length, 0);
+  assert.equal(hasValidDueDate(plan), false);
+  assertFiniteNumbers(noDueDate);
+}
+
+{
+  const validOnly = summarize({
+    weeklyIncome: 300,
+    plans: [makePlan({ id: 'valid-alone', balance: 600, dueDate: '2026-07-28' })],
+  });
+  const withInvalid = summarize({
+    weeklyIncome: 300,
+    plans: [
+      makePlan({ id: 'valid-alone', balance: 600, dueDate: '2026-07-28' }),
+      makePlan({ id: 'invalid-huge', balance: 50000, dueDate: undefined }),
+    ],
+  });
+  const validBaseline = getPlan(validOnly, 'valid-alone');
+  const validWithInvalid = getPlan(withInvalid, 'valid-alone');
+  const invalidHuge = getPlan(withInvalid, 'invalid-huge');
+
+  assert.equal(withInvalid.minimumToAvoidExpiry, validOnly.minimumToAvoidExpiry);
+  assert.equal(withInvalid.requiredWeeklyPressure, validOnly.requiredWeeklyPressure);
+  assert.equal(validWithInvalid.recommendedPayment, validBaseline.recommendedPayment);
+  assert.equal(validWithInvalid.rolloverPressure, validBaseline.rolloverPressure);
+  assert.equal(validWithInvalid.coverageStatus, validBaseline.coverageStatus);
+  assert.equal(invalidHuge.coverageStatus, 'unknown');
+  assert.equal(invalidHuge.recommendedPayment, 0);
+  assert.equal(invalidHuge.smartExtraPayment, 0);
+  assert.equal(invalidHuge.rolloverPressure, 0);
+  assert.equal(withInvalid.coverageTimeline.length, validOnly.coverageTimeline.length);
+  assert.equal(withInvalid.coverageTimeline.some((group) => group.coverageGroupPlanIds.includes('invalid-huge')), false);
+  assertFiniteNumbers(withInvalid);
 }
 
 {
@@ -266,6 +327,15 @@ assert.equal(isPastDueDate('2026-07-15', referenceDate), false);
   assert.equal(coverage.recommendedPayment, plan.recommendedPayment);
   assert.equal(coverage.rolloverPressure, plan.rolloverPressure);
   assert.equal(coverage.smartExtraPayment, plan.smartExtraPayment);
+}
+
+{
+  const planListSource = readFileSync(new URL('../src/components/PlanList.jsx', import.meta.url), 'utf8');
+  const simulatorSource = readFileSync(new URL('../src/components/ScenarioSimulator.jsx', import.meta.url), 'utf8');
+
+  assert.match(planListSource, /Proyección con tu presupuesto semanal actual\./);
+  assert.match(planListSource, /Agregá una fecha válida para calcular el pago recomendado y su cobertura\./);
+  assert.match(simulatorSource, /El monto simulado se interpreta como un pago semanal recurrente hasta cada vencimiento\./);
 }
 
 console.log('financeEngine coverage tests passed');

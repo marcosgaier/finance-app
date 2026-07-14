@@ -66,6 +66,9 @@ export function ScenarioSimulator({ financeData }) {
           Mínimo semanal seguro: <strong>{formatMoney(minimumSafeWeeklyPayment)}</strong>.
         </p>
         <p className="mt-2">
+          El monto simulado se interpreta como un pago semanal recurrente hasta cada vencimiento.
+        </p>
+        <p className="mt-2">
           {safeMinimumGap > 0
             ? `Con ${formatMoney(weeklyPayment)}, te faltarían ${formatMoney(safeMinimumGap)} para cubrir el mínimo semanal seguro.`
             : `Con ${formatMoney(weeklyPayment)}, cubrirías el mínimo semanal seguro de ${formatMoney(minimumSafeWeeklyPayment)}.`}

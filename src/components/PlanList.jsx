@@ -115,6 +115,11 @@ export function PlanList({ plans = [], completedPlans = [], cards, onAddPlan, on
                   <p className="mt-1 text-sm text-stone-500">
                     {plan.card?.name || 'Sin tarjeta'} · vence {formatShortDate(plan.dueDate)}
                   </p>
+                  {plan.coverageReason === 'invalid-due-date' ? (
+                    <p className="mt-2 rounded-md border border-stone-200 bg-stone-50 px-3 py-2 text-sm text-stone-700">
+                      Agregá una fecha válida para calcular el pago recomendado y su cobertura.
+                    </p>
+                  ) : null}
                 </div>
 
                 <div className="grid gap-2 sm:grid-cols-2 xl:min-w-[520px] xl:grid-cols-4">
@@ -273,6 +278,7 @@ function PlanDetail({ plan }) {
           <p>
             <strong>Cobertura al vencimiento:</strong> {plan.coverageLabel}.
           </p>
+          <p className="text-xs text-stone-500">Proyección con tu presupuesto semanal actual.</p>
           {plan.coverageGap > 0 ? (
             <p>Faltan {formatMoney(plan.coverageGap)} acumulados hasta esta fecha.</p>
           ) : plan.surplusWeeks !== null ? (

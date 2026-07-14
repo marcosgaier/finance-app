@@ -9,6 +9,14 @@ const urgencyStyles = {
   calm: 'border-emerald-200 bg-emerald-50 text-emerald-800',
 };
 
+const coverageStyles = {
+  covered: 'border-emerald-200 bg-emerald-50 text-emerald-800',
+  tight: 'border-amber-200 bg-amber-50 text-amber-800',
+  'at-risk': 'border-orange-200 bg-orange-50 text-orange-800',
+  overdue: 'border-red-200 bg-red-50 text-red-800',
+  unknown: 'border-stone-200 bg-stone-50 text-stone-700',
+};
+
 export function PlanList({ plans = [], completedPlans = [], cards, onAddPlan, onDeletePlan, onUpdatePlan }) {
   const [expandedPlanIds, setExpandedPlanIds] = useState({});
   const [editingPlanIds, setEditingPlanIds] = useState({});
@@ -98,17 +106,27 @@ export function PlanList({ plans = [], completedPlans = [], cards, onAddPlan, on
                     <span className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${urgencyStyles[plan.urgency]}`}>
                       {plan.urgencyLabel}
                     </span>
+                    {plan.coverageStatus ? (
+                      <span className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${coverageStyles[plan.coverageStatus]}`}>
+                        Cobertura: {plan.coverageLabel}
+                      </span>
+                    ) : null}
                   </div>
                   <p className="mt-1 text-sm text-stone-500">
                     {plan.card?.name || 'Sin tarjeta'} · vence {formatShortDate(plan.dueDate)}
                   </p>
+                  {plan.coverageReason === 'invalid-due-date' ? (
+                    <p className="mt-2 rounded-md border border-stone-200 bg-stone-50 px-3 py-2 text-sm text-stone-700">
+                      Agregá una fecha válida para calcular el pago recomendado y su cobertura.
+                    </p>
+                  ) : null}
                 </div>
 
                 <div className="grid gap-2 sm:grid-cols-2 xl:min-w-[520px] xl:grid-cols-4">
                   <Metric label="Tarjeta" value={plan.card?.name || 'Sin tarjeta'} />
                   <Metric label="Saldo ajustado" value={formatMoney(plan.adjustedBalance)} />
                   <Metric label="Vencimiento" value={formatShortDate(plan.dueDate)} />
-                  <Metric label="Estado" value={plan.urgencyLabel} strong />
+                  <Metric label="Tiempo" value={plan.urgencyLabel} strong />
                 </div>
               </div>
 
@@ -242,6 +260,8 @@ function isPriorityPlan(plan) {
 }
 
 function PlanDetail({ plan }) {
+  const sharedCoverage = (plan.coverageGroupPlanIds || []).length > 1;
+
   return (
     <div className="mt-3 rounded-lg border border-stone-200 bg-stone-50 p-3">
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
@@ -253,6 +273,24 @@ function PlanDetail({ plan }) {
         <Metric label="Recomendado" value={formatMoney(plan.totalRecommendedPayment)} strong />
         <Metric label="Reserva total" value={formatMoney(plan.rolloverPressure)} />
       </div>
+      {plan.coverageStatus ? (
+        <div className="mt-3 rounded-md border border-stone-200 bg-white p-3 text-sm leading-6 text-stone-700">
+          <p>
+            <strong>Cobertura al vencimiento:</strong> {plan.coverageLabel}.
+          </p>
+          <p className="text-xs text-stone-500">Proyección con tu presupuesto semanal actual.</p>
+          {plan.coverageGap > 0 ? (
+            <p>Faltan {formatMoney(plan.coverageGap)} acumulados hasta esta fecha.</p>
+          ) : plan.surplusWeeks !== null ? (
+            <p>Margen proyectado: {formatMoney(plan.coverageSurplus)} ({plan.surplusWeeks.toFixed(1)} semana{plan.surplusWeeks === 1 ? '' : 's'}).</p>
+          ) : null}
+          {sharedCoverage ? (
+            <p className="text-xs text-stone-500">Este resultado considera todos los planes que vencen hasta esta fecha.</p>
+          ) : (
+            <p className="text-xs text-stone-500">Este resultado es acumulado hasta esta fecha, no una asignación exclusiva del plan.</p>
+          )}
+        </div>
+      ) : null}
       <p className="mt-3 rounded-md bg-white p-3 text-sm leading-6 text-stone-700">{plan.explanation}</p>
     </div>
   );

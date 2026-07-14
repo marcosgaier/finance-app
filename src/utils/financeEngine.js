@@ -10,15 +10,15 @@ const urgencyRank = {
 const urgencyLabels = {
   overdue: 'Atrasado',
   urgent: 'Urgente',
-  attention: 'AtenciÃ³n',
+  attention: 'Atención',
   calm: 'Tranquilo',
 };
 
 const urgencyDescriptions = {
-  overdue: 'La fecha ya pasÃ³, conviene resolverlo antes de nuevos planes.',
+  overdue: 'La fecha ya pasó, conviene resolverlo antes de nuevos planes.',
   urgent: 'Vence en 4 semanas o menos, por eso toma prioridad alta.',
   attention: 'Vence dentro de 5 a 12 semanas, ya necesita una reserva consistente.',
-  calm: 'Vence en mÃ¡s de 12 semanas, se mantiene visible sin presionar de mÃ¡s.',
+  calm: 'Vence en más de 12 semanas, se mantiene visible sin presionar de más.',
 };
 
 const coverageLabels = {
@@ -432,17 +432,17 @@ export function applyCoverageStatusToPlans({
 }
 
 export function buildRecommendationExplanation(urgency, weeksUntilDue, baseWeeklyPayment, recommendedPayment, rolloverPressure) {
-  const weekText = weeksUntilDue < 0 ? 'ya venciÃ³' : `faltan ${weeksUntilDue} semana${weeksUntilDue === 1 ? '' : 's'}`;
-  const standaloneText = `Si este plan estuviera solo, pedirÃ­a ${formatMoney(baseWeeklyPayment)} por semana.`;
+  const weekText = weeksUntilDue < 0 ? 'ya venció' : `faltan ${weeksUntilDue} semana${weeksUntilDue === 1 ? '' : 's'}`;
+  const standaloneText = `Si este plan estuviera solo, pediría ${formatMoney(baseWeeklyPayment)} por semana.`;
 
   if (recommendedPayment < baseWeeklyPayment) {
-    return `${urgencyDescriptions[urgency]} ${standaloneText} Como los pagos de vencimientos anteriores se liberan despuÃ©s, esta semana alcanza con sumar ${formatMoney(recommendedPayment)} para sostener una reserva total de ${formatMoney(rolloverPressure)}.`;
+    return `${urgencyDescriptions[urgency]} ${standaloneText} Como los pagos de vencimientos anteriores se liberan después, esta semana alcanza con sumar ${formatMoney(recommendedPayment)} para sostener una reserva total de ${formatMoney(rolloverPressure)}.`;
   }
 
   if (urgency === 'calm') {
     return `${urgencyDescriptions[urgency]} ${standaloneText} Para llegar sin correr al final, conviene sumar ${formatMoney(recommendedPayment)} a la reserva semanal.`;
   }
-  return `${urgencyDescriptions[urgency]} Como ${weekText}, necesitÃ¡s reservar ${formatMoney(recommendedPayment)} por semana para cubrirlo a tiempo.`;
+  return `${urgencyDescriptions[urgency]} Como ${weekText}, necesitás reservar ${formatMoney(recommendedPayment)} por semana para cubrirlo a tiempo.`;
 }
 
 export function enrichPaymentPlans(financeData, referenceDate = new Date()) {
@@ -493,62 +493,62 @@ export function applyRolloverRecommendations(plans) {
 }
 
 export function classifyLifeMargin(lifeMargin) {
-  if (lifeMargin < 0) return { key: 'critical', label: 'CrÃ­tico', tone: 'danger' };
+  if (lifeMargin < 0) return { key: 'critical', label: 'Crítico', tone: 'danger' };
   if (lifeMargin < 30) return { key: 'very-tight', label: 'Muy justo', tone: 'warning' };
   if (lifeMargin < 75) return { key: 'tight', label: 'Ajustado', tone: 'warning' };
   if (lifeMargin < 150) return { key: 'manageable', label: 'Manejable', tone: 'positive' };
-  return { key: 'comfortable', label: 'CÃ³modo', tone: 'positive' };
+  return { key: 'comfortable', label: 'Cómodo', tone: 'positive' };
 }
 
 export function buildDecisionMessage(summary) {
   if (summary.weeklyShortfall > 0) {
-    return `Esta semana quedÃ¡s ${formatMoney(summary.weeklyShortfall)} corto para no vencer. NecesitÃ¡s compensarlo antes del prÃ³ximo vencimiento.`;
+    return `Esta semana quedás ${formatMoney(summary.weeklyShortfall)} corto para no vencer. Necesitás compensarlo antes del próximo vencimiento.`;
   }
 
   if (summary.smartExtraReserve > 0) {
-    return `LlegÃ¡s a los vencimientos. Pagar ${formatMoney(summary.recommendedPayment)} esta semana suma ${formatMoney(summary.smartExtraReserve)} extra para acelerar deuda y te deja ${formatMoney(summary.lifeMargin)} de margen.`;
+    return `Llegás a los vencimientos. Pagar ${formatMoney(summary.recommendedPayment)} esta semana suma ${formatMoney(summary.smartExtraReserve)} extra para acelerar deuda y te deja ${formatMoney(summary.lifeMargin)} de margen.`;
   }
 
-  return `LlegÃ¡s a los vencimientos con el mÃ­nimo de ${formatMoney(summary.minimumToAvoidExpiry)}. No sugiero extra porque conviene proteger tu margen de vida.`;
+  return `Llegás a los vencimientos con el mínimo de ${formatMoney(summary.minimumToAvoidExpiry)}. No sugiero extra porque conviene proteger tu margen de vida.`;
 }
 
 export function buildWeeklyStatus(summary) {
   if (summary.weeklyShortfall > 0) {
     return {
-      label: 'Semana crÃ­tica',
+      label: 'Semana crítica',
       tone: 'danger',
-      message: `Te faltan ${formatMoney(summary.weeklyShortfall)} para cubrir el mÃ­nimo y no caer en vencimientos.`,
+      message: `Te faltan ${formatMoney(summary.weeklyShortfall)} para cubrir el mínimo y no caer en vencimientos.`,
     };
   }
 
   if (summary.lifeMargin < 30) {
     return {
-      label: 'LlegÃ¡s muy justo',
+      label: 'Llegás muy justo',
       tone: 'warning',
-      message: `CubrirÃ­as el mÃ­nimo, pero quedarÃ­as con solo ${formatMoney(summary.lifeMargin)} libres esta semana.`,
+      message: `Cubrirías el mínimo, pero quedarías con solo ${formatMoney(summary.lifeMargin)} libres esta semana.`,
     };
   }
 
   if (summary.lifeMargin < 75) {
     return {
-      label: 'LlegÃ¡s ajustado',
+      label: 'Llegás ajustado',
       tone: 'warning',
-      message: `LlegÃ¡s a los vencimientos y te quedan ${formatMoney(summary.lifeMargin)} de margen.`,
+      message: `Llegás a los vencimientos y te quedan ${formatMoney(summary.lifeMargin)} de margen.`,
     };
   }
 
   if (summary.smartExtraReserve > 0) {
     return {
-      label: 'LlegÃ¡s y acelerÃ¡s',
+      label: 'Llegás y acelerás',
       tone: 'positive',
-      message: `PodÃ©s cubrir el mÃ­nimo, pagar ${formatMoney(summary.smartExtraReserve)} extra y quedar con ${formatMoney(summary.lifeMargin)} libres.`,
+      message: `Podés cubrir el mínimo, pagar ${formatMoney(summary.smartExtraReserve)} extra y quedar con ${formatMoney(summary.lifeMargin)} libres.`,
     };
   }
 
   return {
-    label: 'LlegÃ¡s bien',
+    label: 'Llegás bien',
     tone: 'positive',
-    message: `Cubriendo el mÃ­nimo de ${formatMoney(summary.minimumToAvoidExpiry)}, te quedan ${formatMoney(summary.lifeMargin)} libres.`,
+    message: `Cubriendo el mínimo de ${formatMoney(summary.minimumToAvoidExpiry)}, te quedan ${formatMoney(summary.lifeMargin)} libres.`,
   };
 }
 

@@ -281,7 +281,7 @@ function PlanDetail({ plan }) {
           {sharedCoverage ? (
             <p className="text-xs text-stone-500">Este resultado considera todos los planes que vencen hasta esta fecha.</p>
           ) : (
-            <p className="text-xs text-stone-500">Este resultado es acumulado hasta esta fecha, no una asignaci�n exclusiva del plan.</p>
+            <p className="text-xs text-stone-500">Este resultado es acumulado hasta esta fecha, no una asignación exclusiva del plan.</p>
           )}
         </div>
       ) : null}

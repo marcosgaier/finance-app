@@ -6,8 +6,8 @@ import {
   getFinancialWeekDayLabel,
   getFinancialWeekStartDay,
   getLatestFinancialWeekStartDate,
+  getNextFinancialWeekStartDateAfterClosedRecord,
   getPendingFinancialWeekStartDate,
-  getNextFinancialWeekStartDate,
   getIsoDateWeekday,
   isSameIsoDate,
   parseDisplayDate,
@@ -132,8 +132,10 @@ export function WeeklyTracker({
   const nextEligibleFinancialWeekStartDate = useMemo(
     () =>
       latestClosedFinancialWeekStartDate
-        ? getNextFinancialWeekStartDate({
-            lastWeekStartDate: latestClosedFinancialWeekStartDate,
+        ? getNextFinancialWeekStartDateAfterClosedRecord({
+            closedRecord: (financeData.weeklyRecords || []).find((record) =>
+              isSameIsoDate(record.weekStartDate || record.weekDate, latestClosedFinancialWeekStartDate),
+            ),
             financialWeekStartDay,
           })
         : getCreatableFinancialWeekStartDate({
@@ -141,7 +143,7 @@ export function WeeklyTracker({
             weeklyRecords: [],
             financialWeekStartDay,
           }),
-    [financialWeekStartDay, latestClosedFinancialWeekStartDate, referenceDate],
+    [financeData.weeklyRecords, financialWeekStartDay, latestClosedFinancialWeekStartDate, referenceDate],
   );
   const creatableFinancialWeekStartDate = useMemo(
     () =>
@@ -664,6 +666,7 @@ export function WeeklyTracker({
       budgetSnapshot,
       minimumToAvoidExpiry: weeklySummary.minimumToAvoidExpiry,
       recommendedPayment: weeklySummary.recommendedPayment,
+      closedDate: getTodayIsoDate(),
       closedAt: new Date().toISOString(),
       createdAt: normalizedActiveWeek.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),

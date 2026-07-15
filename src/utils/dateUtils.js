@@ -99,6 +99,11 @@ export function normalizeIsoDate(dateValue) {
     return formatIsoDate(getStartOfDay(dateValue));
   }
 
+  if (typeof dateValue === 'string' && dateValue.includes('T')) {
+    const parsedDate = new Date(dateValue);
+    return Number.isNaN(parsedDate.getTime()) ? null : formatIsoDate(getStartOfDay(parsedDate));
+  }
+
   const localIsoDate = parseLocalIsoDate(dateValue);
   if (localIsoDate) {
     return formatIsoDate(localIsoDate);
@@ -137,6 +142,25 @@ export function getFinancialWeekStartDate(
   return formatIsoDate(addDays(startDate, -daysSinceStartDay));
 }
 
+export function getFinancialWeekStartDateOnOrAfter(
+  referenceDate,
+  financialWeekStartDay = DEFAULT_FINANCIAL_WEEK_START_DAY,
+) {
+  const normalizedReferenceDate = normalizeIsoDate(referenceDate);
+
+  if (!normalizedReferenceDate) {
+    return null;
+  }
+
+  const startDate = coerceLocalDate(normalizedReferenceDate);
+  const startDay = hasValidFinancialWeekStartDay(financialWeekStartDay)
+    ? Number(financialWeekStartDay)
+    : DEFAULT_FINANCIAL_WEEK_START_DAY;
+  const daysUntilStartDay = (startDay - startDate.getDay() + 7) % 7;
+
+  return formatIsoDate(addDays(startDate, daysUntilStartDay));
+}
+
 export function getNextFinancialWeekStartDate({
   lastWeekStartDate,
   financialWeekStartDay = DEFAULT_FINANCIAL_WEEK_START_DAY,
@@ -154,6 +178,43 @@ export function getNextFinancialWeekStartDate({
   const daysUntilStartDay = (startDay - earliestEligibleStart.getDay() + 7) % 7;
 
   return formatIsoDate(addDays(earliestEligibleStart, daysUntilStartDay));
+}
+
+function getClosedRecordCloseDate(closedRecord = {}) {
+  return normalizeIsoDate(closedRecord.closedDate) || normalizeIsoDate(closedRecord.closedAt);
+}
+
+export function getNextFinancialWeekStartDateAfterClosedRecord({
+  closedRecord,
+  financialWeekStartDay = DEFAULT_FINANCIAL_WEEK_START_DAY,
+} = {}) {
+  const weekStartDate = normalizeIsoDate(closedRecord?.weekStartDate || closedRecord?.weekDate);
+
+  if (!weekStartDate) {
+    return null;
+  }
+
+  const configuredStartDay = hasValidFinancialWeekStartDay(financialWeekStartDay)
+    ? Number(financialWeekStartDay)
+    : DEFAULT_FINANCIAL_WEEK_START_DAY;
+  const closedWeekStartDay = getIsoDateWeekday(weekStartDate);
+
+  if (closedWeekStartDay === configuredStartDay) {
+    return getNextFinancialWeekStartDate({
+      lastWeekStartDate: weekStartDate,
+      financialWeekStartDay: configuredStartDay,
+    });
+  }
+
+  const closeDate = getClosedRecordCloseDate(closedRecord);
+
+  return (
+    getFinancialWeekStartDateOnOrAfter(closeDate, configuredStartDay) ||
+    getNextFinancialWeekStartDate({
+      lastWeekStartDate: weekStartDate,
+      financialWeekStartDay: configuredStartDay,
+    })
+  );
 }
 
 function getRecordWeekStartDate(record = {}) {
@@ -175,13 +236,20 @@ export function getCreatableFinancialWeekStartDate({
   financialWeekStartDay = DEFAULT_FINANCIAL_WEEK_START_DAY,
 } = {}) {
   const latestClosedWeekStartDate = getLatestFinancialWeekStartDate(weeklyRecords);
+  const latestClosedRecord = latestClosedWeekStartDate
+    ? weeklyRecords.find((record) => isSameIsoDate(record.weekStartDate || record.weekDate, latestClosedWeekStartDate))
+    : null;
   const candidateWeekStartDate = latestClosedWeekStartDate
-    ? getNextFinancialWeekStartDate({
-        lastWeekStartDate: latestClosedWeekStartDate,
+    ? getNextFinancialWeekStartDateAfterClosedRecord({
+        closedRecord: latestClosedRecord,
         financialWeekStartDay,
       })
     : getFinancialWeekStartDate(referenceDate, financialWeekStartDay);
   const todayIsoDate = formatIsoDate(coerceLocalDate(referenceDate));
+
+  if (!candidateWeekStartDate) {
+    return null;
+  }
 
   return candidateWeekStartDate <= todayIsoDate ? candidateWeekStartDate : null;
 }

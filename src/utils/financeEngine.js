@@ -1,4 +1,4 @@
-﻿import { calculateWeeksUntilDue } from './dateUtils.js';
+﻿import { calculateWeeksUntilDue, getFinancialWeekStartDay } from './dateUtils.js';
 
 const urgencyRank = {
   overdue: 0,
@@ -95,10 +95,12 @@ export function normalizeFinanceData(financeData) {
     }));
   const weeklyRecords = financeData.weeklyRecords || [];
   const reserveBuckets = normalizeReserveBuckets(financeData.reserveBuckets);
+  const settings = normalizeSettings(financeData.settings);
 
   if (financeData.weeklyExpenses && financeData.monthlyExpenses) {
     return {
       ...financeData,
+      settings,
       weeklyExpenses: normalizeWeeklyExpenses(financeData.weeklyExpenses),
       monthlyExpenses: normalizeMonthlyServices(financeData.monthlyExpenses),
       paymentPlans,
@@ -118,11 +120,19 @@ export function normalizeFinanceData(financeData) {
 
   return {
     ...financeData,
+    settings,
     weeklyExpenses: normalizeWeeklyExpenses(weeklyExpenses),
     monthlyExpenses: normalizeMonthlyServices(monthlyExpenses),
     paymentPlans,
     weeklyRecords,
     reserveBuckets,
+  };
+}
+
+function normalizeSettings(settings = {}) {
+  return {
+    ...settings,
+    financialWeekStartDay: getFinancialWeekStartDay({ settings }),
   };
 }
 

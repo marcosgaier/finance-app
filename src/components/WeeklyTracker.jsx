@@ -1,5 +1,17 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { formatDisplayDate, formatIsoDate, parseDisplayDate } from '../utils/dateUtils.js';
+import {
+  formatDisplayDate,
+  formatIsoDate,
+  getCreatableFinancialWeekStartDate,
+  getFinancialWeekDayLabel,
+  getFinancialWeekStartDay,
+  getLatestFinancialWeekStartDate,
+  getPendingFinancialWeekStartDate,
+  getNextFinancialWeekStartDate,
+  getIsoDateWeekday,
+  isSameIsoDate,
+  parseDisplayDate,
+} from '../utils/dateUtils.js';
 import { getFundingSourceLabel, isWeeklyIncomeFunded, WEEKLY_INCOME_SOURCE } from '../utils/fundingSourceUtils.js';
 import { formatMoney } from '../utils/financeEngine.js';
 import {
@@ -31,14 +43,6 @@ function getTodayIsoDate() {
   return formatIsoDate(new Date());
 }
 
-function getCurrentFinancialWeekStartDate(referenceDate = new Date()) {
-  const startDate = new Date(referenceDate.getFullYear(), referenceDate.getMonth(), referenceDate.getDate());
-  const tuesday = 2;
-  const daysSinceTuesday = (startDate.getDay() - tuesday + 7) % 7;
-  startDate.setDate(startDate.getDate() - daysSinceTuesday);
-  return formatIsoDate(startDate);
-}
-
 function calculateDaysBetween(startDate, endDate) {
   if (!startDate || !endDate) return 0;
 
@@ -50,7 +54,7 @@ function calculateDaysBetween(startDate, endDate) {
 }
 
 function hasClosedRecordForWeek(weeklyRecords = [], weekStartDate) {
-  return (weeklyRecords || []).some((record) => (record.weekStartDate || record.weekDate) === weekStartDate);
+  return (weeklyRecords || []).some((record) => isSameIsoDate(record.weekStartDate || record.weekDate, weekStartDate));
 }
 
 function createEmptyTransaction(date = getTodayIsoDate()) {
@@ -119,7 +123,35 @@ export function WeeklyTracker({
   onUpdateActiveWeek,
   onUpdateWeek,
 }) {
-  const financialWeekStartDate = useMemo(() => getCurrentFinancialWeekStartDate(), []);
+  const referenceDate = useMemo(() => new Date(), []);
+  const financialWeekStartDay = getFinancialWeekStartDay(financeData);
+  const latestClosedFinancialWeekStartDate = useMemo(
+    () => getLatestFinancialWeekStartDate(financeData.weeklyRecords),
+    [financeData.weeklyRecords],
+  );
+  const nextEligibleFinancialWeekStartDate = useMemo(
+    () =>
+      latestClosedFinancialWeekStartDate
+        ? getNextFinancialWeekStartDate({
+            lastWeekStartDate: latestClosedFinancialWeekStartDate,
+            financialWeekStartDay,
+          })
+        : getCreatableFinancialWeekStartDate({
+            referenceDate,
+            weeklyRecords: [],
+            financialWeekStartDay,
+          }),
+    [financialWeekStartDay, latestClosedFinancialWeekStartDate, referenceDate],
+  );
+  const creatableFinancialWeekStartDate = useMemo(
+    () =>
+      getCreatableFinancialWeekStartDate({
+        referenceDate,
+        weeklyRecords: financeData.weeklyRecords,
+        financialWeekStartDay,
+      }),
+    [financeData.weeklyRecords, financialWeekStartDay, referenceDate],
+  );
   const activeWeek = financeData.activeWeek;
   const [transactionDraft, setTransactionDraft] = useState(createEmptyTransaction(getTodayIsoDate()));
   const [extraIncomeDraft, setExtraIncomeDraft] = useState(createEmptyExtraIncome(getTodayIsoDate()));
@@ -132,15 +164,22 @@ export function WeeklyTracker({
 
   useEffect(() => {
     if (activeWeek) return;
-    if (hasClosedRecordForWeek(financeData.weeklyRecords, financialWeekStartDate)) return;
+    if (!creatableFinancialWeekStartDate) return;
+    if (hasClosedRecordForWeek(financeData.weeklyRecords, creatableFinancialWeekStartDate)) return;
 
     onStartActiveWeek(
       createActiveWeek({
-        weekStartDate: financialWeekStartDate,
+        weekStartDate: creatableFinancialWeekStartDate,
         weeklySummary,
       }),
     );
-  }, [activeWeek, financeData.weeklyRecords, financialWeekStartDate, onStartActiveWeek, weeklySummary]);
+  }, [
+    activeWeek,
+    creatableFinancialWeekStartDate,
+    financeData.weeklyRecords,
+    onStartActiveWeek,
+    weeklySummary,
+  ]);
 
   useEffect(() => {
     setTransactionDraft((currentDraft) => ({
@@ -158,10 +197,28 @@ export function WeeklyTracker({
     }));
   }, [financeData.cards]);
 
-  const currentFinancialWeekClosed = hasClosedRecordForWeek(financeData.weeklyRecords, financialWeekStartDate);
-  const normalizedActiveWeek = activeWeek ? normalizeActiveWeek(activeWeek, weeklySummary) : null;
-  const hasPendingPreviousWeek = Boolean(normalizedActiveWeek && normalizedActiveWeek.weekStartDate !== financialWeekStartDate);
-  const pendingWeekDays = normalizedActiveWeek ? calculateDaysBetween(normalizedActiveWeek.weekStartDate, financialWeekStartDate) : 0;
+  const currentFinancialWeekClosed = Boolean(
+    !activeWeek && !creatableFinancialWeekStartDate && latestClosedFinancialWeekStartDate,
+  );
+  const normalizedActiveWeek = activeWeek ? normalizeActiveWeek(activeWeek, weeklySummary, financialWeekStartDay) : null;
+  const activeWeekStartDayLabel = normalizedActiveWeek
+    ? getFinancialWeekDayLabel(getIsoDateWeekday(normalizedActiveWeek.weekStartDate)).toLowerCase()
+    : '';
+  const pendingFinancialWeekStartDate = normalizedActiveWeek
+    ? getPendingFinancialWeekStartDate({
+        activeWeekStartDate: normalizedActiveWeek.weekStartDate,
+        referenceDate,
+        financialWeekStartDay,
+      })
+    : null;
+  const hasPendingPreviousWeek = Boolean(
+    normalizedActiveWeek &&
+      pendingFinancialWeekStartDate &&
+      normalizedActiveWeek.weekStartDate !== pendingFinancialWeekStartDate,
+  );
+  const pendingWeekDays = normalizedActiveWeek
+    ? calculateDaysBetween(normalizedActiveWeek.weekStartDate, pendingFinancialWeekStartDate)
+    : 0;
   const showPendingWeekWarning = hasPendingPreviousWeek && !dismissedPendingWeekWarning;
   const openingBalance = Number(normalizedActiveWeek?.openingBalance || 0);
   const showOpeningBalanceControl = showOpeningBalanceInput || openingBalance > 0;
@@ -627,7 +684,7 @@ export function WeeklyTracker({
               <p className="mt-2 text-sm leading-6">
                 Tu semana activa comenzó el {formatDisplayDate(normalizedActiveWeek.weekStartDate)}.
                 <br />
-                La semana financiera actual comenzó el {formatDisplayDate(financialWeekStartDate)}.
+                La semana financiera actual comenzó el {formatDisplayDate(pendingFinancialWeekStartDate)}.
               </p>
               <p className="mt-2 text-sm font-semibold">Todavía no cerraste la semana anterior.</p>
               {pendingWeekDays > 0 ? (
@@ -668,7 +725,7 @@ export function WeeklyTracker({
               <p className="text-sm font-semibold uppercase tracking-wide text-teal-700">Semana actual</p>
               <h2 className="mt-1 text-lg font-semibold text-stone-950">Control de la semana financiera</h2>
               <p className="text-sm text-stone-500">
-                Empieza el martes {formatDisplayDate(normalizedActiveWeek.weekStartDate)}. Todo lo que cargues queda guardado automáticamente.
+                Empieza el {activeWeekStartDayLabel} {formatDisplayDate(normalizedActiveWeek.weekStartDate)}. Todo lo que cargues queda guardado automáticamente.
               </p>
             </div>
             <div className="grid gap-2 sm:grid-cols-2">
@@ -1030,7 +1087,10 @@ export function WeeklyTracker({
               <p className="text-sm font-semibold uppercase tracking-wide text-teal-700">Semana actual cerrada</p>
               <h2 className="mt-1 text-lg font-semibold text-stone-950">Semana actual cerrada</h2>
               <p className="mt-2 text-sm leading-6 text-stone-600">
-                La semana financiera del {formatDisplayDate(financialWeekStartDate)} ya fue cerrada. La próxima semana se abrirá automáticamente cuando empiece el nuevo ciclo.
+                La semana financiera del {formatDisplayDate(latestClosedFinancialWeekStartDate)} ya fue cerrada.
+                {nextEligibleFinancialWeekStartDate
+                  ? ` La próxima semana se abrirá automáticamente el ${formatDisplayDate(nextEligibleFinancialWeekStartDate)}.`
+                  : ' La próxima semana se abrirá automáticamente cuando empiece el nuevo ciclo.'}
               </p>
             </>
           ) : (
@@ -1688,13 +1748,13 @@ function MoneyFlowRow({ label, value, strong = false, tone = 'default' }) {
   );
 }
 
-function normalizeActiveWeek(activeWeek, weeklySummary) {
+function normalizeActiveWeek(activeWeek, weeklySummary, financialWeekStartDay) {
   const plannedGroceries = Number(weeklySummary.groceries || 0);
   const plannedFuel = Number(weeklySummary.fuel || 0);
 
   return {
     ...activeWeek,
-    weekStartDate: activeWeek.weekStartDate || activeWeek.weekDate || getCurrentFinancialWeekStartDate(),
+    weekStartDate: activeWeek.weekStartDate || activeWeek.weekDate || getCreatableFinancialWeekStartDate({ financialWeekStartDay }),
     openingBalance: Number(activeWeek.openingBalance || 0),
     realIncome: Number(activeWeek.realIncome ?? activeWeek.income ?? 0),
     extraIncome: normalizeExtraIncome(activeWeek),

@@ -1,5 +1,11 @@
 import React, { useRef, useState } from 'react';
-import { formatDisplayDate } from '../utils/dateUtils.js';
+import {
+  financialWeekDayOptions,
+  formatDisplayDate,
+  getFinancialWeekDayLabel,
+  getFinancialWeekStartDay,
+  getIsoDateWeekday,
+} from '../utils/dateUtils.js';
 import { downloadFinanceBackup, readFinanceBackup } from '../services/backupService.js';
 
 export function SettingsPanel({ financeData, onReplaceFinanceData }) {
@@ -8,6 +14,24 @@ export function SettingsPanel({ financeData, onReplaceFinanceData }) {
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [isReadingFile, setIsReadingFile] = useState(false);
+  const financialWeekStartDay = getFinancialWeekStartDay(financeData);
+  const activeWeekStartDay = getIsoDateWeekday(financeData.activeWeek?.weekStartDate);
+  const shouldShowDeferredWeekChangeNotice =
+    financeData.activeWeek && activeWeekStartDay !== null && activeWeekStartDay !== financialWeekStartDay;
+
+  function updateFinancialWeekStartDay(event) {
+    const nextDay = Number(event.target.value);
+
+    onReplaceFinanceData((currentData) => ({
+      ...currentData,
+      settings: {
+        ...(currentData.settings || {}),
+        financialWeekStartDay: nextDay,
+      },
+    }));
+    setErrorMessage('');
+    setSuccessMessage('');
+  }
 
   function exportBackup() {
     downloadFinanceBackup(financeData);
@@ -59,6 +83,38 @@ export function SettingsPanel({ financeData, onReplaceFinanceData }) {
 
   return (
     <section className="grid gap-4">
+      <div className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
+        <p className="text-sm font-semibold uppercase tracking-wide text-teal-700">Semana financiera</p>
+        <h2 className="mt-1 text-xl font-semibold text-stone-950">
+          Día de inicio de la semana financiera
+        </h2>
+        <p className="mt-2 max-w-3xl text-sm leading-6 text-stone-600">
+          Normalmente coincide con el día en que cobrás.
+        </p>
+
+        <label className="mt-4 block max-w-sm text-sm font-medium text-stone-700">
+          Día de inicio
+          <select
+            className="mt-1 block w-full rounded-md border border-stone-200 bg-stone-50 px-3 py-2 text-sm text-stone-700"
+            value={financialWeekStartDay}
+            onChange={updateFinancialWeekStartDay}
+          >
+            {financialWeekDayOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        {shouldShowDeferredWeekChangeNotice ? (
+          <p className="mt-3 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">
+            El cambio se aplicará después de cerrar la semana actual. Esta semana sigue iniciada el{' '}
+            {getFinancialWeekDayLabel(activeWeekStartDay).toLowerCase()}.
+          </p>
+        ) : null}
+      </div>
+
       <div className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
         <p className="text-sm font-semibold uppercase tracking-wide text-teal-700">Ajustes</p>
         <h2 className="mt-1 text-xl font-semibold text-stone-950">Backup de datos</h2>

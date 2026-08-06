@@ -16,7 +16,7 @@ export function CardSummary({ cards }) {
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <h3 className="truncate text-base font-semibold text-stone-950">{card.name}</h3>
-                <p className="text-xs text-stone-500">{card.planCount} plan{card.planCount === 1 ? '' : 'es'}</p>
+                <p className="text-xs text-stone-500">{card.planCount} obligaci{card.planCount === 1 ? 'ón' : 'ones'}</p>
               </div>
               <span className="h-3 w-3 rounded-full" style={{ backgroundColor: card.color || '#0f172a' }} />
             </div>

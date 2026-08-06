@@ -1,12 +1,18 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { readFinanceBackup } from '../src/services/backupService.js';
+import { suggestStatementDueDate } from '../src/utils/dateUtils.js';
 import {
+  PROMOTIONAL_PLAN_TYPE,
+  STATEMENT_BALANCE_TYPE,
   applyCoverageStatusToPlans,
   buildCoverageTimeline,
   calculateGemMinimumSummary,
+  calculateMonthlyMinimumForPlan,
   calculateWeeklyDebtReserve,
   hasValidDueDate,
   isPastDueDate,
+  normalizeFinanceData,
 } from '../src/utils/financeEngine.js';
 
 const referenceDate = new Date('2026-07-14T12:00:00');
@@ -14,13 +20,15 @@ const referenceDate = new Date('2026-07-14T12:00:00');
 function makePlan(patch) {
   return {
     id: patch.id,
+    type: patch.type,
     name: patch.name || patch.id,
     cardId: 'gem',
-    originalAmount: patch.balance,
+    originalAmount: patch.originalAmount ?? patch.balance,
     balance: patch.balance,
+    statementDate: patch.statementDate,
     thirdPartyContribution: patch.thirdPartyContribution || 0,
     dueDate: patch.dueDate,
-    minimumPaymentRule: null,
+    minimumPaymentRule: patch.minimumPaymentRule ?? null,
   };
 }
 
@@ -231,6 +239,167 @@ assert.equal(isPastDueDate('2026-07-15', referenceDate), false);
   assert.equal(paymentPlan.coverageStatus, baselinePlan.coverageStatus);
   assert.equal(paymentPlan.urgency, baselinePlan.urgency);
   assert.equal(withPayments.gemMinimumSummary.paymentsThisCycle, 50);
+}
+
+{
+  assert.equal(suggestStatementDueDate('2026-08-01', ''), '2026-08-26');
+  assert.equal(suggestStatementDueDate('2026-08-01', '2026-08-20'), '2026-08-20');
+}
+
+{
+  const normalizedLegacy = normalizeFinanceData(
+    makeFinanceData({
+      weeklyIncome: 300,
+      plans: [makePlan({ id: 'legacy-plan', balance: 100, dueDate: '2026-07-28' })],
+    }),
+  );
+
+  assert.equal(normalizedLegacy.paymentPlans[0].type, PROMOTIONAL_PLAN_TYPE);
+}
+
+{
+  const legacyFinanceData = makeFinanceData({
+    weeklyIncome: 300,
+    plans: [makePlan({ id: 'legacy-backup-plan', balance: 100, dueDate: '2026-07-28' })],
+  });
+  const backupContent = JSON.stringify({
+    type: 'weekly-finance-planner-backup',
+    schemaVersion: 1,
+    appVersion: '1.0.0',
+    exportedAt: '2026-07-14T00:00:00.000Z',
+    financeData: legacyFinanceData,
+  });
+  const importedBackup = await readFinanceBackup({
+    name: 'legacy-backup.json',
+    size: backupContent.length,
+    text: async () => backupContent,
+  });
+
+  assert.equal(importedBackup.financeData.paymentPlans[0].type, PROMOTIONAL_PLAN_TYPE);
+}
+
+{
+  const statement = summarize({
+    weeklyIncome: 300,
+    plans: [
+      makePlan({
+        id: 'statement-august',
+        type: STATEMENT_BALANCE_TYPE,
+        name: 'Compras generales GEM - Agosto',
+        balance: 600,
+        statementDate: '2026-07-01',
+        dueDate: '2026-07-28',
+        minimumPaymentRule: {
+          enabled: true,
+          type: 'fixedMonthlyMinimum',
+          amount: 100,
+          frequency: 'monthly',
+        },
+      }),
+    ],
+  });
+  const plan = getPlan(statement, 'statement-august');
+
+  assert.equal(plan.type, STATEMENT_BALANCE_TYPE);
+  assert.equal(plan.recommendedPayment, 300);
+  assert.equal(statement.minimumToAvoidExpiry, 300);
+  assert.equal(statement.recommendedPayment, 300);
+  assert.equal(plan.recommendedPayment * Math.max(1, plan.weeksUntilDue), plan.adjustedBalance);
+  assert.equal(plan.coverageStatus, 'tight');
+  assert.equal(statement.gemMinimumSummary.monthlyMinimumTotal, 0);
+  assert.equal(statement.gemMinimumSummary.weeklyBuffer, 0);
+  assert.equal(calculateMonthlyMinimumForPlan(plan), 0);
+}
+
+{
+  const statementDueToday = summarize({
+    weeklyIncome: 300,
+    plans: [
+      makePlan({
+        id: 'statement-due-today',
+        type: STATEMENT_BALANCE_TYPE,
+        balance: 100,
+        statementDate: '2026-06-19',
+        dueDate: '2026-07-14',
+      }),
+    ],
+  });
+  const plan = getPlan(statementDueToday, 'statement-due-today');
+
+  assert.equal(plan.coverageStatus, 'covered');
+  assert.equal(plan.paymentOpportunities, 1);
+  assert.equal(plan.recommendedPayment, 100);
+}
+
+{
+  const summary = summarize({
+    weeklyIncome: 500,
+    plans: [
+      makePlan({
+        id: 'promotional-minimum',
+        balance: 500,
+        dueDate: '2026-08-11',
+        minimumPaymentRule: {
+          enabled: true,
+          type: 'fixedMonthlyMinimum',
+          amount: 100,
+          frequency: 'monthly',
+        },
+      }),
+      makePlan({
+        id: 'statement-with-ignored-rule',
+        type: STATEMENT_BALANCE_TYPE,
+        balance: 500,
+        statementDate: '2026-07-01',
+        dueDate: '2026-08-11',
+        minimumPaymentRule: {
+          enabled: true,
+          type: 'fixedMonthlyMinimum',
+          amount: 100,
+          frequency: 'monthly',
+        },
+      }),
+    ],
+  });
+
+  assert.equal(summary.gemMinimumSummary.monthlyMinimumTotal, 100);
+  assert.equal(summary.gemMinimumSummary.weeklyBuffer, 100 / (30 / 7));
+  assert.equal(summary.activePlans.find((plan) => plan.id === 'statement-with-ignored-rule').minimumPaymentRule, null);
+}
+
+{
+  const otherCardData = {
+    ...makeFinanceData({
+      weeklyIncome: 500,
+      plans: [
+        {
+          ...makePlan({
+            id: 'purple-statement',
+            type: STATEMENT_BALANCE_TYPE,
+            balance: 400,
+            statementDate: '2026-07-01',
+            dueDate: '2026-07-28',
+            minimumPaymentRule: {
+              enabled: true,
+              type: 'fixedMonthlyMinimum',
+              amount: 100,
+              frequency: 'monthly',
+            },
+          }),
+          cardId: 'purple',
+        },
+      ],
+    }),
+    cards: [
+      { id: 'gem', name: 'GEM Visa' },
+      { id: 'purple', name: 'Purple Visa' },
+    ],
+  };
+  const summary = calculateWeeklyDebtReserve(otherCardData, referenceDate);
+
+  assert.equal(summary.minimumToAvoidExpiry, 200);
+  assert.equal(summary.gemMinimumSummary.monthlyMinimumTotal, 0);
+  assert.equal(summary.gemMinimumSummary.weeklyBuffer, 0);
 }
 
 {
@@ -490,6 +659,8 @@ assert.equal(isPastDueDate('2026-07-15', referenceDate), false);
 
   assert.match(planListSource, /Proyección con tu presupuesto semanal actual\./);
   assert.match(planListSource, /Agregá una fecha válida para calcular el pago recomendado y su cobertura\./);
+  assert.match(planListSource, /Compras generales del próximo resumen/);
+  assert.match(planListSource, /Incluí solo compras generales que no estén cargadas como planes promocionales\./);
   assert.match(simulatorSource, /El monto simulado se interpreta como un pago semanal recurrente hasta cada vencimiento\./);
 }
 

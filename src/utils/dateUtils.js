@@ -17,6 +17,27 @@ export function formatIsoDate(date = new Date()) {
   return `${year}-${month}-${day}`;
 }
 
+export function addDaysToIsoDate(dateValue, dayCount) {
+  if (!dateValue) return '';
+
+  const [year, month, day] = String(dateValue).split('T')[0].split('-').map((part) => Number(part));
+  if (!year || !month || !day) return '';
+
+  const parsedDate = new Date(year, month - 1, day);
+  if (Number.isNaN(parsedDate.getTime())) return '';
+  if (parsedDate.getFullYear() !== year) return '';
+  if (parsedDate.getMonth() + 1 !== month) return '';
+  if (parsedDate.getDate() !== day) return '';
+
+  parsedDate.setDate(parsedDate.getDate() + Number(dayCount || 0));
+  return formatIsoDate(parsedDate);
+}
+
+export function suggestStatementDueDate(statementDate, currentDueDate) {
+  if (currentDueDate) return currentDueDate;
+  return addDaysToIsoDate(statementDate, 25);
+}
+
 export function formatDisplayDate(dateValue) {
   if (!dateValue) return '';
   const dateParts = String(dateValue).split('T')[0].split('-');

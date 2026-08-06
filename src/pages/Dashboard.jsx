@@ -12,7 +12,12 @@ import { UpcomingDueSummary } from '../components/UpcomingDueSummary.jsx';
 import { WeeklyTracker } from '../components/WeeklyTracker.jsx';
 import { WeeklyActionPlan } from '../components/WeeklyActionPlan.jsx';
 import { WeeklyStatus } from '../components/WeeklyStatus.jsx';
-import { calculateWeeklyDebtReserve, formatActionMoney } from '../utils/financeEngine.js';
+import {
+  PROMOTIONAL_PLAN_TYPE,
+  STATEMENT_BALANCE_TYPE,
+  calculateWeeklyDebtReserve,
+  formatActionMoney,
+} from '../utils/financeEngine.js';
 
 const dashboardTabs = [
   { id: 'dashboard', label: 'Dashboard' },
@@ -74,10 +79,14 @@ export function Dashboard({ financeData, setFinanceData }) {
     }));
   }
 
-  function addPlan() {
+  function addPlan(planType = PROMOTIONAL_PLAN_TYPE) {
     setFinanceData((currentData) => {
       const dueDate = new Date();
       dueDate.setDate(dueDate.getDate() + 28);
+      const isStatementBalance = planType === STATEMENT_BALANCE_TYPE;
+      const defaultCardId = isStatementBalance
+        ? currentData.cards.find((card) => /gem/i.test(card.id) || /gem/i.test(card.name))?.id || currentData.cards[0]?.id || ''
+        : currentData.cards[0]?.id || '';
 
       return {
         ...currentData,
@@ -85,11 +94,13 @@ export function Dashboard({ financeData, setFinanceData }) {
           ...currentData.paymentPlans,
           {
             id: `plan-${Date.now()}`,
-            name: 'Nuevo plan',
-            cardId: currentData.cards[0]?.id || '',
+            type: planType,
+            name: isStatementBalance ? 'Compras generales GEM' : 'Nuevo plan',
+            cardId: defaultCardId,
             originalAmount: 0,
             balance: 0,
-            dueDate: dueDate.toISOString().slice(0, 10),
+            statementDate: '',
+            dueDate: isStatementBalance ? '' : dueDate.toISOString().slice(0, 10),
             thirdPartyContribution: 0,
             minimumPaymentRule: null,
           },

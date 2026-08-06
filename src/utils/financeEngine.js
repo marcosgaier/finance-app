@@ -47,6 +47,17 @@ const smartExtraAllocationRatio = 0.65;
 const gemCardNamePattern = /gem/i;
 const approximateWeeksPerMonthlyCycle = 30 / 7;
 
+export const PROMOTIONAL_PLAN_TYPE = 'promotional-plan';
+export const STATEMENT_BALANCE_TYPE = 'statement-balance';
+
+export function normalizePlanType(type) {
+  return type === STATEMENT_BALANCE_TYPE ? STATEMENT_BALANCE_TYPE : PROMOTIONAL_PLAN_TYPE;
+}
+
+export function isStatementBalancePlan(plan) {
+  return normalizePlanType(plan?.type) === STATEMENT_BALANCE_TYPE;
+}
+
 export function isPlanCompleted(plan) {
   return Number(plan?.balance || 0) <= 0;
 }
@@ -88,11 +99,17 @@ export function calculateWeeklyAvailable(financeData) {
 export function normalizeFinanceData(financeData) {
   const paymentPlans = (financeData.paymentPlans || [])
     .filter((plan) => plan.calculationMode !== 'fixedWeekly')
-    .map((plan) => ({
-      ...plan,
-      originalAmount: Number(plan.originalAmount ?? plan.balance ?? 0),
-      minimumPaymentRule: normalizeMinimumPaymentRule(plan.minimumPaymentRule),
-    }));
+    .map((plan) => {
+      const type = normalizePlanType(plan.type);
+
+      return {
+        ...plan,
+        type,
+        originalAmount: Number(plan.originalAmount ?? plan.balance ?? 0),
+        statementDate: plan.statementDate ? normalizeDueDate(plan.statementDate) : '',
+        minimumPaymentRule: type === STATEMENT_BALANCE_TYPE ? null : normalizeMinimumPaymentRule(plan.minimumPaymentRule),
+      };
+    });
   const weeklyRecords = financeData.weeklyRecords || [];
   const reserveBuckets = normalizeReserveBuckets(financeData.reserveBuckets);
 
@@ -711,6 +728,8 @@ export function calculateWeeklyDebtReserve(financeData, referenceDate = new Date
 }
 
 export function calculateMonthlyMinimumForPlan(plan) {
+  if (isStatementBalancePlan(plan)) return 0;
+
   const rule = normalizeMinimumPaymentRule(plan.minimumPaymentRule);
   if (!rule) return 0;
 
@@ -748,7 +767,7 @@ export function calculateGemMinimumSummary(financeData, referenceDate = new Date
   const gemCardIds = new Set(gemCards.map((card) => card.id));
   const cycle = getGemBillingCycle(referenceDate);
   const plans = normalizedData.paymentPlans
-    .filter((plan) => gemCardIds.has(plan.cardId) && !isPlanCompleted(plan))
+    .filter((plan) => gemCardIds.has(plan.cardId) && !isPlanCompleted(plan) && !isStatementBalancePlan(plan))
     .map((plan) => ({
       id: plan.id,
       name: plan.name,

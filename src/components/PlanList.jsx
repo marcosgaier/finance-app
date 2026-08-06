@@ -1,6 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { formatDateForDisplay, formatShortDate, parseDisplayDate } from '../utils/dateUtils.js';
-import { formatMoney } from '../utils/financeEngine.js';
+import { formatDateForDisplay, formatShortDate, parseDisplayDate, suggestStatementDueDate } from '../utils/dateUtils.js';
+import {
+  PROMOTIONAL_PLAN_TYPE,
+  STATEMENT_BALANCE_TYPE,
+  formatMoney,
+  isStatementBalancePlan,
+  normalizePlanType,
+} from '../utils/financeEngine.js';
 
 const urgencyStyles = {
   overdue: 'border-red-200 bg-red-50 text-red-800',
@@ -15,6 +21,16 @@ const coverageStyles = {
   'at-risk': 'border-orange-200 bg-orange-50 text-orange-800',
   overdue: 'border-red-200 bg-red-50 text-red-800',
   unknown: 'border-stone-200 bg-stone-50 text-stone-700',
+};
+
+const planTypeLabels = {
+  [PROMOTIONAL_PLAN_TYPE]: 'Plan promocional',
+  [STATEMENT_BALANCE_TYPE]: 'Compras generales del próximo resumen',
+};
+
+const planTypeStyles = {
+  [PROMOTIONAL_PLAN_TYPE]: 'border-sky-200 bg-sky-50 text-sky-800',
+  [STATEMENT_BALANCE_TYPE]: 'border-violet-200 bg-violet-50 text-violet-800',
 };
 
 export function PlanList({ plans = [], completedPlans = [], cards, onAddPlan, onDeletePlan, onUpdatePlan }) {
@@ -63,8 +79,8 @@ export function PlanList({ plans = [], completedPlans = [], cards, onAddPlan, on
     <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-stone-950">Planes activos</h2>
-          <p className="text-sm text-stone-500">Vencimientos ordenados por urgencia y fecha.</p>
+          <h2 className="text-lg font-semibold text-stone-950">Obligaciones activas</h2>
+          <p className="text-sm text-stone-500">Planes promocionales y compras generales ordenados por urgencia y fecha.</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <button
@@ -82,9 +98,16 @@ export function PlanList({ plans = [], completedPlans = [], cards, onAddPlan, on
             Expandir urgentes
           </button>
           <button
+            className="rounded-md border border-violet-200 bg-violet-50 px-3 py-2 text-sm font-semibold text-violet-800 hover:border-violet-400"
+            type="button"
+            onClick={() => onAddPlan(STATEMENT_BALANCE_TYPE)}
+          >
+            Agregar compras generales
+          </button>
+          <button
             className="rounded-md bg-stone-950 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-stone-800"
             type="button"
-            onClick={onAddPlan}
+            onClick={() => onAddPlan(PROMOTIONAL_PLAN_TYPE)}
           >
             Agregar plan
           </button>
@@ -96,6 +119,9 @@ export function PlanList({ plans = [], completedPlans = [], cards, onAddPlan, on
           const priorityPlan = isPriorityPlan(plan);
           const detailVisible = Boolean(expandedPlanIds[plan.id]);
           const editorVisible = Boolean(editingPlanIds[plan.id]);
+          const statementBalance = isStatementBalancePlan(plan);
+          const typeLabel = getPlanTypeLabel(plan);
+          const typeStyle = planTypeStyles[normalizePlanType(plan.type)];
 
           return (
             <article key={plan.id} className="rounded-lg border border-stone-200 p-4">
@@ -103,6 +129,9 @@ export function PlanList({ plans = [], completedPlans = [], cards, onAddPlan, on
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <h3 className="text-base font-semibold text-stone-950">{plan.name}</h3>
+                    <span className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${typeStyle}`}>
+                      {typeLabel}
+                    </span>
                     <span className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${urgencyStyles[plan.urgency]}`}>
                       {plan.urgencyLabel}
                     </span>
@@ -113,7 +142,8 @@ export function PlanList({ plans = [], completedPlans = [], cards, onAddPlan, on
                     ) : null}
                   </div>
                   <p className="mt-1 text-sm text-stone-500">
-                    {plan.card?.name || 'Sin tarjeta'} · vence {formatShortDate(plan.dueDate)}
+                    {plan.card?.name || 'Sin tarjeta'} · {statementBalance && plan.statementDate ? `cierre ${formatShortDate(plan.statementDate)} · ` : ''}
+                    vence {plan.dueDate ? formatShortDate(plan.dueDate) : 'sin fecha'}
                   </p>
                   {plan.coverageReason === 'invalid-due-date' ? (
                     <p className="mt-2 rounded-md border border-stone-200 bg-stone-50 px-3 py-2 text-sm text-stone-700">
@@ -124,9 +154,9 @@ export function PlanList({ plans = [], completedPlans = [], cards, onAddPlan, on
 
                 <div className="grid gap-2 sm:grid-cols-2 xl:min-w-[520px] xl:grid-cols-4">
                   <Metric label="Tarjeta" value={plan.card?.name || 'Sin tarjeta'} />
-                  <Metric label="Saldo ajustado" value={formatMoney(plan.adjustedBalance)} />
-                  <Metric label="Vencimiento" value={formatShortDate(plan.dueDate)} />
-                  <Metric label="Tiempo" value={plan.urgencyLabel} strong />
+                  <Metric label={statementBalance ? 'Saldo pendiente' : 'Saldo ajustado'} value={formatMoney(plan.adjustedBalance)} />
+                  <Metric label={statementBalance ? 'Vencimiento resumen' : 'Vencimiento'} value={plan.dueDate ? formatShortDate(plan.dueDate) : 'Sin fecha'} />
+                  <Metric label={statementBalance ? 'Estado de riesgo' : 'Tiempo'} value={plan.urgencyLabel} strong />
                 </div>
               </div>
 
@@ -168,7 +198,7 @@ export function PlanList({ plans = [], completedPlans = [], cards, onAddPlan, on
         })}
         {plans.length === 0 ? (
           <p className="rounded-md border border-dashed border-emerald-300 bg-emerald-50 p-4 text-sm text-emerald-900">
-            No hay planes activos pendientes.
+            No hay obligaciones activas pendientes.
           </p>
         ) : null}
       </div>
@@ -180,9 +210,9 @@ export function PlanList({ plans = [], completedPlans = [], cards, onAddPlan, on
           onClick={() => setCompletedPlansOpen((currentValue) => !currentValue)}
         >
           <span>
-            <span className="block text-sm font-semibold uppercase tracking-wide text-stone-700">Planes completados</span>
+            <span className="block text-sm font-semibold uppercase tracking-wide text-stone-700">Obligaciones completadas</span>
             <span className="mt-1 block text-sm text-stone-500">
-              {completedPlans.length} plan{completedPlans.length === 1 ? '' : 'es'} con saldo en cero.
+              {completedPlans.length} obligaci{completedPlans.length === 1 ? 'ón' : 'ones'} con saldo en cero.
             </span>
           </span>
           <span className="shrink-0 rounded-full border border-stone-300 bg-white px-2.5 py-1 text-xs font-semibold text-stone-700">
@@ -202,6 +232,9 @@ export function PlanList({ plans = [], completedPlans = [], cards, onAddPlan, on
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
                           <h3 className="text-base font-semibold text-stone-950">{plan.name}</h3>
+                          <span className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${planTypeStyles[normalizePlanType(plan.type)]}`}>
+                            {getPlanTypeLabel(plan)}
+                          </span>
                           <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-800">
                             Completado
                           </span>
@@ -245,7 +278,7 @@ export function PlanList({ plans = [], completedPlans = [], cards, onAddPlan, on
               })
             ) : (
               <p className="rounded-md border border-dashed border-stone-300 bg-white p-4 text-sm text-stone-500">
-                Todavía no hay planes completados.
+                Todavía no hay obligaciones completadas.
               </p>
             )}
           </div>
@@ -259,8 +292,13 @@ function isPriorityPlan(plan) {
   return plan.urgency === 'overdue' || plan.urgency === 'urgent' || plan.urgency === 'attention';
 }
 
+function getPlanTypeLabel(plan) {
+  return planTypeLabels[normalizePlanType(plan.type)];
+}
+
 function PlanDetail({ plan }) {
   const sharedCoverage = (plan.coverageGroupPlanIds || []).length > 1;
+  const statementBalance = isStatementBalancePlan(plan);
 
   return (
     <div className="mt-3 rounded-lg border border-stone-200 bg-stone-50 p-3">
@@ -269,8 +307,8 @@ function PlanDetail({ plan }) {
           label={plan.weeksUntilDue < 0 ? 'Vencido' : 'Semanas restantes'}
           value={plan.weeksUntilDue < 0 ? 'Atrasado' : `${plan.weeksUntilDue}`}
         />
-        <Metric label="Mínimo para no vencer" value={formatMoney(plan.recommendedPayment)} strong />
-        <Metric label="Recomendado" value={formatMoney(plan.totalRecommendedPayment)} strong />
+        <Metric label={statementBalance ? 'Necesidad semanal' : 'Mínimo para no vencer'} value={formatMoney(plan.recommendedPayment)} strong />
+        <Metric label={statementBalance ? 'Pago recomendado' : 'Recomendado'} value={formatMoney(plan.totalRecommendedPayment)} strong />
         <Metric label="Reserva total" value={formatMoney(plan.rolloverPressure)} />
       </div>
       {plan.coverageStatus ? (
@@ -297,11 +335,47 @@ function PlanDetail({ plan }) {
 }
 
 function PlanEditor({ cards, plan, onUpdatePlan }) {
+  const planType = normalizePlanType(plan.type);
+  const statementBalance = planType === STATEMENT_BALANCE_TYPE;
+
+  function updatePlanType(nextType) {
+    if (nextType === STATEMENT_BALANCE_TYPE) {
+      onUpdatePlan({
+        type: STATEMENT_BALANCE_TYPE,
+        minimumPaymentRule: null,
+        thirdPartyContribution: 0,
+      });
+      return;
+    }
+
+    onUpdatePlan({
+      type: PROMOTIONAL_PLAN_TYPE,
+    });
+  }
+
+  function updateStatementDate(nextDate) {
+    onUpdatePlan({
+      statementDate: nextDate,
+      dueDate: suggestStatementDueDate(nextDate, plan.dueDate),
+    });
+  }
+
   return (
     <div className="mt-3 rounded-lg border border-sky-100 bg-sky-50/40 p-3">
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
         <label className="text-sm font-medium text-stone-600 xl:col-span-2">
-          Nombre del plan
+          Tipo
+          <select
+            className="mt-1 w-full rounded-md border border-stone-200 bg-white px-3 py-2 outline-none focus:border-sky-500"
+            value={planType}
+            onChange={(event) => updatePlanType(event.target.value)}
+          >
+            <option value={PROMOTIONAL_PLAN_TYPE}>Plan promocional</option>
+            <option value={STATEMENT_BALANCE_TYPE}>Compras generales del próximo resumen</option>
+          </select>
+        </label>
+        <label className="text-sm font-medium text-stone-600 xl:col-span-2">
+          Nombre
           <input
             className="mt-1 w-full rounded-md border border-stone-200 px-3 py-2 outline-none focus:border-sky-500"
             type="text"
@@ -323,18 +397,20 @@ function PlanEditor({ cards, plan, onUpdatePlan }) {
             ))}
           </select>
         </label>
+        {!statementBalance ? (
+          <label className="text-sm font-medium text-stone-600">
+            Monto total original
+            <input
+              className="mt-1 w-full rounded-md border border-stone-200 px-3 py-2 outline-none focus:border-sky-500"
+              type="number"
+              min="0"
+              value={plan.originalAmount ?? plan.balance}
+              onChange={(event) => onUpdatePlan({ originalAmount: Number(event.target.value) })}
+            />
+          </label>
+        ) : null}
         <label className="text-sm font-medium text-stone-600">
-          Monto total original
-          <input
-            className="mt-1 w-full rounded-md border border-stone-200 px-3 py-2 outline-none focus:border-sky-500"
-            type="number"
-            min="0"
-            value={plan.originalAmount ?? plan.balance}
-            onChange={(event) => onUpdatePlan({ originalAmount: Number(event.target.value) })}
-          />
-        </label>
-        <label className="text-sm font-medium text-stone-600">
-          Saldo actual
+          {statementBalance ? 'Saldo pendiente' : 'Saldo actual'}
           <input
             className="mt-1 w-full rounded-md border border-stone-200 px-3 py-2 outline-none focus:border-sky-500"
             type="number"
@@ -343,26 +419,40 @@ function PlanEditor({ cards, plan, onUpdatePlan }) {
             onChange={(event) => onUpdatePlan({ balance: Number(event.target.value) })}
           />
         </label>
-        <label className="text-sm font-medium text-stone-600">
-          Pago de terceros
-          <input
-            className="mt-1 w-full rounded-md border border-stone-200 px-3 py-2 outline-none focus:border-sky-500"
-            type="number"
-            min="0"
-            value={plan.thirdPartyContribution}
-            onChange={(event) => onUpdatePlan({ thirdPartyContribution: Number(event.target.value) })}
-          />
-        </label>
+        {!statementBalance ? (
+          <label className="text-sm font-medium text-stone-600">
+            Pago de terceros
+            <input
+              className="mt-1 w-full rounded-md border border-stone-200 px-3 py-2 outline-none focus:border-sky-500"
+              type="number"
+              min="0"
+              value={plan.thirdPartyContribution}
+              onChange={(event) => onUpdatePlan({ thirdPartyContribution: Number(event.target.value) })}
+            />
+          </label>
+        ) : null}
+        {statementBalance ? (
+          <label className="text-sm font-medium text-stone-600 xl:col-span-2">
+            Fecha de cierre
+            <DateField value={plan.statementDate || ''} onChange={updateStatementDate} />
+          </label>
+        ) : null}
         <label className="text-sm font-medium text-stone-600 xl:col-span-2">
           Fecha de vencimiento
           <DateField value={plan.dueDate} onChange={(nextDate) => onUpdatePlan({ dueDate: nextDate })} />
         </label>
       </div>
 
-      <MinimumPaymentRuleEditor
-        rule={plan.minimumPaymentRule}
-        onChange={(minimumPaymentRule) => onUpdatePlan({ minimumPaymentRule })}
-      />
+      {statementBalance ? (
+        <p className="mt-3 rounded-md border border-violet-200 bg-violet-50 p-3 text-sm leading-6 text-violet-900">
+          Incluí solo compras generales que no estén cargadas como planes promocionales.
+        </p>
+      ) : (
+        <MinimumPaymentRuleEditor
+          rule={plan.minimumPaymentRule}
+          onChange={(minimumPaymentRule) => onUpdatePlan({ minimumPaymentRule })}
+        />
+      )}
     </div>
   );
 }

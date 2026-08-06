@@ -781,16 +781,21 @@ function calculateCardCyclePayments(financeData, cardIds, cycle) {
   if (financeData.activeWeek) records.push(financeData.activeWeek);
 
   return records.reduce((total, record) => {
-    const recordDate = new Date(`${record.weekDate || record.weekStartDate || ''}T00:00:00`);
-    if (Number.isNaN(recordDate.getTime()) || recordDate < cycle.start || recordDate > cycle.end) return total;
-
     return (
       total +
       (record.payments || [])
         .filter((payment) => cardIds.has(payment.cardId))
-        .reduce((paymentTotal, payment) => paymentTotal + Number(payment.amount || 0), 0)
+        .reduce((paymentTotal, payment) => {
+          const paymentDate = getPaymentCycleDate(payment, record);
+          if (!paymentDate || paymentDate < cycle.start || paymentDate > cycle.end) return paymentTotal;
+          return paymentTotal + Number(payment.amount || 0);
+        }, 0)
     );
   }, 0);
+}
+
+function getPaymentCycleDate(payment, record) {
+  return parseLocalDate(payment?.date) || parseLocalDate(record.weekDate || record.weekStartDate);
 }
 
 function calculateRemainingWeeklySlots(cycleEnd, referenceDate = new Date()) {

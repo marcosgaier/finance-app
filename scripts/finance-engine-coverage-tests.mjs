@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import {
   applyCoverageStatusToPlans,
   buildCoverageTimeline,
+  calculateGemMinimumSummary,
   calculateWeeklyDebtReserve,
   hasValidDueDate,
   isPastDueDate,
@@ -43,6 +44,43 @@ function summarize({ weeklyIncome, plans }) {
   return calculateWeeklyDebtReserve(makeFinanceData({ weeklyIncome, plans }), referenceDate);
 }
 
+const gemCycleReferenceDate = new Date('2026-06-25T12:00:00');
+
+function makeGemCycleFinanceData(records = []) {
+  return {
+    weeklyIncome: 500,
+    cards: [
+      { id: 'gem', name: 'GEM Visa' },
+      { id: 'purple', name: 'Purple Visa' },
+    ],
+    weeklyExpenses: [],
+    monthlyExpenses: [],
+    variableBudgets: { groceries: 0, fuel: 0 },
+    paymentPlans: [
+      {
+        id: 'gem-plan',
+        name: 'GEM plan',
+        cardId: 'gem',
+        originalAmount: 1000,
+        balance: 1000,
+        dueDate: '2026-08-01',
+        minimumPaymentRule: {
+          enabled: true,
+          type: 'fixedMonthlyMinimum',
+          amount: 100,
+          frequency: 'monthly',
+        },
+      },
+    ],
+    weeklyRecords: records,
+    reserveBuckets: [],
+  };
+}
+
+function calculateGemPaymentsThisCycle(records = []) {
+  return calculateGemMinimumSummary(makeGemCycleFinanceData(records), gemCycleReferenceDate).paymentsThisCycle;
+}
+
 function getPlan(summary, planId) {
   return summary.activePlans.find((plan) => plan.id === planId);
 }
@@ -77,6 +115,123 @@ function buildSingleTimeline({ dueDate, balance = 100, capacity = 300 }) {
 assert.equal(isPastDueDate('2026-07-13', referenceDate), true);
 assert.equal(isPastDueDate('2026-07-14', referenceDate), false);
 assert.equal(isPastDueDate('2026-07-15', referenceDate), false);
+
+{
+  const records = [
+    {
+      id: 'week-before-cycle',
+      weekStartDate: '2026-06-16',
+      payments: [{ id: 'inside-cycle', cardId: 'gem', amount: 40, date: '2026-06-20' }],
+    },
+  ];
+
+  assert.equal(calculateGemPaymentsThisCycle(records), 40);
+}
+
+{
+  const records = [
+    {
+      id: 'week-inside-cycle',
+      weekStartDate: '2026-06-23',
+      payments: [{ id: 'outside-cycle', cardId: 'gem', amount: 40, date: '2026-07-20' }],
+    },
+  ];
+
+  assert.equal(calculateGemPaymentsThisCycle(records), 0);
+}
+
+{
+  const records = [
+    {
+      id: 'legacy-payment-date',
+      weekStartDate: '2026-06-23',
+      payments: [{ id: 'no-payment-date', cardId: 'gem', amount: 15 }],
+    },
+  ];
+
+  assert.equal(calculateGemPaymentsThisCycle(records), 15);
+}
+
+{
+  const records = [
+    {
+      id: 'invalid-payment-date',
+      weekStartDate: '2026-06-23',
+      payments: [{ id: 'bad-payment-date', cardId: 'gem', amount: 25, date: 'not-a-date' }],
+    },
+  ];
+
+  assert.equal(calculateGemPaymentsThisCycle(records), 25);
+}
+
+{
+  const records = [
+    {
+      id: 'mixed-payment-week',
+      weekStartDate: '2026-06-23',
+      payments: [
+        { id: 'inside-cycle', cardId: 'gem', amount: 30, date: '2026-06-21' },
+        { id: 'outside-cycle', cardId: 'gem', amount: 45, date: '2026-07-20' },
+      ],
+    },
+  ];
+
+  assert.equal(calculateGemPaymentsThisCycle(records), 30);
+}
+
+{
+  const records = [
+    {
+      id: 'other-card-payment',
+      weekStartDate: '2026-06-23',
+      payments: [
+        { id: 'gem-payment', cardId: 'gem', amount: 35, date: '2026-06-24' },
+        { id: 'purple-payment', cardId: 'purple', amount: 80, date: '2026-06-24' },
+      ],
+    },
+  ];
+
+  assert.equal(calculateGemPaymentsThisCycle(records), 35);
+}
+
+{
+  const records = [
+    {
+      id: 'cycle-boundaries',
+      weekStartDate: '2026-06-23',
+      payments: [
+        { id: 'cycle-start', cardId: 'gem', amount: 10, date: '2026-06-20' },
+        { id: 'cycle-end', cardId: 'gem', amount: 20, date: '2026-07-19' },
+      ],
+    },
+  ];
+
+  assert.equal(calculateGemPaymentsThisCycle(records), 30);
+}
+
+{
+  const baseline = calculateWeeklyDebtReserve(makeGemCycleFinanceData([]), gemCycleReferenceDate);
+  const withPayments = calculateWeeklyDebtReserve(
+    makeGemCycleFinanceData([
+      {
+        id: 'payments-do-not-change-interest-free-plan',
+        weekStartDate: '2026-06-23',
+        payments: [{ id: 'gem-payment', cardId: 'gem', amount: 50, date: '2026-06-24' }],
+      },
+    ]),
+    gemCycleReferenceDate,
+  );
+  const baselinePlan = getPlan(baseline, 'gem-plan');
+  const paymentPlan = getPlan(withPayments, 'gem-plan');
+
+  assert.equal(withPayments.minimumToAvoidExpiry, baseline.minimumToAvoidExpiry);
+  assert.equal(withPayments.recommendedPayment, baseline.recommendedPayment);
+  assert.equal(paymentPlan.recommendedPayment, baselinePlan.recommendedPayment);
+  assert.equal(paymentPlan.rolloverPressure, baselinePlan.rolloverPressure);
+  assert.equal(paymentPlan.coverageStatus, baselinePlan.coverageStatus);
+  assert.equal(paymentPlan.urgency, baselinePlan.urgency);
+  assert.equal(withPayments.gemMinimumSummary.paymentsThisCycle, 50);
+}
 
 {
   const today = summarize({

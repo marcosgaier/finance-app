@@ -308,7 +308,7 @@ function PlanDetail({ plan }) {
           value={plan.weeksUntilDue < 0 ? 'Atrasado' : `${plan.weeksUntilDue}`}
         />
         <Metric label={statementBalance ? 'Necesidad semanal' : 'Mínimo para no vencer'} value={formatMoney(plan.recommendedPayment)} strong />
-        <Metric label={statementBalance ? 'Pago recomendado' : 'Recomendado'} value={formatMoney(plan.totalRecommendedPayment)} strong />
+        <Metric label="Referencia para acelerar" value={formatMoney(plan.totalRecommendedPayment)} />
         <Metric label="Reserva total" value={formatMoney(plan.rolloverPressure)} />
       </div>
       {plan.coverageStatus ? (

@@ -391,7 +391,7 @@ export function Dashboard({ financeData, setFinanceData }) {
 
         {activeTab === 'debts' && (
           <div className="grid gap-5">
-            <CardSummary cards={weeklySummary.cardSummaries} />
+            <CardSummary cards={weeklySummary.cardSummaries} gemMinimumSummary={weeklySummary.gemMinimumSummary} />
             <GemMinimumSummary
               summary={{
                 ...weeklySummary.gemMinimumSummary,

@@ -40,8 +40,8 @@ export function UpcomingDueSummary({ plans }) {
               </span>
             </div>
             <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
-              <Metric label="Mínimo" value={formatMoney(plan.recommendedPayment)} />
-              <Metric label="Total recomendado" value={formatMoney(plan.totalRecommendedPayment)} />
+              <Metric label="Necesidad semanal" value={formatMoney(plan.recommendedPayment)} />
+              <Metric label="Referencia para acelerar" value={formatMoney(plan.totalRecommendedPayment)} />
             </div>
           </article>
         ))}

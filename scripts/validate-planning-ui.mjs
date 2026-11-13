@@ -36,7 +36,7 @@ await mkdir(output, { recursive: true });
 const finance = structuredClone(sampleFinanceData);
 finance.weeklyRecords = [];
 finance.weeklyExpenses = [{ id: 'rent', name: 'Alquiler sintético', amount: 20 }];
-finance.monthlyExpenses = [{ id: 'monthly', name: 'Mensual sintético', amount: 30.01 }];
+finance.monthlyExpenses = [{ id: 'monthly', name: '', amount: 30.01 }];
 finance.variableBudgets = { groceries: 2, fuel: 3 };
 finance.activeWeek = {id:'synthetic-active', weekStartDate:'2026-09-15', weekDate:'2026-09-15', realIncome:25, income:25, payments:[], extraIncome:[], variableTransactions:[], reserveMovements:[]};
 const browser = await chromium.launch({ headless: true, ...(process.env.CHROMIUM_PATH ? {executablePath:process.env.CHROMIUM_PATH} : {}), args:['--no-sandbox'] });
@@ -113,6 +113,12 @@ try {
   await check('validated Taura producer fixture → visible planner, payDate mapping, no automatic review', async () => {
     await upload(fixture); await plan.waitFor();
     assert.equal(await weeks.count(),4);
+    await expectText(first, 'Semana no registrada');
+    await open(first);
+    await expectText(first, 'Alquiler sintético');
+    await expectText(first, 'Cobertura parcial');
+    await expectText(first, 'Gasto mensual 1');
+    assert.doesNotMatch(await plan.innerText(), /explicit-zero|unknown-income|unregistered|snapshot|\bpartial\b/);
     await open(first);
     assert.match(await first.innerText(), /2026-09-28/);
     assert.match(await first.getByTestId('week-margin').innerText(), /Indeterminado/);
@@ -121,12 +127,12 @@ try {
   await check('explicit no assignments review; exact cents including monthly 7/30', async () => {
     await review(first);
     assert.match(await first.getByTestId('week-margin').innerText(), /932[,.]00/); // 964 - 20 - 7 - 5
-    assert.match(await first.innerText(), /hypothetical/);
+    assert.match(await first.innerText(), /Margen hipotético/);
     await unchanged(before);
   });
   await check('expense replacement/addition, manual debt/saving, all due dates and negative margin', async () => {
-    await first.getByRole('button', {name:'Sustituir rent',exact:true}).click();
-    await first.getByLabel('Reemplazo rent (NZD)',{exact:true}).fill('1000.01');
+    await first.getByRole('button', {name:'Sustituir Alquiler sintético',exact:true}).click();
+    await first.getByLabel('Reemplazo Alquiler sintético (NZD)',{exact:true}).fill('1000.01');
     assert.match(await first.getByTestId('week-margin').innerText(),/Indeterminado/);
     await first.getByRole('button', {name:'Agregar gasto hipotético',exact:true}).click();
     await first.getByLabel('Gasto adicional 2 (NZD)',{exact:true}).fill('2.03');
@@ -141,6 +147,7 @@ try {
       await first.getByLabel(`Fecha vencimiento ${i+1}`).fill(date);
       await first.getByLabel(`Vencimiento ${i+1} (NZD)`,{exact:true}).fill('1.01');
     }
+    assert.equal(await first.getByLabel('Gasto o asignación vinculada 1').inputValue(), 'rent');
     await review(first);
     assert.match(await first.getByTestId('week-margin').innerText(), /-63[,.]10/);
     assert.equal(await first.getByText(/Vencimiento revisado:/).count(),2);
@@ -159,10 +166,10 @@ try {
   await check('zero roster vs unknown, later individual margin with blocked total', async () => {
     const zero=weeks.nth(2), unknown=weeks.nth(1);
     await open(zero); await review(zero);
-    assert.match(await zero.innerText(),/explicit-zero/);
+    assert.match(await zero.innerText(),/Neto estimado cero/);
     assert.match(await zero.getByTestId('week-margin').innerText(),/-32[,.]00/);
     await open(unknown); await review(unknown);
-    assert.match(await unknown.innerText(),/unknown-income/);
+    assert.match(await unknown.innerText(),/Ingreso desconocido/);
     assert.match(await unknown.getByTestId('week-margin').innerText(),/Indeterminado/);
     assert.match(await plan.getByTestId('planning-total').innerText(),/oculto/);
   });
@@ -188,6 +195,8 @@ try {
   });
   await check('mobile and keyboard review, accessible labels and alerts',async()=>{
     await page.setViewportSize({width:390,height:844});
+    await expectText(first, 'Alquiler sintético');
+    assert.doesNotMatch(await plan.innerText(), /explicit-zero|unknown-income|unregistered|snapshot|\bpartial\b/);
     await first.getByRole('button',{name:/^Revisar y calcular/}).focus();
     await page.keyboard.press('Enter');
     await page.screenshot({path:fileURLToPath(new URL('planner-mobile.png',output)),fullPage:true});
@@ -198,7 +207,7 @@ try {
     await tab('Presupuesto');
     await page.getByLabel(/Supermercado/).fill('4');
     await tab('Estimaciones Taura');
-    await expectText(plan.getByRole('alert'),'Snapshot desactualizado');
+    await expectText(plan.getByRole('alert'),'Base de gastos desactualizada');
     assert.equal(await plan.getByTestId('week-margin').count(),0);
     const changed=await snapshot();
     assert.notDeepEqual(changed.local,before.local);
@@ -215,7 +224,7 @@ try {
     await close.click();
     await tab('Estimaciones Taura');
     await open(first);
-    assert.match(await first.innerText(),/excluded/);
+    assert.match(await first.innerText(),/Excluida del futuro/);
     assert.match(await first.getByTestId('week-margin').innerText(),/Indeterminado/);
     // Close the now-active synthetic Sep 22 week from the existing tracker.
     await tab('Historial');
@@ -225,15 +234,15 @@ try {
     }
     await closeCurrent.click();
     await tab('Estimaciones Taura'); await open(first);
-    assert.match(await first.innerText(),/closed/);
+    assert.match(await first.innerText(),/Semana cerrada/);
     await tab('Historial');
     await page.getByRole('button',{name:'Reabrir como semana actual',exact:true}).click();
     await tab('Estimaciones Taura'); await open(first);
-    assert.match(await first.innerText(),/reopened/);
+    assert.match(await first.innerText(),/Semana reabierta/);
     await tab('Historial');
     await page.getByRole('button',{name:'Volver a cerrar semana',exact:true}).click();
     await tab('Estimaciones Taura'); await open(first);
-    assert.match(await first.innerText(),/closed/);
+    assert.match(await first.innerText(),/Semana cerrada/);
     const operational=await snapshot();
     await review(first);
     assert.match(await first.getByTestId('week-margin').innerText(),/Indeterminado/);

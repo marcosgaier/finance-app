@@ -114,7 +114,7 @@ export function TauraIncomePreview({ weeklyRecords = [], activeWeek = null, budg
           </details>
         </article>)}
       </div>}
-      {preview && plan && <PlanningPreview plan={plan} weekCount={weekCount}
+      {preview && plan && <PlanningPreview budget={budget} plan={plan} weekCount={weekCount}
         onHorizon={setWeekCount} notice={notice}
         onRebuild={() => { setPlan(session.current.rebuildBudget(budget)); setNotice('Base actualizada; supuestos descartados.'); }}
         onEdit={(start, draft, review) => {

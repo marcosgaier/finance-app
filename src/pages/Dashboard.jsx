@@ -36,8 +36,8 @@ const dashboardTabs = [
 export function Dashboard({ financeData, setFinanceData }) {
   const [activeTab, setActiveTab] = useState('dashboard');
   const planningBudget = useMemo(() => ({
-    weeklyExpenses: financeData.weeklyExpenses?.map(({ id, amount }) => ({ id, amount })),
-    monthlyExpenses: financeData.monthlyExpenses?.map(({ id, amount }) => ({ id, amount })),
+    weeklyExpenses: financeData.weeklyExpenses?.map(({ id, amount, name }) => ({ id, amount, name: typeof name === 'string' ? name : '' })),
+    monthlyExpenses: financeData.monthlyExpenses?.map(({ id, amount, name }) => ({ id, amount, name: typeof name === 'string' ? name : '' })),
     variableBudgets: { groceries: financeData.variableBudgets?.groceries, fuel: financeData.variableBudgets?.fuel },
   }), [financeData.weeklyExpenses, financeData.monthlyExpenses, financeData.variableBudgets]);
   const effectiveFinanceData = useMemo(() => {

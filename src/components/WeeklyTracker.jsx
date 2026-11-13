@@ -3,6 +3,7 @@ import { formatDisplayDate, formatIsoDate, parseDisplayDate } from '../utils/dat
 import { getFundingSourceLabel, isWeeklyIncomeFunded, WEEKLY_INCOME_SOURCE } from '../utils/fundingSourceUtils.js';
 import { formatMoney } from '../utils/financeEngine.js';
 import { prepareHistoricalPayments, updateHistoricalPaymentAmount } from '../utils/historicalPaymentUtils.js';
+import { buildReopenedWeekCorrection, closeReopenedFinancialWeek, getWeekReopenError } from '../utils/weekReopeningUtils.js';
 import {
   buildWeeklyMoneyFlowSummary,
   calculateExtraIncomeTotal,
@@ -89,6 +90,7 @@ function createActiveWeek({ weekStartDate, income, weeklySummary }) {
 
   return {
     id: `active-week-${weekStartDate}`,
+    pristineFinancialWeek: true,
     weekStartDate,
     weekDate: weekStartDate,
     openingBalance: 0,
@@ -129,6 +131,7 @@ export function WeeklyTracker({
   const [editingRecordId, setEditingRecordId] = useState(null);
   const [editingRecordDraft, setEditingRecordDraft] = useState(null);
   const [editingPaymentError, setEditingPaymentError] = useState('');
+  const [reopenError, setReopenError] = useState('');
   const [dismissedPendingWeekWarning, setDismissedPendingWeekWarning] = useState(false);
   const [showOpeningBalanceInput, setShowOpeningBalanceInput] = useState(false);
 
@@ -164,7 +167,7 @@ export function WeeklyTracker({
   const normalizedActiveWeek = activeWeek ? normalizeActiveWeek(activeWeek, weeklySummary) : null;
   const hasPendingPreviousWeek = Boolean(normalizedActiveWeek && normalizedActiveWeek.weekStartDate !== financialWeekStartDate);
   const pendingWeekDays = normalizedActiveWeek ? calculateDaysBetween(normalizedActiveWeek.weekStartDate, financialWeekStartDate) : 0;
-  const showPendingWeekWarning = hasPendingPreviousWeek && !dismissedPendingWeekWarning;
+  const showPendingWeekWarning = hasPendingPreviousWeek && !dismissedPendingWeekWarning && !activeWeek?.reopenedFromHistory;
   const openingBalance = Number(normalizedActiveWeek?.openingBalance || 0);
   const showOpeningBalanceControl = showOpeningBalanceInput || openingBalance > 0;
   const extraIncome = normalizedActiveWeek?.extraIncome || [];
@@ -443,13 +446,14 @@ export function WeeklyTracker({
   }
 
   function reopenRecord(record) {
-    if (activeWeek && normalizedActiveWeek && activeWeekHasRealData(normalizedActiveWeek)) {
-      const confirmed = window.confirm(
-        'La semana activa actual tiene datos cargados. Si reabrís esta semana cerrada, la semana activa actual será reemplazada. ¿Querés continuar?',
-      );
-      if (!confirmed) return;
+    if (editingRecordDraft || transactionDraft.description.trim() || transactionDraft.amount !== '' ||
+        extraIncomeDraft.description.trim() || extraIncomeDraft.amount !== '' || paymentDraft.amount !== '' || paymentDraft.note.trim()) {
+      setReopenError('Guardá o cancelá la edición y registrá los movimientos pendientes antes de reabrir otra semana. No se modificó ningún dato.');
+      return;
     }
-
+    const error = getWeekReopenError(financeData, record.id);
+    setReopenError(error);
+    if (error) return;
     onReopenWeek(record.id);
   }
 
@@ -576,7 +580,16 @@ export function WeeklyTracker({
   }
 
   function closeWeek() {
+    if (activeWeek?.reopenedFromHistory) {
+      onCloseWeek(closeReopenedFinancialWeek(activeWeek));
+      return;
+    }
     if (!normalizedActiveWeek) return;
+    if (transactionDraft.description.trim() || transactionDraft.amount !== '' || extraIncomeDraft.description.trim() ||
+        extraIncomeDraft.amount !== '' || paymentDraft.amount !== '' || paymentDraft.note.trim()) {
+      setReopenError('Hay movimientos sin registrar en los formularios. Registralos o vaciá esos campos antes de cerrar la semana.');
+      return;
+    }
 
     const budgetSnapshot = createBudgetSnapshot({
       financeData,
@@ -605,13 +618,15 @@ export function WeeklyTracker({
       updatedAt: new Date().toISOString(),
     };
 
-    onCloseWeek(closedRecord);
+    const { pristineFinancialWeek, ...recordToSave } = closedRecord;
+    onCloseWeek(recordToSave);
     setTransactionDraft(createEmptyTransaction(getTodayIsoDate()));
     setExtraIncomeDraft(createEmptyExtraIncome(getTodayIsoDate()));
   }
 
   return (
     <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
+      {reopenError && <p role="alert" className="mb-4 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">{reopenError}</p>}
       {showPendingWeekWarning ? (
         <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 p-4 text-amber-950">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
@@ -649,7 +664,9 @@ export function WeeklyTracker({
         </div>
       ) : null}
 
-      {normalizedActiveWeek ? (
+      {activeWeek?.reopenedFromHistory ? (
+        <ReopenedWeekPanel key={activeWeek.id} record={activeWeek} financeData={financeData} weeklySummary={weeklySummary} onUpdate={onUpdateActiveWeek} onClose={closeWeek} />
+      ) : normalizedActiveWeek ? (
       <div className="grid gap-3">
         <CollapsiblePanel
           title="Control de la semana financiera"
@@ -1067,6 +1084,58 @@ export function WeeklyTracker({
         </div>
       ) : null}
     </section>
+  );
+}
+
+function ReopenedWeekPanel({ record, financeData, weeklySummary, onUpdate, onClose }) {
+  const makeDraft = () => ({ income: record.realIncome ?? record.income ?? 0, note: record.note || '', payments: (record.payments || []).map((payment) => ({ ...payment })) });
+  const [draft, setDraft] = useState(makeDraft);
+  const [error, setError] = useState('');
+  useEffect(() => { setDraft(makeDraft()); setError(''); }, [record]);
+  const dirty = JSON.stringify(draft) !== JSON.stringify(makeDraft());
+  function saveCorrections() {
+    try {
+      const patch = buildReopenedWeekCorrection(record, draft, financeData.cards);
+      if (Object.keys(patch).length) onUpdate(patch);
+      else setDraft(makeDraft());
+      setError('');
+    } catch (issue) { setError(issue.message); }
+  }
+  return (
+    <div className="grid gap-4">
+      <h2 className="text-lg font-semibold">Semana histórica reabierta · {formatDisplayDate(record.weekStartDate || record.weekDate)}</h2>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <label className="text-sm">Ingreso real cobrado
+          <input className="mt-1 w-full rounded-md border p-2" type="number" min="0" step="0.01" value={draft.income} onChange={(event) => setDraft({ ...draft, income: event.target.value })} />
+        </label>
+        <label className="text-sm">Nota
+          <textarea aria-label="Nota" className="mt-1 w-full rounded-md border p-2" value={draft.note} onChange={(event) => setDraft({ ...draft, note: event.target.value })} />
+        </label>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {draft.payments.map((payment, index) => (
+          <div key={`${payment.id || 'legacy'}-${index}`} className="min-w-0 rounded-md border p-3">
+            <p className="break-words text-sm font-semibold">Pago {index + 1} · {payment.cardName || financeData.cards.find((card) => card.id === payment.cardId)?.name || 'Tarjeta anterior'}</p>
+            <p className="text-sm">{formatDisplayDate(payment.date || record.weekStartDate || record.weekDate)} · {getFundingSourceLabel(payment, financeData.reserveBuckets || [])}</p>
+            {payment.note && <p className="break-words text-sm">{payment.note}</p>}
+            <label className="mt-2 block text-sm">Importe del pago {index + 1}
+              <input className="mt-1 w-full min-w-0 rounded-md border p-2 disabled:bg-stone-100" type="number" min="0.01" step="0.01" value={payment.amount ?? ''}
+                disabled={!isWeeklyIncomeFunded(payment) || !financeData.cards.some((card) => card.id === payment.cardId)}
+                onChange={(event) => setDraft({ ...draft, payments: updateHistoricalPaymentAmount(draft.payments, index, event.target.value) })} />
+            </label>
+          </div>
+        ))}
+      </div>
+      <p className="text-sm text-stone-600">Los ingresos adicionales, gastos y movimientos de reservas existentes se conservan. Los pagos desde reservas y las transferencias quedan protegidos hasta poder conciliar sus saldos.</p>
+      {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
+      <div className="flex flex-wrap gap-3">
+        <button className="rounded-md border px-3 py-2 disabled:opacity-50" disabled={!dirty} onClick={saveCorrections}>Guardar correcciones</button>
+        <button className="rounded-md border px-3 py-2 disabled:opacity-50" disabled={!dirty} onClick={() => { setDraft(makeDraft()); setError(''); }}>Cancelar correcciones</button>
+        <button className="rounded-md bg-stone-950 px-3 py-2 text-white disabled:opacity-50" disabled={dirty} onClick={onClose}>Volver a cerrar semana</button>
+      </div>
+      {dirty && <p className="text-sm text-amber-800">Guardá o cancelá las correcciones antes de volver a cerrar. Todavía no están guardadas.</p>}
+      <MoneyFlowPanel summary={buildWeeklyMoneyFlowSummary({ financeData, record, weeklySummary, useCurrentBudget: false })} />
+    </div>
   );
 }
 
@@ -1770,18 +1839,6 @@ function normalizeWeeklyRecord(record, weeklySummary) {
     realWeeklyMargin,
     note: record.note || '',
   };
-}
-
-function activeWeekHasRealData(activeWeek) {
-  if (!activeWeek) return false;
-
-  return (
-    normalizeExtraIncome(activeWeek).length > 0 ||
-    Number(activeWeek.openingBalance || 0) > 0 ||
-    normalizeWeeklyRecordTransactions(activeWeek).length > 0 ||
-    (activeWeek.payments || []).length > 0 ||
-    Boolean((activeWeek.note || '').trim())
-  );
 }
 
 function createEditableRecordDraft(record) {

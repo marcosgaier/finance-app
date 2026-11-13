@@ -19,6 +19,8 @@ import {
   formatActionMoney,
 } from '../utils/financeEngine.js';
 
+import { closeFinancialWeek, reopenFinancialWeek } from '../utils/weekReopeningUtils.js';
+
 const dashboardTabs = [
   { id: 'dashboard', label: 'Dashboard' },
   { id: 'debts', label: 'Deudas' },
@@ -141,6 +143,7 @@ export function Dashboard({ financeData, setFinanceData }) {
         ...currentData,
         activeWeek: {
           ...nextActiveWeek,
+          ...(nextActiveWeek.reopenedFromHistory ? {} : { pristineFinancialWeek: false }),
           updatedAt: new Date().toISOString(),
         },
       };
@@ -217,7 +220,7 @@ export function Dashboard({ financeData, setFinanceData }) {
     if (!bucketId || transferAmount <= 0) return;
 
     setFinanceData((currentData) => {
-      if (!currentData.activeWeek) return currentData;
+      if (!currentData.activeWeek || currentData.activeWeek.reopenedFromHistory) return currentData;
 
       const targetBucket = (currentData.reserveBuckets || []).find((bucket) => bucket.id === bucketId);
       const movement = {
@@ -240,6 +243,7 @@ export function Dashboard({ financeData, setFinanceData }) {
         ),
         activeWeek: {
           ...currentData.activeWeek,
+          pristineFinancialWeek: false,
           reserveMovements: [...(currentData.activeWeek.reserveMovements || []), movement],
           updatedAt: new Date().toISOString(),
         },
@@ -251,7 +255,7 @@ export function Dashboard({ financeData, setFinanceData }) {
     if (!movementId) return;
 
     setFinanceData((currentData) => {
-      if (!currentData.activeWeek) return currentData;
+      if (!currentData.activeWeek || currentData.activeWeek.reopenedFromHistory) return currentData;
 
       const movementToDelete = (currentData.activeWeek.reserveMovements || []).find(
         (movement) => movement.id === movementId,
@@ -293,11 +297,7 @@ export function Dashboard({ financeData, setFinanceData }) {
   }
 
   function closeActiveWeek(record) {
-    setFinanceData((currentData) => ({
-      ...currentData,
-      activeWeek: null,
-      weeklyRecords: [...(currentData.weeklyRecords || []), record],
-    }));
+    setFinanceData((currentData) => closeFinancialWeek(currentData, record));
   }
 
   function deleteWeeklyRecord(recordId) {
@@ -318,21 +318,7 @@ export function Dashboard({ financeData, setFinanceData }) {
   }
 
   function reopenWeeklyRecord(recordId) {
-    setFinanceData((currentData) => {
-      const recordToReopen = (currentData.weeklyRecords || []).find((record) => record.id === recordId);
-      if (!recordToReopen) return currentData;
-
-      return {
-        ...currentData,
-        activeWeek: {
-          ...recordToReopen,
-          weekStartDate: recordToReopen.weekStartDate || recordToReopen.weekDate,
-          weekDate: recordToReopen.weekDate || recordToReopen.weekStartDate,
-          updatedAt: new Date().toISOString(),
-        },
-        weeklyRecords: (currentData.weeklyRecords || []).filter((record) => record.id !== recordId),
-      };
-    });
+    setFinanceData((currentData) => reopenFinancialWeek(currentData, recordId));
   }
 
   return (
@@ -434,7 +420,7 @@ export function Dashboard({ financeData, setFinanceData }) {
           <ReserveBuckets
             activeWeek={financeData.activeWeek || null}
             buckets={financeData.reserveBuckets || []}
-            canTransferFromCurrentWeek={Boolean(financeData.activeWeek)}
+            canTransferFromCurrentWeek={Boolean(financeData.activeWeek && !financeData.activeWeek.reopenedFromHistory)}
             onAddMovement={addReserveMovement}
             onDeleteActiveWeekReserveMovement={deleteActiveWeekReserveMovement}
             onDeleteManualReserveMovement={deleteManualReserveMovement}

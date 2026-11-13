@@ -450,7 +450,7 @@ function buildReserveMovementHistory({ activeWeek, buckets, reserveBucketMovemen
     label: 'Transferido desde semana actual',
     note: movement.note || '',
     source: 'active-week-reserve-transfer',
-    canDelete: true,
+    canDelete: !activeWeek.reopenedFromHistory,
   }));
 
   const closedWeekReserveMovements = closedRecords.flatMap((record) =>

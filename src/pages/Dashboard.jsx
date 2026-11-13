@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { TauraIncomePreview } from '../components/TauraIncomePreview.jsx';
 import { AppTabs } from '../components/AppTabs.jsx';
 import { BudgetEditor } from '../components/BudgetEditor.jsx';
 import { CardSummary } from '../components/CardSummary.jsx';
@@ -28,6 +29,7 @@ const dashboardTabs = [
   { id: 'history', label: 'Historial' },
   { id: 'reserves', label: 'Reservas' },
   { id: 'simulator', label: 'Simulador' },
+  { id: 'taura-preview', label: 'Estimaciones Taura' },
   { id: 'settings', label: 'Ajustes' },
 ];
 
@@ -432,6 +434,10 @@ export function Dashboard({ financeData, setFinanceData }) {
         )}
 
         {activeTab === 'simulator' && <ScenarioSimulator financeData={effectiveFinanceData} />}
+
+        <div hidden={activeTab !== 'taura-preview'}>
+          <TauraIncomePreview weeklyRecords={financeData.weeklyRecords} activeWeek={financeData.activeWeek} />
+        </div>
 
         {activeTab === 'settings' && (
           <SettingsPanel financeData={financeData} onReplaceFinanceData={setFinanceData} />

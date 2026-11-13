@@ -1,0 +1,25 @@
+{
+  "status": "PASS",
+  "date": "2026-11-14",
+  "node": "v22.23.5",
+  "browser": "156.0.8078.79",
+  "fixture": "Taura PR #9 producer at 5cbceda6, synthetic only",
+  "checks": [
+    "actual producer JSON → rendered preview, Monday/Tuesday/DST/year mapping, closed and active flags, zero net",
+    "session retained across tabs, dashboard totals unchanged",
+    "same revision deduplicates, distinct revisions reject entire batch",
+    "whole-session replacement; older generatedAt is informational and not accumulated",
+    "backups, corruption and oversize fail visibly; successful retry",
+    "discard during asynchronous validation cannot restore discarded estimates",
+    "mobile viewport has no page overflow",
+    "discard removes session; same file can be reselected; reload forgets preview"
+  ],
+  "storageWrites": 0,
+  "indexedDBAccesses": 0,
+  "broadcastChannels": 0,
+  "unchangedPersistence": true,
+  "unchangedDashboard": true,
+  "consoleErrors": [],
+  "externalRequests": [],
+  "limits": "Local production build, desktop/mobile viewport Chromium, not a deployed PWA or every browser."
+}

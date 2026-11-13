@@ -1,5 +1,7 @@
 import { normalizeFinanceData } from '../utils/financeEngine.js';
 
+import { validateFinanceData as validateCompatibleData } from '../utils/financeDataValidation.js';
+
 const BACKUP_TYPE = 'weekly-finance-planner-backup';
 const SCHEMA_VERSION = 1;
 const APP_VERSION = '1.0.0';
@@ -117,6 +119,7 @@ export async function readFinanceBackup(file) {
   }
 
   validateFinanceData(backup.financeData);
+  validateCompatibleData(backup.financeData);
 
   const importedCopy = JSON.parse(JSON.stringify(backup.financeData));
   const normalizedFinanceData = normalizeFinanceData(prepareFinanceData(importedCopy));

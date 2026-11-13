@@ -1,5 +1,7 @@
 ﻿import { calculateWeeksUntilDue } from './dateUtils.js';
 
+import { assertCompatiblePlans } from './financeDataValidation.js';
+
 const urgencyRank = {
   overdue: 0,
   urgent: 1,
@@ -97,8 +99,8 @@ export function calculateWeeklyAvailable(financeData) {
 }
 
 export function normalizeFinanceData(financeData) {
+  assertCompatiblePlans(financeData.paymentPlans);
   const paymentPlans = (financeData.paymentPlans || [])
-    .filter((plan) => plan.calculationMode !== 'fixedWeekly')
     .map((plan) => {
       const type = normalizePlanType(plan.type);
 
@@ -107,13 +109,14 @@ export function normalizeFinanceData(financeData) {
         type,
         originalAmount: Number(plan.originalAmount ?? plan.balance ?? 0),
         statementDate: plan.statementDate ? normalizeDueDate(plan.statementDate) : '',
-        minimumPaymentRule: type === STATEMENT_BALANCE_TYPE ? null : normalizeMinimumPaymentRule(plan.minimumPaymentRule),
+        minimumPaymentRule: type === STATEMENT_BALANCE_TYPE ? null : plan.minimumPaymentRule?.enabled === false
+          ? { ...plan.minimumPaymentRule } : normalizeMinimumPaymentRule(plan.minimumPaymentRule),
       };
     });
   const weeklyRecords = financeData.weeklyRecords || [];
   const reserveBuckets = normalizeReserveBuckets(financeData.reserveBuckets);
 
-  if (financeData.weeklyExpenses && financeData.monthlyExpenses) {
+  if (financeData.weeklyExpenses !== undefined && financeData.monthlyExpenses !== undefined) {
     return {
       ...financeData,
       weeklyExpenses: normalizeWeeklyExpenses(financeData.weeklyExpenses),
@@ -135,26 +138,16 @@ export function normalizeFinanceData(financeData) {
 
   return {
     ...financeData,
-    weeklyExpenses: normalizeWeeklyExpenses(weeklyExpenses),
-    monthlyExpenses: normalizeMonthlyServices(monthlyExpenses),
+    weeklyExpenses: normalizeWeeklyExpenses(financeData.weeklyExpenses ?? (financeData.fixedExpenses !== undefined ? weeklyExpenses : undefined)),
+    monthlyExpenses: normalizeMonthlyServices(financeData.monthlyExpenses ?? (financeData.fixedExpenses !== undefined ? monthlyExpenses : undefined)),
     paymentPlans,
     weeklyRecords,
     reserveBuckets,
   };
 }
 
-function normalizeReserveBuckets(reserveBuckets = []) {
-  const bucketsById = Object.fromEntries(reserveBuckets.map((bucket) => [bucket.id, bucket]));
-
-  return reserveBucketTemplates.map((template) => {
-    const bucket = bucketsById[template.id];
-    return {
-      ...template,
-      ...bucket,
-      balance: Number(bucket?.balance ?? template.balance),
-      note: bucket?.note ?? template.note,
-    };
-  });
+function normalizeReserveBuckets(reserveBuckets) {
+  return (reserveBuckets === undefined ? reserveBucketTemplates : reserveBuckets).map((bucket) => ({ ...bucket }));
 }
 
 function normalizeMinimumPaymentRule(rule) {
@@ -162,6 +155,7 @@ function normalizeMinimumPaymentRule(rule) {
 
   if (rule.type === 'percentageOrFixedMinimum') {
     return {
+      ...rule,
       enabled: true,
       type: 'percentageOrFixedMinimum',
       percentage: Number(rule.percentage || 0),
@@ -172,6 +166,7 @@ function normalizeMinimumPaymentRule(rule) {
 
   if (rule.type === 'fixedMonthlyMinimum') {
     return {
+      ...rule,
       enabled: true,
       type: 'fixedMonthlyMinimum',
       amount: Number(rule.amount || 0),
@@ -182,34 +177,19 @@ function normalizeMinimumPaymentRule(rule) {
   return null;
 }
 
-function normalizeWeeklyExpenses(weeklyExpenses = []) {
-  const expensesById = Object.fromEntries(weeklyExpenses.map((expense) => [expense.id, expense]));
+function normalizeWeeklyExpenses(weeklyExpenses) {
+  if (weeklyExpenses !== undefined) return weeklyExpenses;
   const templates = [
     { id: 'rent', name: 'Alquiler', amount: 520 },
     { id: 'argentina-card', name: 'Tarjeta Argentina', amount: 75 },
   ];
 
-  if (weeklyExpenses.length > 0 && templates.some((template) => expensesById[template.id])) {
-    return weeklyExpenses;
-  }
-
   return templates;
 }
 
-function normalizeMonthlyServices(monthlyExpenses = []) {
-  const expensesById = Object.fromEntries(monthlyExpenses.map((expense) => [expense.id, expense]));
-  const legacyPhone = expensesById.phone;
-  const legacySubscriptions = expensesById.subscriptions;
-
-  if (monthlyExpenses.length > 0 && monthlyServiceTemplates.some((template) => expensesById[template.id])) {
-    return monthlyExpenses;
-  }
-
-  return monthlyServiceTemplates.map((template) => {
-    if (template.id === 'cellphone' && legacyPhone) return { ...template, amount: Number(legacyPhone.amount || template.amount) };
-    if (template.id === 'netflix' && legacySubscriptions) return { ...template, amount: template.amount };
-    return template;
-  });
+function normalizeMonthlyServices(monthlyExpenses) {
+  if (monthlyExpenses !== undefined) return monthlyExpenses;
+  return monthlyServiceTemplates.map((template) => ({ ...template }));
 }
 
 export function calculateBaseWeeklyPayment(plan, referenceDate = new Date()) {

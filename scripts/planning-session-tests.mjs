@@ -145,3 +145,46 @@ test('deeply frozen inputs, detached outputs; no operational reads or storage/ne
     names.forEach((n, i) => { if (descriptors[i]) Object.defineProperty(globalThis, n, descriptors[i]); else delete globalThis[n]; });
   }
 });
+
+test('UI reconfiguration 4..8 discards assumptions, keeps civil start and invalidates closed/reopened calculations', () => {
+  const s = session();
+  for (const weekCount of [5, 6, 7, 8, 4]) {
+    s.editWeek(first, draft()); s.reviewWeek(first);
+    const previous = s.read();
+    const next = s.configure(preview, { weekCount });
+    assert.equal(next.incomePlan.weeks.length, weekCount);
+    assert.equal(next.incomePlan.startTuesday, first);
+    assert.deepEqual(next.assumptions, {});
+    assert.ok(next.generation > previous.generation);
+    assert.equal(next.result.weeks[0].marginCents, null);
+  }
+  for (const metadata of [
+    { weeklyRecords: [{ weekDate: first }] },
+    { activeWeek: { weekStartDate: first, reopenedFromHistory: true } },
+    { weeklyRecords: [{ weekStartDate: first }] },
+    {},
+  ]) {
+    s.editWeek(first, draft()); s.reviewWeek(first);
+    s.configure(preview, { weekCount: 4, ...metadata });
+    const next = s.read();
+    assert.deepEqual(next.assumptions, {});
+    assert.equal(next.result.weeks[0].marginCents, null);
+    assert.equal(next.result.weeks[0].state, Object.keys(metadata).length ? 'excluded' : 'pending-review');
+  }
+});
+
+test('render synchronization preserves reviews; a new horizon cannot clear stale-budget blocking', () => {
+  const b = budget(), s = session(b);
+  s.editWeek(first, draft()); s.reviewWeek(first);
+  const reviewed = s.read();
+  assert.deepEqual(s.configure(preview, { weekCount: 4 }), reviewed);
+  s.checkBudget({ ...b, variableBudgets: { groceries: 1, fuel: 0 } });
+  const stale = s.configure(preview, { weekCount: 8 });
+  assert.equal(stale.stale, true);
+  assert.equal(stale.result, null);
+  assert.throws(() => s.reviewWeek(first), /vigente/);
+  const rebuilt = s.rebuildBudget(b);
+  assert.equal(rebuilt.stale, false);
+  assert.deepEqual(rebuilt.assumptions, {});
+  assert.equal(rebuilt.result.weeks[0].marginCents, null);
+});

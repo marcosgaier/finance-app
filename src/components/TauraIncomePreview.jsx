@@ -1,18 +1,43 @@
-import React, { useRef, useState } from 'react';
+import React, { useLayoutEffect, useRef, useState } from 'react';
+import { createPlanningSession } from '../services/planningSession.js';
+import { PlanningPreview } from './PlanningPreview.jsx';
 import { MAX_PREVIEW_BYTES, parseTauraPreview, previewRows } from '../services/tauraPreview.js';
 
 const money = cents => new Intl.NumberFormat('es-NZ', { style: 'currency', currency: 'NZD' }).format(cents / 100);
 const workLabels = { projected: 'Proyectado', partially_worked: 'Parcialmente trabajado', worked: 'Trabajado (no implica cobrado)' };
 
-// Only read-only week metadata enters this component; no finance setter or restore API.
-export function TauraIncomePreview({ weeklyRecords, activeWeek }) {
+// Only allowlisted read-only budget/week metadata; no finance setter or restore API.
+export function TauraIncomePreview({ weeklyRecords = [], activeWeek = null, budget }) {
   const [preview, setPreview] = useState(null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const request = useRef(0);
+  const session = useRef(null);
+  if (!session.current) session.current = createPlanningSession();
+  const [plan, setPlan] = useState(null);
+  const [weekCount, setWeekCount] = useState(4);
+  const [notice, setNotice] = useState('');
+  const metadata = JSON.stringify({ weeklyRecords: weeklyRecords.map(row => ({
+    weekStartDate: row.weekStartDate, weekDate: row.weekDate, reopenedFromHistory: row.reopenedFromHistory,
+  })), activeWeek: activeWeek && { weekStartDate: activeWeek.weekStartDate,
+    weekDate: activeWeek.weekDate, reopenedFromHistory: activeWeek.reopenedFromHistory } });
+  // Before paint: never display a margin from a closed/reopened week or stale base.
+  useLayoutEffect(() => {
+    if (!preview) return;
+    const previous = session.current.read();
+    session.current.checkBudget(budget);
+    const next = session.current.configure(preview, { weekCount, ...JSON.parse(metadata) });
+    if (previous && JSON.stringify(previous.incomePlan) !== JSON.stringify(next.incomePlan)) {
+      setNotice('Horizonte o semanas operativas cambiaron: supuestos descartados; revisá nuevamente.');
+    }
+    setPlan(next);
+  }, [preview, budget, weekCount, metadata]);
   const input = useRef(null);
   function discard() {
     request.current++;
+    session.current.discard();
+    setPlan(null);
+    setNotice('');
     setPreview(null);
     setError('');
     setBusy(false);
@@ -22,15 +47,28 @@ export function TauraIncomePreview({ weeklyRecords, activeWeek }) {
     const file = event.target.files?.[0];
     if (!file) return;
     const selection = ++request.current;
+    const token = session.current.beginImport();
+    setPlan(null);
+    setNotice('');
     setPreview(null);
     setError('');
     setBusy(true);
     try {
       if (file.size > MAX_PREVIEW_BYTES) throw new Error('Archivo demasiado grande (máximo 1 MiB).');
       const next = await parseTauraPreview(await file.text());
-      if (selection === request.current) setPreview(next);
+      if (selection === request.current) {
+        session.current.acceptValidated(token, next, budget, { nowMs: Date.now(), weekCount,
+          ...JSON.parse(metadata) });
+        setPreview(next);
+        setPlan(session.current.read());
+      }
     } catch (cause) {
-      if (selection === request.current) setError(cause.message || 'No se pudo leer el archivo.');
+      if (selection === request.current) {
+        session.current.rejectImport(token);
+        setPlan(null);
+        setPreview(null);
+        setError(cause.message || 'No se pudo leer el archivo.');
+      }
     } finally {
       if (selection === request.current) setBusy(false);
       event.target.value = '';
@@ -76,6 +114,14 @@ export function TauraIncomePreview({ weeklyRecords, activeWeek }) {
           </details>
         </article>)}
       </div>}
+      {preview && plan && <PlanningPreview plan={plan} weekCount={weekCount}
+        onHorizon={setWeekCount} notice={notice}
+        onRebuild={() => { setPlan(session.current.rebuildBudget(budget)); setNotice('Base actualizada; supuestos descartados.'); }}
+        onEdit={(start, draft, review) => {
+          session.current.editWeek(start, draft);
+          setPlan(session.current.read());
+          if (review) setPlan(session.current.reviewWeek(start));
+        }} />}
     </section>
   );
 }

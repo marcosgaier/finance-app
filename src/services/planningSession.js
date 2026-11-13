@@ -1,4 +1,4 @@
-// INT-03C1: internal memory-only API. No UI, importer, setters or persistence.
+// INT-03C1/C2: memory-only controller. No importer, financial setters or persistence.
 import { buildIncomePlan, nextPlanningTuesday } from './incomePlanning.js';
 import { snapshotPlanningExpenses, buildExpensePlan } from './expensePlanning.js';
 
@@ -14,7 +14,7 @@ const unreview = assumptions => Object.fromEntries(Object.entries(assumptions)
  * snapshotPlanningExpenses; week metadata is also copied through an allowlist.
  */
 export function createPlanningSession() {
-  let request = 0, state = null;
+  let request = 0, generation = 0, state = null;
   const read = () => clone(state);
   const clear = () => { state = null; return ++request; };
   function calculate(next) {
@@ -37,7 +37,7 @@ export function createPlanningSession() {
       const incomePlan = buildIncomePlan(preview, { startTuesday: nextPlanningTuesday(nowMs), weekCount,
         weeklyRecords: weeklyRecords.map(week), activeWeek: week(activeWeek) });
       const base = snapshotPlanningExpenses(budget);
-      state = calculate({ incomePlan, base, assumptions: {}, stale: false });
+      state = calculate({ generation: ++generation, incomePlan, base, assumptions: {}, stale: false });
       return true;
     },
     // Editing never constitutes conscious review. All arrays remain explicit;
@@ -60,6 +60,18 @@ export function createPlanningSession() {
       state = next;
       return read();
     },
+    // Rebuild from the one validated React preview, never import/restore again.
+    // Same civil start throughout this session; horizon and week lifecycle changes
+    // discard every assumption, including reviews on newly excluded weeks.
+    configure(preview, { weekCount, weeklyRecords = [], activeWeek = null }) {
+      if (!state) throw new Error('No hay sesión.');
+      const incomePlan = buildIncomePlan(preview, { startTuesday: state.incomePlan.startTuesday,
+        weekCount, weeklyRecords, activeWeek });
+      if (signature(incomePlan) !== signature(state.incomePlan)) {
+        state = calculate({ ...state, generation: ++generation, incomePlan, assumptions: {} });
+      }
+      return read();
+    },
     checkBudget(budget) {
       if (!state) return read();
       if (signature(snapshotPlanningExpenses(budget)) !== signature(state.base)) {
@@ -71,7 +83,7 @@ export function createPlanningSession() {
     // applying a changed operational budget to a previously reviewed scenario.
     rebuildBudget(budget) {
       if (!state) throw new Error('No hay sesión.');
-      state = calculate({ ...state, base: snapshotPlanningExpenses(budget), assumptions: {}, stale: false });
+      state = calculate({ ...state, generation: ++generation, base: snapshotPlanningExpenses(budget), assumptions: {}, stale: false });
       return read();
     },
   };

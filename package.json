@@ -3,9 +3,10 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "test": "node scripts/finance-engine-coverage-tests.mjs && node scripts/persistence-tests.mjs && node scripts/historical-payment-tests.mjs && node scripts/week-reopening-tests.mjs",
+    "test": "node scripts/finance-engine-coverage-tests.mjs && node scripts/persistence-tests.mjs && node scripts/historical-payment-tests.mjs && node scripts/week-reopening-tests.mjs && node --test scripts/taura-preview-tests.mjs",
     "preview": "vite preview",
-    "serve": "node scripts/serve-dist.mjs"
+    "serve": "node scripts/serve-dist.mjs",
+    "test:taura-ui": "node scripts/validate-taura-preview.mjs"
   },
   "dependencies": {
     "autoprefixer": "^10.4.20",

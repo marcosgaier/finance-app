@@ -1,0 +1,221 @@
+{
+  "type": "taura-income-projections",
+  "schemaVersion": 1,
+  "sourceId": "taura-local",
+  "sourceRevision": "taura-payroll-d58ad29/export-v1",
+  "currency": "NZD",
+  "timeZone": "Pacific/Auckland",
+  "generatedAt": "2026-11-13T20:00:00.000Z",
+  "items": [
+    {
+      "periodId": "taura:weekly:2026-09-20",
+      "periodStart": "2026-09-20",
+      "periodEnd": "2026-09-26",
+      "payDate": "2026-09-28",
+      "status": "estimated",
+      "workStatus": "projected",
+      "grossCents": 120000,
+      "deductions": {
+        "payeCents": 20000,
+        "kiwiSaverCents": 3600,
+        "payeIncludesAcc": true
+      },
+      "netCents": 96400,
+      "rulesSnapshot": {
+        "engineVersion": "taura-payroll-d58ad29",
+        "taxCode": "M",
+        "taxYear": "2026-27",
+        "kiwiSaverRate": 3,
+        "configuredTaxCode": "M",
+        "studentLoanRequested": false,
+        "defaultDayRate": 30,
+        "nightAllowanceRate": 2,
+        "weekendAllowanceRate": 3,
+        "weekendEffectiveFrom": "2026-04-01",
+        "overtimeThresholdHours": 40,
+        "overtimeMultiplier": 1.5,
+        "bankableHours": 0,
+        "componentsCents": {
+          "base": 120000,
+          "night": 0,
+          "weekend": 0,
+          "enhancedPayment": 0
+        },
+        "dateBasis": "shift-start-local-civil",
+        "rounding": "existing-engine-cents",
+        "historicalSnapshot": false
+      },
+      "warnings": [
+        {
+          "code": "ESTIMATED_ONLY",
+          "message": "Estimación, no cobro confirmado ni dinero disponible."
+        },
+        {
+          "code": "HOLIDAYS_UNMODELED",
+          "message": "Feriados y sus derechos especiales no están modelados."
+        },
+        {
+          "code": "WEEKEND_PENDING",
+          "message": "El adicional de fin de semana está pendiente de confirmación; se conserva tal como lo calcula Taura."
+        },
+        {
+          "code": "TAX_LIMITED",
+          "message": "Solo código M y año fiscal 2026-27; Student Loan no calculado."
+        },
+        {
+          "code": "HOURS_BANK",
+          "message": "Hours Bank no se convierte en efectivo; solo se incluye Enhanced Payment elegido para cobrar."
+        },
+        {
+          "code": "CURRENT_RULES",
+          "message": "Usa reglas vigentes, no un snapshot histórico. Fechas y DST conservan las limitaciones del motor local."
+        },
+        {
+          "code": "SOURCE_NOT_UNIQUE",
+          "message": "Origen genérico sin ID de instalación: no combinar archivos de distintas instalaciones automáticamente."
+        }
+      ],
+      "revision": "sha256:e36c24143a8a14b9056c2e851b29cae919875d3e0f049dbe076d09059b3d174c"
+    },
+    {
+      "periodId": "taura:weekly:2026-09-27",
+      "periodStart": "2026-09-27",
+      "periodEnd": "2026-10-03",
+      "payDate": "2026-10-06",
+      "status": "estimated",
+      "workStatus": "projected",
+      "grossCents": 0,
+      "deductions": {
+        "payeCents": 0,
+        "kiwiSaverCents": 0,
+        "payeIncludesAcc": true
+      },
+      "netCents": 0,
+      "rulesSnapshot": {
+        "engineVersion": "taura-payroll-d58ad29",
+        "taxCode": "M",
+        "taxYear": "2026-27",
+        "kiwiSaverRate": 3,
+        "configuredTaxCode": "M",
+        "studentLoanRequested": false,
+        "defaultDayRate": 30,
+        "nightAllowanceRate": 2,
+        "weekendAllowanceRate": 3,
+        "weekendEffectiveFrom": "2026-04-01",
+        "overtimeThresholdHours": 40,
+        "overtimeMultiplier": 1.5,
+        "bankableHours": 0,
+        "componentsCents": {
+          "base": 0,
+          "night": 0,
+          "weekend": 0,
+          "enhancedPayment": 0
+        },
+        "dateBasis": "shift-start-local-civil",
+        "rounding": "existing-engine-cents",
+        "historicalSnapshot": false
+      },
+      "warnings": [
+        {
+          "code": "ESTIMATED_ONLY",
+          "message": "Estimación, no cobro confirmado ni dinero disponible."
+        },
+        {
+          "code": "HOLIDAYS_UNMODELED",
+          "message": "Feriados y sus derechos especiales no están modelados."
+        },
+        {
+          "code": "WEEKEND_PENDING",
+          "message": "El adicional de fin de semana está pendiente de confirmación; se conserva tal como lo calcula Taura."
+        },
+        {
+          "code": "TAX_LIMITED",
+          "message": "Solo código M y año fiscal 2026-27; Student Loan no calculado."
+        },
+        {
+          "code": "HOURS_BANK",
+          "message": "Hours Bank no se convierte en efectivo; solo se incluye Enhanced Payment elegido para cobrar."
+        },
+        {
+          "code": "CURRENT_RULES",
+          "message": "Usa reglas vigentes, no un snapshot histórico. Fechas y DST conservan las limitaciones del motor local."
+        },
+        {
+          "code": "SOURCE_NOT_UNIQUE",
+          "message": "Origen genérico sin ID de instalación: no combinar archivos de distintas instalaciones automáticamente."
+        }
+      ],
+      "revision": "sha256:e8bf96f64cf54e88b7c5e4592c82fc4f7bbb585582eb907022ea65746ee79973"
+    },
+    {
+      "periodId": "taura:weekly:2026-12-20",
+      "periodStart": "2026-12-20",
+      "periodEnd": "2026-12-26",
+      "payDate": "2027-01-04",
+      "status": "estimated",
+      "workStatus": "projected",
+      "grossCents": 120000,
+      "deductions": {
+        "payeCents": 20000,
+        "kiwiSaverCents": 3600,
+        "payeIncludesAcc": true
+      },
+      "netCents": 96400,
+      "rulesSnapshot": {
+        "engineVersion": "taura-payroll-d58ad29",
+        "taxCode": "M",
+        "taxYear": "2026-27",
+        "kiwiSaverRate": 3,
+        "configuredTaxCode": "M",
+        "studentLoanRequested": false,
+        "defaultDayRate": 30,
+        "nightAllowanceRate": 2,
+        "weekendAllowanceRate": 3,
+        "weekendEffectiveFrom": "2026-04-01",
+        "overtimeThresholdHours": 40,
+        "overtimeMultiplier": 1.5,
+        "bankableHours": 0,
+        "componentsCents": {
+          "base": 120000,
+          "night": 0,
+          "weekend": 0,
+          "enhancedPayment": 0
+        },
+        "dateBasis": "shift-start-local-civil",
+        "rounding": "existing-engine-cents",
+        "historicalSnapshot": false
+      },
+      "warnings": [
+        {
+          "code": "ESTIMATED_ONLY",
+          "message": "Estimación, no cobro confirmado ni dinero disponible."
+        },
+        {
+          "code": "HOLIDAYS_UNMODELED",
+          "message": "Feriados y sus derechos especiales no están modelados."
+        },
+        {
+          "code": "WEEKEND_PENDING",
+          "message": "El adicional de fin de semana está pendiente de confirmación; se conserva tal como lo calcula Taura."
+        },
+        {
+          "code": "TAX_LIMITED",
+          "message": "Solo código M y año fiscal 2026-27; Student Loan no calculado."
+        },
+        {
+          "code": "HOURS_BANK",
+          "message": "Hours Bank no se convierte en efectivo; solo se incluye Enhanced Payment elegido para cobrar."
+        },
+        {
+          "code": "CURRENT_RULES",
+          "message": "Usa reglas vigentes, no un snapshot histórico. Fechas y DST conservan las limitaciones del motor local."
+        },
+        {
+          "code": "SOURCE_NOT_UNIQUE",
+          "message": "Origen genérico sin ID de instalación: no combinar archivos de distintas instalaciones automáticamente."
+        }
+      ],
+      "revision": "sha256:c421c7db58a2d0acb0f38fc993f14eb4aadbb8ce3338ba16e972823cfb6a8a39"
+    }
+  ]
+}

@@ -23,6 +23,7 @@ function AmountInput({ label, value, onChange }) {
 }
 function WeekCard({ income, result, base, assumptions, disabled, onEdit, labels }) {
   const [error, setError] = useState('');
+  const [selectedExpense, setSelectedExpense] = useState('');
   const draft = assumptions ?? empty();
   const rows = Object.entries(base).flatMap(([group, values]) => (values ?? []).map(row => ({ ...row, group })));
   const update = next => {
@@ -47,32 +48,52 @@ function WeekCard({ income, result, base, assumptions, disabled, onEdit, labels 
     try { onEdit(income.start, draft, true); }
     catch { setError('No se puede calcular: revisá importes, fechas, vínculos y datos base faltantes. Los importes requieren centavos válidos y no negativos.'); }
   };
-  return <details className="min-w-0 rounded border border-stone-300 p-3" data-testid="planning-week">
-    <summary className="cursor-pointer font-semibold">{income.start} → {income.end} · {disabled ? 'Base de gastos desactualizada' : states[result.state]} · {incomeLabels[income.incomeState]} · {weekLabels[income.weekState]}</summary>
+  return <article className="min-w-0 space-y-3 rounded-lg border border-stone-300 bg-white p-3" data-testid="planning-week">
+    <h3 className="font-bold">{income.start} → {income.end}</h3>
+    <p className="text-sm">{disabled ? 'Base de gastos desactualizada' : states[result.state]} · {incomeLabels[income.incomeState]} · {weekLabels[income.weekState]} · {coverageLabel(income.coverage)}</p>
+    <dl className="grid grid-cols-2 gap-3" data-testid="week-summary">
+      <div><dt>Neto estimado</dt><dd className="font-semibold">{money(income.knownIncomeCents)}</dd></div>
+      <div><dt>Gastos</dt><dd>{!disabled && result.expenses ? money(result.expenses.totalCents) : 'Por revisar'}</dd></div>
+      <div><dt>Aportes</dt><dd>{!disabled && result.expenses ? `Deuda ${money(result.debtCents)} · Ahorro ${money(result.savingCents)}` : 'Por revisar'}</dd></div>
+      <div><dt>Margen hipotético</dt><dd className="font-bold" data-testid="week-margin">{money(disabled ? null : result.marginCents)}</dd></div>
+    </dl>
+    <details data-testid="week-editor"><summary className="cursor-pointer rounded border border-stone-400 p-3 font-semibold">Revisar esta semana</summary>
     <div className="mt-3 space-y-3">
       <p>{income.periodCount} cobros por fecha de pago · Neto estimado: {money(income.knownIncomeCents)} · {coverageLabel(income.coverage)}</p>
       <p>Días de pago: {income.periods.map(row => row.payDate).join(', ') || 'Sin datos de ingreso; no equivale a cero.'}</p>
       {income.incomeState === 'explicit-zero' && <p>Neto estimado cero: puede faltar roster.</p>}
       <p>Origen de gastos: base del presupuesto, solo lectura. Los reemplazos y aportes son únicamente de esta semana y sesión.</p>
+      <details><summary className="cursor-pointer p-2 font-semibold">Ver desglose de gastos base</summary>
       {Object.entries(base).map(([group, values]) => <div key={group}>
         <h4 className="font-semibold">{groups[group]}</h4>
         {!values && <p role="alert">Datos base ausentes; no se asumen cero.</p>}
         {values?.length === 0 && <p>Lista base explícitamente vacía.</p>}
         {values?.map((row, index) => <p key={`${row.id}-${index}`} className="break-words">{labels[row.id] || 'Gasto sin identidad válida'}: {money(row.amountCents)}{row.amountCents == null ? ' · Importe ausente o inválido' : ''}</p>)}
       </div>)}
+      </details>
       <fieldset disabled={disabled} className="space-y-3">
         <legend className="font-bold">Supuestos hipotéticos de {income.start}</legend>
         <p>Deuda y ahorro/sobres son salidas adicionales. No ingreses de nuevo un gasto ya contado en el presupuesto. No son recomendaciones de pago.</p>
-        <h4 className="font-semibold">Gastos hipotéticos y reemplazos</h4>
-        <div className="flex flex-wrap gap-2">{rows.filter(row => row.id && !draft.adjustments.some(a => a.targetId === row.id)).map(row =>
-          <button className={button} type="button" key={row.id} onClick={() => add('adjustments', { targetId: row.id, amountCents: row.amountCents })}>Sustituir {labels[row.id]}</button>)}
+        <details open><summary className="cursor-pointer p-2 font-semibold">Gastos</summary>
+        <div className="space-y-2">
+          <label className="block">Gasto a sustituir <select aria-label="Gasto a sustituir" className="block w-full rounded border p-2" value={selectedExpense} onChange={e => setSelectedExpense(e.target.value)}>
+            <option value="">Seleccionar gasto</option>
+            {rows.filter(row => row.id && !draft.adjustments.some(a => a.targetId === row.id)).map(row => <option key={row.id} value={row.id}>{labels[row.id]}</option>)}
+          </select></label>
+          <button className={button} type="button" disabled={!rows.some(row => row.id === selectedExpense) || draft.adjustments.some(row => row.targetId === selectedExpense)} onClick={() => {
+            const row = rows.find(row => row.id === selectedExpense);
+            add('adjustments', { targetId: row.id, amountCents: row.amountCents });
+            setSelectedExpense('');
+          }}>Sustituir gasto seleccionado</button>
           <button className={button} type="button" onClick={() => add('adjustments', { id: `gasto-${crypto.randomUUID()}`, amountCents: null })}>Agregar gasto hipotético</button>
         </div>
         {draft.adjustments.map((row, i) => <div key={row.targetId ?? row.id} className="rounded border p-2">
           <AmountInput label={row.targetId ? `Reemplazo ${labels[row.targetId]}` : `Gasto adicional ${i + 1}`} value={row.amountCents} onChange={amountCents => patch('adjustments', i, { amountCents })} />
           <button className={button} type="button" onClick={() => remove('adjustments', i)}>Quitar gasto {i + 1}</button>
         </div>)}
-        <h4 className="font-semibold">Asignaciones adicionales manuales</h4>
+        {!draft.adjustments.length && <p>Sin ajustes. Al revisar confirmás explícitamente esta lista vacía.</p>}
+        </details>
+        <details><summary className="cursor-pointer p-2 font-semibold">Deudas y ahorro</summary>
         <button className={button} type="button" onClick={() => add('assignments', { id: `aporte-${crypto.randomUUID()}`, destination: 'debt', amountCents: null })}>Agregar asignación</button>
         {draft.assignments.map((row, i) => <div key={row.id} className="rounded border p-2">
           <label>Destino asignación {i + 1} <select className="rounded border p-2" value={row.destination} onChange={e => patch('assignments', i, { destination: e.target.value })}>
@@ -82,7 +103,8 @@ function WeekCard({ income, result, base, assumptions, disabled, onEdit, labels 
           <button className={button} type="button" onClick={() => remove('assignments', i)}>Quitar asignación {i + 1}</button>
         </div>)}
         {!draft.assignments.length && <p>Sin asignaciones. Al revisar confirmás explícitamente esta lista vacía.</p>}
-        <details><summary className="cursor-pointer">Vencimientos manuales opcionales ({draft.obligations.length})</summary>
+        </details>
+        <details><summary className="cursor-pointer p-2 font-semibold">Vencimientos manuales opcionales ({draft.obligations.length})</summary>
           <p>Listas vacías: ninguno revisado. Son anotaciones, no una segunda resta; un margen positivo no declara pagos cubiertos.</p>
           <button className={button} type="button" onClick={() => add('obligations', { id: crypto.randomUUID(), targetId: targets[0]?.id ?? '', dueDate: '', amountCents: null, reviewed: true })}>Agregar vencimiento</button>
           {draft.obligations.map((row, i) => <div key={row.id} className="space-y-2 rounded border p-2">
@@ -103,7 +125,7 @@ function WeekCard({ income, result, base, assumptions, disabled, onEdit, labels 
       {!disabled && <div role="status" className="space-y-2">
         <p>Estado: {states[result.state]} · {coverageLabel(result.coverage)}</p>
         {result.expenses && <p>Gastos: semanales {money(result.expenses.fixedCents)} + provisión mensual 7/30 {money(result.expenses.monthlyProvisionCents)} + variables {money(result.expenses.variableCents)} = subtotal {money(result.expenses.totalCents)}. Deuda adicional {money(result.debtCents)}; ahorro adicional {money(result.savingCents)}.</p>}
-        <p className="font-bold" data-testid="week-margin">Margen hipotético: {money(result.marginCents)}</p>
+
         {result.obligations.length === 0 && <p>Vencimientos: ninguno revisado.</p>}
         {result.obligations.map((row, i) => <p key={i}>Vencimiento revisado: {row.dueDate} · {targetLabel(row.targetId)} · {money(row.amountCents)}. No implica pago cubierto.
           {income.periods.some(period => row.dueDate < period.payDate) && <strong> Alerta: vencimiento previo al cobro estimado.</strong>}
@@ -111,7 +133,7 @@ function WeekCard({ income, result, base, assumptions, disabled, onEdit, labels 
         {result.warnings.map((warning, i) => <p key={i}>{warning.message ?? (warning.code === 'DUE_BEFORE_PAY_DATE' ? 'Alerta: vencimiento previo al cobro estimado.' : warning.code)}</p>)}
       </div>}
     </div>
-  </details>;
+  </details></article>;
 }
 export function PlanningPreview({ budget, plan, weekCount, onHorizon, onEdit, onRebuild, notice }) {
   const labels = Object.fromEntries(['weeklyExpenses', 'monthlyExpenses'].flatMap(group =>
@@ -127,9 +149,9 @@ export function PlanningPreview({ budget, plan, weekCount, onHorizon, onEdit, on
     <p>{plan.incomePlan.startTuesday} → {plan.incomePlan.endMonday} (martes–lunes). Cambiar horizonte descarta todos los supuestos y requiere revisión.</p>
     {notice && <p role="status">{notice}</p>}
     {plan.stale && <div role="alert"><p>Base de gastos desactualizada: cambió el presupuesto. Resultados detenidos.</p><button className={button} type="button" onClick={onRebuild}>Actualizar base y descartar supuestos</button></div>}
-    {plan.incomePlan.weeks.map((income, i) => <WeekCard key={`${income.start}-${plan.generation}`}
+    <div className="grid items-start gap-4 lg:grid-cols-2">{plan.incomePlan.weeks.map((income, i) => <WeekCard key={`${income.start}-${plan.generation}`}
       income={income} result={plan.result?.weeks[i]} base={plan.base} assumptions={plan.assumptions[income.start]}
-      disabled={plan.stale} onEdit={onEdit} labels={labels} />)}
+      disabled={plan.stale} onEdit={onEdit} labels={labels} />)}</div>
     <p role="status" data-testid="planning-total">{plan.result?.totalMarginCents != null ? `Total hipotético parcial del horizonte: ${money(plan.result.totalMarginCents)}` : 'Total/acumulado completo oculto: hay semanas desconocidas, pendientes, excluidas o base desactualizada.'}</p>
     <details><summary>Períodos fuera del rango ({plan.incomePlan.outsidePeriodCount})</summary>
       {plan.incomePlan.outsidePeriods.map(row => <p key={row.periodId}>{row.periodStart} → {row.periodEnd}: cobro {row.payDate} · {money(row.netCents)}</p>)}

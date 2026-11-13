@@ -36,11 +36,12 @@ await mkdir(output, { recursive: true });
 const finance = structuredClone(sampleFinanceData);
 finance.weeklyRecords = [];
 finance.weeklyExpenses = [{ id: 'rent', name: 'Alquiler sintético', amount: 20 }];
+finance.weeklyExpenses.push(...Array.from({length:8}, (_, i) => ({id:`extra-${i}`, name:`Gasto sintético ${i+1}`, amount:0})));
 finance.monthlyExpenses = [{ id: 'monthly', name: '', amount: 30.01 }];
 finance.variableBudgets = { groceries: 2, fuel: 3 };
 finance.activeWeek = {id:'synthetic-active', weekStartDate:'2026-09-15', weekDate:'2026-09-15', realIncome:25, income:25, payments:[], extraIncome:[], variableTransactions:[], reserveMovements:[]};
 const browser = await chromium.launch({ headless: true, ...(process.env.CHROMIUM_PATH ? {executablePath:process.env.CHROMIUM_PATH} : {}), args:['--no-sandbox'] });
-const context = await browser.newContext({timezoneId:'Pacific/Auckland', viewport:{width:1280,height:900}, serviceWorkers:'block'});
+const context = await browser.newContext({timezoneId:'Pacific/Auckland', viewport:process.env.MOBILE === '1' ? {width:360,height:800} : {width:1280,height:900}, serviceWorkers:'block'});
 const errors = [], outbound = [];
 await context.route('**/*', route => {
   if (new URL(route.request().url()).origin === new URL(baseURL).origin) return route.continue();
@@ -91,7 +92,14 @@ const plan = page.getByTestId('planning-preview');
 const weeks = plan.getByTestId('planning-week');
 const first = weeks.nth(0);
 const review = card => card.getByRole('button', {name:/^Revisar y calcular/}).click();
-const open = async card => { if (!await card.getAttribute('open').then(v => v !== null)) await card.locator(':scope > summary').click(); };
+const open = async card => {
+  const editor = card.getByTestId('week-editor');
+  if (await editor.getAttribute('open') === null) await editor.locator(':scope > summary').click();
+  for (const title of ['Ver desglose de gastos base', 'Deudas y ahorro']) {
+    const summary = card.getByText(title, {exact:true});
+    if (await summary.locator('..').getAttribute('open') === null) await summary.click();
+  }
+};
 const unchanged = async before => assert.deepEqual(await snapshot(), before);
 try {
   await page.goto(baseURL);
@@ -110,9 +118,35 @@ try {
   const before = await snapshot();
   assert.deepEqual(before.writes, []);
   await tab('Estimaciones Taura');
+  await check('12 periods: planning first, four visible summaries, collapsed salary details, no false reset notice', async () => {
+    const twelve = structuredClone(fixture); twelve.items = [];
+    for (let i=0;i<12;i++) {
+      const item = structuredClone(fixture.items[0]);
+      const date = days => new Date(Date.parse('2026-09-20T00:00:00Z') + (i*7+days)*86400000).toISOString().slice(0,10);
+      item.periodStart=date(0); item.periodEnd=date(6); item.payDate=date(8); item.periodId=`taura:weekly:${item.periodStart}`;
+      const {revision,...payload}=item; item.revision=await revisionFor(payload); twelve.items.push(item);
+    }
+    await upload(twelve); await plan.waitFor();
+    await expectText(page.getByTestId('import-success'),'12 períodos importados');
+    const detail = page.getByTestId('income-details');
+    assert.equal(await detail.getAttribute('open'),null);
+    assert.equal(await weeks.count(),4);
+    for (const card of await weeks.all()) {
+      assert.ok(await card.getByTestId('week-summary').isVisible());
+      assert.equal(await card.getByTestId('week-editor').getAttribute('open'),null);
+    }
+    assert.ok(await plan.evaluate((node) => Boolean(node.compareDocumentPosition(document.querySelector('[data-testid="income-details"]')) & Node.DOCUMENT_POSITION_FOLLOWING)));
+    assert.doesNotMatch(await plan.innerText(),/supuestos descartados/);
+    await page.screenshot({path:fileURLToPath(new URL('overview.png',output)),fullPage:true});
+    await detail.locator(':scope > summary').click();
+    assert.equal(await detail.locator('article').count(),12);
+    await detail.locator(':scope > summary').click();
+    await unchanged(before);
+  });
   await check('validated Taura producer fixture → visible planner, payDate mapping, no automatic review', async () => {
     await upload(fixture); await plan.waitFor();
     assert.equal(await weeks.count(),4);
+    assert.doesNotMatch(await plan.innerText(),/supuestos descartados/);
     await expectText(first, 'Semana no registrada');
     await open(first);
     await expectText(first, 'Alquiler sintético');
@@ -131,7 +165,10 @@ try {
     await unchanged(before);
   });
   await check('expense replacement/addition, manual debt/saving, all due dates and negative margin', async () => {
-    await first.getByRole('button', {name:'Sustituir Alquiler sintético',exact:true}).click();
+    assert.equal(await first.getByRole('button',{name:/^Sustituir /}).count(),1);
+    assert.equal(await first.getByLabel('Gasto a sustituir').locator('option').count(),13);
+    await first.getByLabel('Gasto a sustituir').selectOption('rent');
+    await first.getByRole('button', {name:'Sustituir gasto seleccionado',exact:true}).click();
     await first.getByLabel('Reemplazo Alquiler sintético (NZD)',{exact:true}).fill('1000.01');
     assert.match(await first.getByTestId('week-margin').innerText(),/Indeterminado/);
     await first.getByRole('button', {name:'Agregar gasto hipotético',exact:true}).click();
@@ -184,6 +221,7 @@ try {
     for(const count of [5,6,7,8,4]){
       await page.getByLabel('Horizonte desde próximo martes civil NZ').selectOption(String(count));
       assert.equal(await weeks.count(),count);
+      await expectText(plan,'Cambiaste el rango');
       await open(first);
       assert.match(await first.getByTestId('week-margin').innerText(),/Indeterminado/);
       assert.equal(await first.getByLabel('Asignación 1 (NZD)',{exact:true}).count(),0);
@@ -194,6 +232,8 @@ try {
     await review(first); await unchanged(before);
   });
   await check('mobile and keyboard review, accessible labels and alerts',async()=>{
+    await page.setViewportSize({width:360,height:800});
+    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth));
     await page.setViewportSize({width:390,height:844});
     await expectText(first, 'Alquiler sintético');
     assert.doesNotMatch(await plan.innerText(), /explicit-zero|unknown-income|unregistered|snapshot|\bpartial\b/);
@@ -201,14 +241,14 @@ try {
     await page.keyboard.press('Enter');
     await page.screenshot({path:fileURLToPath(new URL('planner-mobile.png',output)),fullPage:true});
     assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth));
-    await page.setViewportSize({width:1280,height:900});
+    await page.setViewportSize(process.env.MOBILE === '1' ? {width:360,height:800} : {width:1280,height:900});
   });
   await check('actual synthetic budget edit in UI stops results until explicit rebuild',async()=>{
     await tab('Presupuesto');
     await page.getByLabel(/Supermercado/).fill('4');
     await tab('Estimaciones Taura');
     await expectText(plan.getByRole('alert'),'Base de gastos desactualizada');
-    assert.equal(await plan.getByTestId('week-margin').count(),0);
+    assert.ok((await plan.getByTestId('week-margin').allTextContents()).every(text => /Indeterminado/.test(text)));
     const changed=await snapshot();
     assert.notDeepEqual(changed.local,before.local);
     assert.ok(changed.writes.every(x=>x==='Storage.setItem'));
@@ -243,6 +283,7 @@ try {
     await page.getByRole('button',{name:'Volver a cerrar semana',exact:true}).click();
     await tab('Estimaciones Taura'); await open(first);
     assert.match(await first.innerText(),/Semana cerrada/);
+    await expectText(plan,'Se modificó una semana');
     const operational=await snapshot();
     await review(first);
     assert.match(await first.getByTestId('week-margin').innerText(),/Indeterminado/);
@@ -284,7 +325,7 @@ try {
     const newer = structuredClone(fixture); newer.items=[newer.items[1]];
     await upload(newer); await plan.waitFor();
     await page.evaluate(() => window.__releaseDigest());
-    await expectText(preview,'1 períodos únicos');
+    await expectText(page.getByTestId('import-success'),'1 períodos importados');
     await unchanged(afterOperations);
   });
   await check('hash, fiscal code, backup and oversize failures remove the entire planner; retry/discard/reload', async () => {

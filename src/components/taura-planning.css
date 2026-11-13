@@ -1,0 +1,7 @@
+/* Scoped to the temporary estimates view; other tabs retain their styles. */
+[data-taura-ui] { min-width: 0; overflow-wrap: anywhere; }
+[data-taura-ui] :is(button, select, input, summary) { min-height: 44px; }
+[data-taura-ui] :is(button, select, input, summary):focus-visible { outline: 3px solid #0f766e; outline-offset: 3px; }
+[data-taura-ui] :is(input, select) { max-width: 100%; }
+[data-taura-ui] button:disabled { opacity: .55; cursor: not-allowed; }
+[data-taura-ui] summary { align-content: center; }

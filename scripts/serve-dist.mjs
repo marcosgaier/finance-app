@@ -19,7 +19,7 @@ const mimeTypes = {
 createServer((request, response) => {
   const requestPath = decodeURIComponent(new URL(request.url, `http://${request.headers.host}`).pathname);
   const safePath = normalize(requestPath).replace(/^(\.\.[/\\])+/, '');
-  const filePath = join(root, safePath === '/' ? 'index.html' : safePath);
+  const filePath = join(root, requestPath === '/' ? 'index.html' : safePath);
   const resolvedPath = existsSync(filePath) ? filePath : join(root, 'index.html');
 
   response.setHeader('Content-Type', mimeTypes[extname(resolvedPath)] || 'application/octet-stream');

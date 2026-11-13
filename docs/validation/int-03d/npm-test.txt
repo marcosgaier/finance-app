@@ -1,0 +1,306 @@
+
+> test
+> node scripts/finance-engine-coverage-tests.mjs && node scripts/persistence-tests.mjs && node scripts/historical-payment-tests.mjs && node scripts/week-reopening-tests.mjs && node --test scripts/taura-preview-tests.mjs scripts/income-planning-tests.mjs scripts/expense-planning-tests.mjs scripts/planning-session-tests.mjs
+
+financeEngine coverage tests passed
+Persistence and compatibility tests passed
+Historical payment editing tests passed
+Week reopening and reclosure tests passed
+TAP version 13
+# Subtest: reviewed base: single 7/30 rounding, explicit zero, partial estimates and theoretical sum
+ok 1 - reviewed base: single 7/30 rounding, explicit zero, partial estimates and theoretical sum
+  ---
+  duration_ms: 65.9623
+  type: 'test'
+  ...
+# Subtest: missing, invalid and zero differ; no implicit debt/saving/obligation review
+ok 2 - missing, invalid and zero differ; no implicit debt/saving/obligation review
+  ---
+  duration_ms: 11.0243
+  type: 'test'
+  ...
+# Subtest: manual replacements/additions, debt, saving, negative margin and no double funding
+ok 3 - manual replacements/additions, debt, saving, negative margin and no double funding
+  ---
+  duration_ms: 6.2937
+  type: 'test'
+  ...
+# Subtest: unknown income blocks suffix; explicit zero stays hypothetical and warns
+ok 4 - unknown income blocks suffix; explicit zero stays hypothetical and warns
+  ---
+  duration_ms: 4.57
+  type: 'test'
+  ...
+# Subtest: closed, active and reopened weeks never contribute estimates or accumulations
+ok 5 - closed, active and reopened weeks never contribute estimates or accumulations
+  ---
+  duration_ms: 14.4605
+  type: 'test'
+  ...
+# Subtest: due dates are annotations, missing date/amount/review remains unknown
+ok 6 - due dates are annotations, missing date/amount/review remains unknown
+  ---
+  duration_ms: 6.0037
+  type: 'test'
+  ...
+# Subtest: safe arithmetic: monthly intermediate, debt and accumulated margins
+ok 7 - safe arithmetic: monthly intermediate, debt and accumulated margins
+  ---
+  duration_ms: 7.0529
+  type: 'test'
+  ...
+# Subtest: several validated pay periods in one week are consumed once
+ok 8 - several validated pay periods in one week are consumed once
+  ---
+  duration_ms: 5.2773
+  type: 'test'
+  ...
+# Subtest: frozen inputs detached; forbidden operational fields and side effects never accessed
+ok 9 - frozen inputs detached; forbidden operational fields and side effects never accessed
+  ---
+  duration_ms: 13.0184
+  type: 'test'
+  ...
+# Subtest: C1 rejects excess, summed excess, duplicate destinations, monthly and missing funding
+ok 10 - C1 rejects excess, summed excess, duplicate destinations, monthly and missing funding
+  ---
+  duration_ms: 8.3423
+  type: 'test'
+  ...
+# Subtest: C1 all reviewed obligations are detached annotations, before and after pay date
+ok 11 - C1 all reviewed obligations are detached annotations, before and after pay date
+  ---
+  duration_ms: 5.2622
+  type: 'test'
+  ...
+# Subtest: NZ clock is explicit; strictly next Tuesday at civil midnight, Monday and Tuesday
+ok 12 - NZ clock is explicit; strictly next Tuesday at civil midnight, Monday and Tuesday
+  ---
+  duration_ms: 69.4385
+  type: 'test'
+  ...
+# Subtest: complete Tuesday–Monday grid, default four and every supported horizon
+ok 13 - complete Tuesday–Monday grid, default four and every supported horizon
+  ---
+  duration_ms: 31.2901
+  type: 'test'
+  ...
+# Subtest: invalid Tuesday/horizon inputs fail instead of normalizing
+ok 14 - invalid Tuesday/horizon inputs fail instead of normalizing
+  ---
+  duration_ms: 4.36
+  type: 'test'
+  ...
+# Subtest: same payDate and different periods sum once in cents, retaining metadata
+ok 15 - same payDate and different periods sum once in cents, retaining metadata
+  ---
+  duration_ms: 9.374
+  type: 'test'
+  ...
+# Subtest: Monday belongs to prior week; Tuesday starts new week; outside items listed not summed
+ok 16 - Monday belongs to prior week; Tuesday starts new week; outside items listed not summed
+  ---
+  duration_ms: 6.3541
+  type: 'test'
+  ...
+# Subtest: zero is mathematical zero with roster warning; absence stays unknown/null
+ok 17 - zero is mathematical zero with roster warning; absence stays unknown/null
+  ---
+  duration_ms: 5.5142
+  type: 'test'
+  ...
+# Subtest: zero warning survives alongside positive items; selection never becomes exhaustive
+ok 18 - zero warning survives alongside positive items; selection never becomes exhaustive
+  ---
+  duration_ms: 3.6938
+  type: 'test'
+  ...
+# Subtest: no items within horizon means unknown weeks and only a zero known subtotal
+ok 19 - no items within horizon means unknown weeks and only a zero known subtotal
+  ---
+  duration_ms: 3.3389
+  type: 'test'
+  ...
+# Subtest: duplicates/conflicts stay owned by v1; changed payDate replaces previous calculation
+ok 20 - duplicates/conflicts stay owned by v1; changed payDate replaces previous calculation
+  ---
+  duration_ms: 12.6166
+  type: 'test'
+  ...
+# Subtest: active, closed, legacy and reopened are read-only and excluded; realIncome never consulted
+ok 21 - active, closed, legacy and reopened are read-only and excluded; realIncome never consulted
+  ---
+  duration_ms: 6.99
+  type: 'test'
+  ...
+# Subtest: month/year/leap and both NZ DST boundaries use civil days
+ok 22 - month/year/leap and both NZ DST boundaries use civil days
+  ---
+  duration_ms: 6.9043
+  type: 'test'
+  ...
+# Subtest: output independent of host TZ for clocks and grids
+ok 23 - output independent of host TZ for clocks and grids
+  ---
+  duration_ms: 604.7889
+  type: 'test'
+  ...
+# Subtest: safe cent arithmetic rejects overflow in week and across weeks, even excluded weeks
+ok 24 - safe cent arithmetic rejects overflow in week and across weeks, even excluded weeks
+  ---
+  duration_ms: 8.4499
+  type: 'test'
+  ...
+# Subtest: 104 distinct validated periods preserve exact cents and reject aggregate overflow
+ok 25 - 104 distinct validated periods preserve exact cents and reject aggregate overflow
+  ---
+  duration_ms: 109.8214
+  type: 'test'
+  ...
+# Subtest: deep frozen inputs unchanged; nested output metadata is detached
+ok 26 - deep frozen inputs unchanged; nested output metadata is detached
+  ---
+  duration_ms: 4.4895
+  type: 'test'
+  ...
+# Subtest: no persistent effects or clock reads on import, success and failure
+ok 27 - no persistent effects or clock reads on import, success and failure
+  ---
+  duration_ms: 7.8351
+  type: 'test'
+  ...
+# Subtest: validated producer → 4/8 weeks → allowed snapshot → pending → explicit review
+ok 28 - validated producer → 4/8 weeks → allowed snapshot → pending → explicit review
+  ---
+  duration_ms: 45.754
+  type: 'test'
+  ...
+# Subtest: explicit arrays and valid assumptions required; failed review does not commit
+ok 29 - explicit arrays and valid assumptions required; failed review does not commit
+  ---
+  duration_ms: 7.9507
+  type: 'test'
+  ...
+# Subtest: integration keeps explicit zero, absent income, negative margin and registered exclusions
+ok 30 - integration keeps explicit zero, absent income, negative margin and registered exclusions
+  ---
+  duration_ms: 9.3783
+  type: 'test'
+  ...
+# Subtest: invalid mutable IDs cannot leak operational references into a snapshot
+ok 31 - invalid mutable IDs cannot leak operational references into a snapshot
+  ---
+  duration_ms: 3.7819
+  type: 'test'
+  ...
+# Subtest: replacement, invalid import, discard, refresh and obsolete async completions
+ok 32 - replacement, invalid import, discard, refresh and obsolete async completions
+  ---
+  duration_ms: 6.9943
+  type: 'test'
+  ...
+# Subtest: navigation is no session action; budget staleness is sticky and rebuild resets review
+ok 33 - navigation is no session action; budget staleness is sticky and rebuild resets review
+  ---
+  duration_ms: 6.6822
+  type: 'test'
+  ...
+# Subtest: deeply frozen inputs, detached outputs; no operational reads or storage/network access
+ok 34 - deeply frozen inputs, detached outputs; no operational reads or storage/network access
+  ---
+  duration_ms: 11.5904
+  type: 'test'
+  ...
+# Subtest: UI reconfiguration 4..8 discards assumptions, keeps civil start and invalidates closed/reopened calculations
+ok 35 - UI reconfiguration 4..8 discards assumptions, keeps civil start and invalidates closed/reopened calculations
+  ---
+  duration_ms: 21.44
+  type: 'test'
+  ...
+# Subtest: render synchronization preserves reviews; a new horizon cannot clear stale-budget blocking
+ok 36 - render synchronization preserves reviews; a new horizon cannot clear stale-budget blocking
+  ---
+  duration_ms: 6.8292
+  type: 'test'
+  ...
+# Subtest: exact Taura PR \#9 producer fixture, positive and explicit zero, no input mutation
+ok 37 - exact Taura PR \#9 producer fixture, positive and explicit zero, no input mutation
+  ---
+  duration_ms: 65.8426
+  type: 'test'
+  ...
+# Subtest: malformed JSON and both apps’ backups are rejected
+ok 38 - malformed JSON and both apps’ backups are rejected
+  ---
+  duration_ms: 2.0993
+  type: 'test'
+  ...
+# Subtest: envelope values and exact allowlist
+ok 39 - envelope values and exact allowlist
+  ---
+  duration_ms: 7.4843
+  type: 'test'
+  ...
+# Subtest: byte and item limits, absent versus explicit zero
+ok 40 - byte and item limits, absent versus explicit zero
+  ---
+  duration_ms: 14.06
+  type: 'test'
+  ...
+# Subtest: full item, nested rules, warnings and deduction allowlists
+ok 41 - full item, nested rules, warnings and deduction allowlists
+  ---
+  duration_ms: 18.6542
+  type: 'test'
+  ...
+# Subtest: invalid/unsafe/fractional/negative amounts, ACC and net arithmetic
+ok 42 - invalid/unsafe/fractional/negative amounts, ACC and net arithmetic
+  ---
+  duration_ms: 5.215
+  type: 'test'
+  ...
+# Subtest: calendar, worked week, identity, payment, status and fiscal coverage
+ok 43 - calendar, worked week, identity, payment, status and fiscal coverage
+  ---
+  duration_ms: 5.5587
+  type: 'test'
+  ...
+# Subtest: revision integrity, deterministic exporter canonical order, not a signature
+ok 44 - revision integrity, deterministic exporter canonical order, not a signature
+  ---
+  duration_ms: 6.7393
+  type: 'test'
+  ...
+# Subtest: identical duplicates collapse; changed content or payDate revision conflicts reject the batch
+ok 45 - identical duplicates collapse; changed content or payDate revision conflicts reject the batch
+  ---
+  duration_ms: 5.9105
+  type: 'test'
+  ...
+# Subtest: successive exports replace whole sessions without ordering opaque revisions
+ok 46 - successive exports replace whole sessions without ordering opaque revisions
+  ---
+  duration_ms: 4.5366
+  type: 'test'
+  ...
+# Subtest: Monday/Tuesday, month/year boundaries and DST are civil-date based
+ok 47 - Monday/Tuesday, month/year boundaries and DST are civil-date based
+  ---
+  duration_ms: 1.7221
+  type: 'test'
+  ...
+# Subtest: closed, legacy, active and reopened weeks read only; no storage writes on success/failure
+ok 48 - closed, legacy, active and reopened weeks read only; no storage writes on success/failure
+  ---
+  duration_ms: 2.8234
+  type: 'test'
+  ...
+1..48
+# tests 48
+# suites 0
+# pass 48
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1168.6939

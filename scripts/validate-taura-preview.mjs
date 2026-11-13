@@ -56,7 +56,12 @@ const upload = async data => {
   await page.locator('#taura-file').setInputFiles({name:'synthetic.json', mimeType:'application/json', buffer:Buffer.from(typeof data === 'string' ? data : JSON.stringify(data))});
 };
 const preview = page.getByTestId('taura-preview');
-const expectText = async (locator, text) => { await locator.getByText(text, {exact:false}).first().waitFor(); };
+const expectText = async (locator, text) => {
+  const details = page.getByTestId('income-details');
+  if (locator === preview) await details.waitFor({state:'attached'});
+  if (await details.count() && await details.getAttribute('open') === null) await details.locator(':scope > summary').click();
+  await locator.getByText(text, {exact:false}).first().waitFor();
+};
 try {
   await page.goto(baseURL);
   await page.getByRole('button', {name:'Estimaciones Taura', exact:true}).waitFor();
@@ -73,7 +78,7 @@ try {
     await expectText(preview, 'Semana cerrada'); await expectText(preview, 'Semana activa');
     assert.equal(await preview.locator('article').count(), 3);
     assert.match(await preview.locator('article').nth(1).innerText(), /0[,.]00/);
-    await preview.locator('summary').first().click();
+    await preview.locator('article summary').first().click();
     await expectText(preview, 'Feriados');
     await page.screenshot({path:fileURLToPath(new URL('int-02b-preview-desktop.png', output)), fullPage:true});
   });

@@ -1,3 +1,4 @@
+import './taura-planning.css';
 import React, { useLayoutEffect, useRef, useState } from 'react';
 import { createPlanningSession } from '../services/planningSession.js';
 import { PlanningPreview } from './PlanningPreview.jsx';
@@ -27,8 +28,9 @@ export function TauraIncomePreview({ weeklyRecords = [], activeWeek = null, budg
     const previous = session.current.read();
     session.current.checkBudget(budget);
     const next = session.current.configure(preview, { weekCount, ...JSON.parse(metadata) });
-    if (previous && JSON.stringify(previous.incomePlan) !== JSON.stringify(next.incomePlan)) {
-      setNotice('Horizonte o semanas operativas cambiaron: supuestos descartados; revisá nuevamente.');
+    if (previous && Object.keys(previous.assumptions).length && JSON.stringify(previous.incomePlan) !== JSON.stringify(next.incomePlan)) {
+      const rangeChanged = previous.incomePlan.endMonday !== next.incomePlan.endMonday;
+      setNotice(`${rangeChanged ? 'Cambiaste el rango' : 'Se modificó una semana activa/cerrada o reabierta'}: supuestos descartados; revisá nuevamente.`);
     }
     setPlan(next);
   }, [preview, budget, weekCount, metadata]);
@@ -77,20 +79,32 @@ export function TauraIncomePreview({ weeklyRecords = [], activeWeek = null, budg
   const rows = preview ? previewRows(preview, weeklyRecords, activeWeek) : [];
   const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Pacific/Auckland', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
   return (
-    <section className="space-y-4 rounded-lg border border-stone-200 bg-white p-4 shadow-sm" aria-labelledby="taura-title">
-      <h2 id="taura-title" className="text-xl font-bold">Ingresos Taura · vista previa temporal</h2>
+    <section className="space-y-4 rounded-lg border border-stone-200 bg-white p-4 shadow-sm" data-taura-ui aria-labelledby="taura-title">
+      <h2 id="taura-title" className="text-xl font-bold">Estimaciones Taura</h2>
       <p className="rounded border border-amber-300 bg-amber-50 p-3 font-semibold">Estimado / no cobrado. No es dinero disponible para gastar. Cobertura salarial y fiscal incompleta.</p>
-      <p>Seleccioná el JSON v1 de «Exportar ingresos estimados» de Taura (máximo 1 MiB, 104 períodos). Solo se muestra en memoria; podés descartarlo o refrescar la página.</p>
-      <p className="text-sm text-stone-600">Cada selección reemplaza toda la vista previa, incluso si el archivo se rechaza. No se acumulan archivos ni revisiones. El origen taura-local no identifica una instalación; la fecha de generación y el hash no prueban cuál revisión es más reciente.</p>
+      <details><summary className="cursor-pointer font-semibold">Cómo importar y límites de esta vista</summary><p>Seleccioná el JSON v1 de «Exportar ingresos estimados» de Taura (máximo 1 MiB, 104 períodos). Solo se muestra en memoria; podés descartarlo o refrescar la página.</p>
+      <p className="text-sm text-stone-600">Cada selección reemplaza toda la vista previa, incluso si el archivo se rechaza. No se acumulan archivos ni revisiones. El origen taura-local no identifica una instalación; la fecha de generación y el hash no prueban cuál revisión es más reciente.</p></details>
       <div className="flex flex-wrap items-center gap-3">
-        <label className="font-semibold" htmlFor="taura-file">{preview ? 'Reemplazar archivo de estimaciones' : 'Seleccionar archivo de estimaciones'}</label>
-        <input ref={input} id="taura-file" type="file" accept=".json,application/json" onChange={selectFile} className="max-w-full text-sm" />
+        <button type="button" className="rounded border border-stone-400 px-4 py-3 font-semibold" onClick={() => input.current?.click()}>{preview ? 'Reemplazar archivo de estimaciones' : 'Seleccionar archivo de estimaciones'}</button>
+        <input ref={input} id="taura-file" aria-label="Archivo JSON de estimaciones" tabIndex={-1} type="file" accept=".json,application/json" onChange={selectFile} className="sr-only" />
         <button type="button" onClick={discard} className="rounded border border-stone-400 px-4 py-2">Descartar vista previa</button>
       </div>
       {busy && <p role="status">Validando archivo…</p>}
       {error && <p role="alert" className="rounded bg-red-50 p-3 text-red-800">{error}</p>}
       {!preview && !busy && <p className="text-stone-600">Sin estimaciones en esta sesión.</p>}
+      {preview && <p className="break-words text-sm">Generado: {preview.generatedAt} (UTC) · Origen: {preview.sourceId}</p>}
+      {preview && <p role="status" className="rounded bg-emerald-50 p-3 font-semibold" data-testid="import-success">Archivo importado correctamente · {rows.length} períodos importados</p>}
+      {preview && <p className="text-sm text-amber-900">PAYE incluye ACC; KiwiSaver estimado. Feriados, roster parcial y cobertura fiscal requieren revisión: consultá las advertencias por período en Detalle de ingresos.</p>}
+      {preview && plan && <PlanningPreview budget={budget} plan={plan} weekCount={weekCount}
+        onHorizon={setWeekCount} notice={notice}
+        onRebuild={() => { setPlan(session.current.rebuildBudget(budget)); setNotice('Base actualizada; supuestos descartados.'); }}
+        onEdit={(start, draft, review) => {
+          session.current.editWeek(start, draft);
+          setPlan(session.current.read());
+          if (review) setPlan(session.current.reviewWeek(start));
+        }} />}
       {preview && <div className="space-y-4" data-testid="taura-preview">
+        <details data-testid="income-details"><summary className="cursor-pointer rounded border p-3 font-semibold">Detalle de ingresos · {rows.length} períodos</summary>
         <p>Origen: {preview.sourceId} · {preview.sourceRevision}<br />Generado: <time dateTime={preview.generatedAt}>{preview.generatedAt}</time> (UTC) · NZD · Pacific/Auckland</p>
         <p role="status">{rows.length} períodos únicos · {preview.duplicates} repeticiones idénticas omitidas. Los períodos ausentes no equivalen a cero ni eliminan datos.</p>
         {(Date.now() - Date.parse(preview.generatedAt) > 30 * 86400000 || Date.parse(preview.generatedAt) > Date.now()) && <p className="text-amber-900">Generación antigua (más de 30 días) o futura: revisá manualmente la vigencia. No se determina recencia por hash.</p>}
@@ -113,15 +127,9 @@ export function TauraIncomePreview({ weeklyRecords = [], activeWeek = null, budg
             <p className="break-all text-xs">{item.periodId} · Revisión opaca: {item.revision}</p>
           </details>
         </article>)}
+        </details>
       </div>}
-      {preview && plan && <PlanningPreview budget={budget} plan={plan} weekCount={weekCount}
-        onHorizon={setWeekCount} notice={notice}
-        onRebuild={() => { setPlan(session.current.rebuildBudget(budget)); setNotice('Base actualizada; supuestos descartados.'); }}
-        onEdit={(start, draft, review) => {
-          session.current.editWeek(start, draft);
-          setPlan(session.current.read());
-          if (review) setPlan(session.current.reviewWeek(start));
-        }} />}
+
     </section>
   );
 }

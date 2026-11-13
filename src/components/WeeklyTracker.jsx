@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { formatDisplayDate, formatIsoDate, parseDisplayDate } from '../utils/dateUtils.js';
 import { getFundingSourceLabel, isWeeklyIncomeFunded, WEEKLY_INCOME_SOURCE } from '../utils/fundingSourceUtils.js';
 import { formatMoney } from '../utils/financeEngine.js';
+import { prepareHistoricalPayments, updateHistoricalPaymentAmount } from '../utils/historicalPaymentUtils.js';
 import {
   buildWeeklyMoneyFlowSummary,
   calculateExtraIncomeTotal,
@@ -127,6 +128,7 @@ export function WeeklyTracker({
   const [expandedRecordIds, setExpandedRecordIds] = useState({});
   const [editingRecordId, setEditingRecordId] = useState(null);
   const [editingRecordDraft, setEditingRecordDraft] = useState(null);
+  const [editingPaymentError, setEditingPaymentError] = useState('');
   const [dismissedPendingWeekWarning, setDismissedPendingWeekWarning] = useState(false);
   const [showOpeningBalanceInput, setShowOpeningBalanceInput] = useState(false);
 
@@ -452,6 +454,7 @@ export function WeeklyTracker({
   }
 
   function startEditingRecord(record) {
+    setEditingPaymentError('');
     setEditingRecordId(record.id);
     setEditingRecordDraft(createEditableRecordDraft(record));
     setExpandedRecordIds((currentExpandedIds) => ({
@@ -461,6 +464,7 @@ export function WeeklyTracker({
   }
 
   function cancelEditingRecord() {
+    setEditingPaymentError('');
     setEditingRecordId(null);
     setEditingRecordDraft(null);
   }
@@ -536,29 +540,12 @@ export function WeeklyTracker({
     }));
   }
 
-  function updateEditingPayment(cardId, amount) {
-    const nextAmount = Number(amount || 0);
-
-    setEditingRecordDraft((currentDraft) => {
-      const card = financeData.cards.find((item) => item.id === cardId);
-      const otherPayments = currentDraft.payments.filter((payment) => payment.cardId !== cardId);
-      const payments =
-        nextAmount > 0
-          ? [
-              ...otherPayments,
-              {
-                cardId,
-                cardName: card?.name || 'Tarjeta',
-                amount: nextAmount,
-              },
-            ]
-          : otherPayments;
-
-      return {
-        ...currentDraft,
-        payments,
-      };
-    });
+  function updateEditingPayment(paymentIndex, amount) {
+    setEditingPaymentError('');
+    setEditingRecordDraft((currentDraft) => ({
+      ...currentDraft,
+      payments: updateHistoricalPaymentAmount(currentDraft.payments, paymentIndex, amount),
+    }));
   }
 
   function saveEditingRecord(originalRecord) {
@@ -566,7 +553,13 @@ export function WeeklyTracker({
 
     const variableTransactions = sanitizeTransactions(editingRecordDraft.variableTransactions);
     const extraIncome = sanitizeExtraIncome(editingRecordDraft.extraIncome);
-    const payments = sanitizePayments(editingRecordDraft.payments, editingRecordDraft.weekDate);
+    let payments;
+    try {
+      payments = prepareHistoricalPayments(originalRecord.payments || [], editingRecordDraft.payments, financeData.cards);
+    } catch (error) {
+      setEditingPaymentError(error.message);
+      return;
+    }
 
     onUpdateWeek(originalRecord.id, (currentRecord) => ({
       ...currentRecord,
@@ -574,9 +567,9 @@ export function WeeklyTracker({
       realIncome: Number(editingRecordDraft.realIncome || 0),
       extraIncome,
       variableTransactions,
-      payments,
+      ...(Array.isArray(currentRecord.payments) ? { payments } : {}),
       note: editingRecordDraft.note || '',
-      totalPaid: calculatePaymentTotal(payments),
+      totalPaid: payments.length > 0 ? calculatePaymentTotal(payments) : currentRecord.totalPaid ?? 0,
       updatedAt: new Date().toISOString(),
     }));
     cancelEditingRecord();
@@ -1051,6 +1044,7 @@ export function WeeklyTracker({
                 cards={financeData.cards}
                 financeData={financeData}
                 editingDraft={editingRecordId === record.id ? editingRecordDraft : null}
+                editingPaymentError={editingRecordId === record.id ? editingPaymentError : ''}
                 isMostRecent={index === 0}
                 weeklySummary={weeklySummary}
                 onDeleteWeek={onDeleteWeek}
@@ -1162,6 +1156,7 @@ function WeeklyRecordItem({
   cards,
   financeData,
   editingDraft,
+  editingPaymentError,
   isMostRecent,
   weeklySummary,
   onDeleteWeek,
@@ -1265,6 +1260,8 @@ function WeeklyRecordItem({
         <ClosedWeekEditor
           cards={cards}
           draft={editingDraft}
+          paymentError={editingPaymentError}
+          buckets={financeData.reserveBuckets || []}
           onAddExtraIncome={onAddEditingExtraIncome}
           onAddTransaction={onAddEditingTransaction}
           onCancel={onCancelEditing}
@@ -1348,6 +1345,8 @@ function WeeklyRecordItem({
 
 function ClosedWeekEditor({
   cards,
+  buckets,
+  paymentError,
   draft,
   onAddExtraIncome,
   onAddTransaction,
@@ -1510,16 +1509,30 @@ function ClosedWeekEditor({
 
       <div className="mt-4">
         <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">Pagos reales a deudas</p>
-        <div className="mt-2 grid gap-2 md:grid-cols-2 xl:grid-cols-3">
-          {cards.map((card) => (
-            <MoneyInput
-              key={card.id}
-              label={card.name}
-              value={draft.payments.find((payment) => payment.cardId === card.id)?.amount || ''}
-              onChange={(value) => onUpdatePayment(card.id, value)}
-            />
-          ))}
+        <div className="mt-2 grid gap-3 md:grid-cols-2">
+          {draft.payments.map((payment, index) => {
+            const reserveFunded = !isWeeklyIncomeFunded(payment);
+            const card = cards.find((item) => item.id === payment.cardId);
+            return (
+              <div key={`${payment.id || 'legacy'}-${index}`} className="min-w-0 rounded-md border border-stone-200 p-3">
+                <p className="break-words text-sm font-semibold">Pago {index + 1} · {payment.cardName || card?.name || 'Tarjeta anterior'}</p>
+                <p className="mt-1 text-sm text-stone-600">{formatDisplayDate(payment.date || draft.weekDate)} · {getFundingSourceLabel(payment, buckets)}</p>
+                {payment.note && <p className="mt-1 break-words text-sm text-stone-600">{payment.note}</p>}
+                <label className="mt-2 block text-sm text-stone-600">
+                  Importe del pago {index + 1}
+                  <input className="mt-1 w-full min-w-0 rounded-md border border-stone-300 px-3 py-2 disabled:bg-stone-100"
+                    type="number" min="0.01" step="0.01" value={payment.amount ?? ''}
+                    disabled={reserveFunded || !card}
+                    onChange={(event) => onUpdatePayment(index, event.target.value)} />
+                </label>
+                {reserveFunded && <p className="mt-2 text-xs text-amber-800">El importe está protegido porque salió de una reserva. Su corrección requiere conciliar saldos.</p>}
+                {!card && <p className="mt-2 text-xs text-amber-800">La tarjeta ya no existe. Conservamos este pago sin modificarlo.</p>}
+              </div>
+            );
+          })}
+          {draft.payments.length === 0 && <p className="text-sm text-stone-500">Esta semana no tiene pagos individuales registrados.</p>}
         </div>
+        {paymentError && <p role="alert" className="mt-2 text-sm text-red-700">{paymentError}</p>}
       </div>
 
       <div className="mt-4 flex flex-wrap justify-end gap-2 border-t border-stone-200 pt-3">
@@ -1778,7 +1791,7 @@ function createEditableRecordDraft(record) {
     realIncome: Number(record.realIncome ?? record.income ?? 0),
     extraIncome: normalizeExtraIncome(record),
     variableTransactions: normalizeWeeklyRecordTransactions(record),
-    payments: sanitizePayments(record.payments || [], record.weekStartDate || record.weekDate),
+    payments: (record.payments || []).map((payment) => ({ ...payment })),
     note: record.note || '',
   };
 }

@@ -1,0 +1,64 @@
+
+> test
+> node scripts/finance-engine-coverage-tests.mjs && node scripts/persistence-tests.mjs && node scripts/historical-payment-tests.mjs && node scripts/week-reopening-tests.mjs && node --test scripts/taura-preview-tests.mjs scripts/income-planning-tests.mjs scripts/expense-planning-tests.mjs scripts/planning-session-tests.mjs
+
+financeEngine coverage tests passed
+Persistence and compatibility tests passed
+Historical payment editing tests passed
+Week reopening and reclosure tests passed
+✔ reviewed base: single 7/30 rounding, explicit zero, partial estimates and theoretical sum (45.128782ms)
+✔ missing, invalid and zero differ; no implicit debt/saving/obligation review (7.953715ms)
+✔ manual replacements/additions, debt, saving, negative margin and no double funding (8.66288ms)
+✔ unknown income blocks suffix; explicit zero stays hypothetical and warns (5.148907ms)
+✔ closed, active and reopened weeks never contribute estimates or accumulations (8.344821ms)
+✔ due dates are annotations, missing date/amount/review remains unknown (6.882348ms)
+✔ safe arithmetic: monthly intermediate, debt and accumulated margins (15.429647ms)
+✔ several validated pay periods in one week are consumed once (5.49164ms)
+✔ frozen inputs detached; forbidden operational fields and side effects never accessed (8.118677ms)
+✔ C1 rejects excess, summed excess, duplicate destinations, monthly and missing funding (4.323814ms)
+✔ C1 all reviewed obligations are detached annotations, before and after pay date (3.228993ms)
+✔ NZ clock is explicit; strictly next Tuesday at civil midnight, Monday and Tuesday (29.570509ms)
+✔ complete Tuesday–Monday grid, default four and every supported horizon (29.26417ms)
+✔ invalid Tuesday/horizon inputs fail instead of normalizing (3.340366ms)
+✔ same payDate and different periods sum once in cents, retaining metadata (6.886532ms)
+✔ Monday belongs to prior week; Tuesday starts new week; outside items listed not summed (6.308841ms)
+✔ zero is mathematical zero with roster warning; absence stays unknown/null (4.614966ms)
+✔ zero warning survives alongside positive items; selection never becomes exhaustive (2.510008ms)
+✔ no items within horizon means unknown weeks and only a zero known subtotal (1.55929ms)
+✔ duplicates/conflicts stay owned by v1; changed payDate replaces previous calculation (3.668886ms)
+✔ active, closed, legacy and reopened are read-only and excluded; realIncome never consulted (3.863453ms)
+✔ month/year/leap and both NZ DST boundaries use civil days (8.563506ms)
+✔ output independent of host TZ for clocks and grids (272.398059ms)
+✔ safe cent arithmetic rejects overflow in week and across weeks, even excluded weeks (5.794511ms)
+✔ 104 distinct validated periods preserve exact cents and reject aggregate overflow (88.032947ms)
+✔ deep frozen inputs unchanged; nested output metadata is detached (3.001384ms)
+✔ no persistent effects or clock reads on import, success and failure (7.212792ms)
+✔ validated producer → 4/8 weeks → allowed snapshot → pending → explicit review (21.509246ms)
+✔ explicit arrays and valid assumptions required; failed review does not commit (2.557598ms)
+✔ integration keeps explicit zero, absent income, negative margin and registered exclusions (2.841766ms)
+✔ invalid mutable IDs cannot leak operational references into a snapshot (2.014619ms)
+✔ replacement, invalid import, discard, refresh and obsolete async completions (3.15572ms)
+✔ navigation is no session action; budget staleness is sticky and rebuild resets review (2.195592ms)
+✔ deeply frozen inputs, detached outputs; no operational reads or storage/network access (6.056101ms)
+✔ UI reconfiguration 4..8 discards assumptions, keeps civil start and invalidates closed/reopened calculations (8.421639ms)
+✔ render synchronization preserves reviews; a new horizon cannot clear stale-budget blocking (3.232633ms)
+✔ exact Taura PR #9 producer fixture, positive and explicit zero, no input mutation (41.633736ms)
+✔ malformed JSON and both apps’ backups are rejected (2.023185ms)
+✔ envelope values and exact allowlist (13.165342ms)
+✔ byte and item limits, absent versus explicit zero (27.337681ms)
+✔ full item, nested rules, warnings and deduction allowlists (19.090555ms)
+✔ invalid/unsafe/fractional/negative amounts, ACC and net arithmetic (2.011563ms)
+✔ calendar, worked week, identity, payment, status and fiscal coverage (2.315301ms)
+✔ revision integrity, deterministic exporter canonical order, not a signature (5.951031ms)
+✔ identical duplicates collapse; changed content or payDate revision conflicts reject the batch (4.796235ms)
+✔ successive exports replace whole sessions without ordering opaque revisions (4.139346ms)
+✔ Monday/Tuesday, month/year boundaries and DST are civil-date based (3.307103ms)
+✔ closed, legacy, active and reopened weeks read only; no storage writes on success/failure (2.358041ms)
+ℹ tests 48
+ℹ suites 0
+ℹ pass 48
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1201.730852

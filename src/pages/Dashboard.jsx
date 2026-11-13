@@ -35,6 +35,11 @@ const dashboardTabs = [
 
 export function Dashboard({ financeData, setFinanceData }) {
   const [activeTab, setActiveTab] = useState('dashboard');
+  const planningBudget = useMemo(() => ({
+    weeklyExpenses: financeData.weeklyExpenses?.map(({ id, amount, name }) => ({ id, amount, name: typeof name === 'string' ? name : '' })),
+    monthlyExpenses: financeData.monthlyExpenses?.map(({ id, amount, name }) => ({ id, amount, name: typeof name === 'string' ? name : '' })),
+    variableBudgets: { groceries: financeData.variableBudgets?.groceries, fuel: financeData.variableBudgets?.fuel },
+  }), [financeData.weeklyExpenses, financeData.monthlyExpenses, financeData.variableBudgets]);
   const effectiveFinanceData = useMemo(() => {
     const activeOpeningBalance = Number(financeData.activeWeek?.openingBalance || 0);
     const activeRealIncome = Number(financeData.activeWeek?.realIncome || 0);
@@ -436,7 +441,7 @@ export function Dashboard({ financeData, setFinanceData }) {
         {activeTab === 'simulator' && <ScenarioSimulator financeData={effectiveFinanceData} />}
 
         <div hidden={activeTab !== 'taura-preview'}>
-          <TauraIncomePreview weeklyRecords={financeData.weeklyRecords} activeWeek={financeData.activeWeek} />
+          <TauraIncomePreview budget={planningBudget} weeklyRecords={financeData.weeklyRecords} activeWeek={financeData.activeWeek} />
         </div>
 
         {activeTab === 'settings' && (

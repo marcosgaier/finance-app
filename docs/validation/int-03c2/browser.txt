@@ -1,0 +1,49 @@
+
+> test:planning-ui
+> node scripts/validate-planning-ui.mjs
+
+CHECK validated Taura producer fixture → visible planner, payDate mapping, no automatic review
+CHECK explicit no assignments review; exact cents including monthly 7/30
+CHECK expense replacement/addition, manual debt/saving, all due dates and negative margin
+CHECK invalid and sub-cent manual inputs block calculation accessibly
+CHECK zero roster vs unknown, later individual margin with blocked total
+CHECK tab retention and unchanged Dashboard/history/debts/reserves, exported backup and persistence
+CHECK all horizons 4..8 discard assumptions and explicit reset requires review
+CHECK mobile and keyboard review, accessible labels and alerts
+CHECK actual synthetic budget edit in UI stops results until explicit rebuild
+CHECK synthetic active/history close → reopen → close invalidates earlier margins
+CHECK complete partial horizon total appears only after all four explicit reviews
+CHECK replacement clears plan immediately; newer import wins over a delayed validated selection
+CHECK hash, fiscal code, backup and oversize failures remove the entire planner; retry/discard/reload
+{
+  "status": "PASS",
+  "node": "v24.22.1",
+  "browser": "156.0.8078.79",
+  "actualExporter": true,
+  "fixture": "Synthetic Taura v1; exporter blob d2ba6ea982d159907b432351000a4d4dd1582a6b",
+  "planningStorageWrites": 0,
+  "planningIDBAccesses": 0,
+  "planningBroadcastChannelActivity": 0,
+  "planningCacheActivity": 0,
+  "unchangedPersistenceDuringPlanning": true,
+  "unchangedExportedBackup": true,
+  "operationalEdits": "Budget and week lifecycle actions deliberately performed through UI on isolated synthetic profile; each followed by a new baseline",
+  "limits": "Local Chromium build and mobile viewport; no live deployment, PWA, other browsers, or Taura export button UI certification.",
+  "checks": [
+    "validated Taura producer fixture → visible planner, payDate mapping, no automatic review",
+    "explicit no assignments review; exact cents including monthly 7/30",
+    "expense replacement/addition, manual debt/saving, all due dates and negative margin",
+    "invalid and sub-cent manual inputs block calculation accessibly",
+    "zero roster vs unknown, later individual margin with blocked total",
+    "tab retention and unchanged Dashboard/history/debts/reserves, exported backup and persistence",
+    "all horizons 4..8 discard assumptions and explicit reset requires review",
+    "mobile and keyboard review, accessible labels and alerts",
+    "actual synthetic budget edit in UI stops results until explicit rebuild",
+    "synthetic active/history close → reopen → close invalidates earlier margins",
+    "complete partial horizon total appears only after all four explicit reviews",
+    "replacement clears plan immediately; newer import wins over a delayed validated selection",
+    "hash, fiscal code, backup and oversize failures remove the entire planner; retry/discard/reload"
+  ],
+  "externalRequests": [],
+  "consoleErrors": []
+}

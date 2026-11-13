@@ -3,14 +3,16 @@
 import assert from 'node:assert/strict';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { resolve } from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { pathToFileURL, fileURLToPath } from 'node:url';
 import { sampleFinanceData } from '../src/data/sampleData.js';
 import { revisionFor } from '../src/services/tauraPreview.js';
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE ? pathToFileURL(resolve(process.env.PLAYWRIGHT_MODULE)).href : 'playwright');
 const fixture = JSON.parse(await readFile(new URL('./fixtures/taura-income-projections-v1.json', import.meta.url), 'utf8'));
 const baseURL = process.env.PREVIEW_URL || 'http://127.0.0.1:4173';
 assert.ok(['127.0.0.1', 'localhost'].includes(new URL(baseURL).hostname), 'Only localhost synthetic validation is allowed');
-const output = new URL('../docs/validation/', import.meta.url);
+const output = process.env.VALIDATION_OUTPUT_DIR
+  ? pathToFileURL(resolve(process.env.VALIDATION_OUTPUT_DIR) + '/')
+  : new URL('../docs/validation/', import.meta.url);
 await mkdir(output, { recursive: true });
 const finance = structuredClone(sampleFinanceData);
 finance.weeklyRecords = [{id:'synthetic-closed', weekStartDate:'2026-09-22', weekDate:'2026-09-22', realIncome:50, income:50, payments:[], extraIncome:[], variableTransactions:[], reserveMovements:[]}];
@@ -73,7 +75,7 @@ try {
     assert.match(await preview.locator('article').nth(1).innerText(), /0[,.]00/);
     await preview.locator('summary').first().click();
     await expectText(preview, 'Feriados');
-    await page.screenshot({path:new URL('int-02b-preview-desktop.png', output).pathname, fullPage:true});
+    await page.screenshot({path:fileURLToPath(new URL('int-02b-preview-desktop.png', output)), fullPage:true});
   });
   await check('session retained across tabs, dashboard totals unchanged', async () => {
     await page.getByRole('button', {name:'Dashboard', exact:true}).click();
@@ -90,7 +92,7 @@ try {
     const {revision, ...payload} = data.items.at(-1); data.items.at(-1).revision = await revisionFor(payload);
     await upload(data); await expectText(page.getByRole('alert'), 'Conflicto');
     assert.equal(await preview.count(), 0);
-    await page.screenshot({path:new URL('int-02b-preview-conflict.png', output).pathname, fullPage:true});
+    await page.screenshot({path:fileURLToPath(new URL('int-02b-preview-conflict.png', output)), fullPage:true});
   });
   await check('whole-session replacement; older generatedAt is informational and not accumulated', async () => {
     const data = structuredClone(fixture); data.items = [data.items[1]]; data.generatedAt = '2026-10-01T00:00:00.000Z';
@@ -129,7 +131,7 @@ try {
   await check('mobile viewport has no page overflow', async () => {
     await upload(fixture); await expectText(preview, '3 períodos únicos');
     await page.setViewportSize({width:390,height:844});
-    await page.screenshot({path:new URL('int-02b-preview-mobile.png', output).pathname, fullPage:true});
+    await page.screenshot({path:fileURLToPath(new URL('int-02b-preview-mobile.png', output)), fullPage:true});
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth));
   });
   await check('discard removes session; same file can be reselected; reload forgets preview', async () => {

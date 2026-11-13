@@ -22,7 +22,7 @@ function money(value) {
  */
 export function snapshotPlanningExpenses(data) {
   const rows = list => Array.isArray(list) ? list.map(row => ({
-    id: row?.id, amountCents: money(row?.amount),
+    id: typeof row?.id === 'string' ? row.id : null, amountCents: money(row?.amount),
   })) : null;
   return {
     weekly: rows(data?.weeklyExpenses), monthly: rows(data?.monthlyExpenses),
@@ -77,6 +77,8 @@ export function buildExpensePlan(incomePlan, base, assumptions = {}) {
     const monthlyProvisionCents = safe((sums.monthly * 7n + 15n) / 30n);
     const expenseCents = safe(BigInt(fixedCents) + BigInt(variableCents) + BigInt(monthlyProvisionCents));
     let debt = 0n, saving = 0n;
+    const funding = new Map();
+    const fundingDestinations = new Set();
     const identities = new Set(items.keys());
     if (!Array.isArray(review?.assignments)) pending.push('assignments');
     else for (const entry of review.assignments) {
@@ -86,7 +88,18 @@ export function buildExpensePlan(incomePlan, base, assumptions = {}) {
       }
       identities.add(entry.id);
       if (entry.fundingExpenseId != null) {
-        if (!items.has(entry.fundingExpenseId)) pending.push('assignment.unknownExpense');
+        const target = items.get(entry.fundingExpenseId);
+        if (!target) { pending.push('assignment.unknownExpense'); continue; }
+        // Monthly amounts are not weekly capacity. V1 deliberately rejects links
+        // rather than assigning per-item shares of the aggregate 7/30 rounding.
+        if (target.group === 'monthly') { pending.push('assignment.monthlyFundingUnsupported'); continue; }
+        if (!cents(target.amountCents)) { pending.push('assignment.invalidFundingAmount'); continue; }
+        const key = JSON.stringify([entry.fundingExpenseId, entry.destination]);
+        if (fundingDestinations.has(key)) pending.push('assignment.duplicateFundingDestination');
+        fundingDestinations.add(key);
+        const total = (funding.get(entry.fundingExpenseId) ?? 0n) + BigInt(entry.amountCents);
+        funding.set(entry.fundingExpenseId, total);
+        if (total > BigInt(target.amountCents)) pending.push('assignment.excessFunding');
         continue;
       }
       if (entry.destination === 'debt') debt += BigInt(entry.amountCents);
@@ -94,6 +107,7 @@ export function buildExpensePlan(incomePlan, base, assumptions = {}) {
     }
     const debtCents = safe(debt), savingCents = safe(saving);
     const warnings = structuredClone(income.warnings);
+    const obligations = [];
     if (!Array.isArray(review?.obligations)) pending.push('obligations');
     else for (const entry of review.obligations) {
       let validDate = true;
@@ -104,6 +118,8 @@ export function buildExpensePlan(incomePlan, base, assumptions = {}) {
       // Obligations are timing annotations linked to an expense/assignment,
       // never another amount to subtract or a statement that payment is covered.
       if (!identities.has(entry.targetId)) { pending.push('obligation.unknownTarget'); continue; }
+      if (review.reviewed === true) obligations.push({ targetId: entry.targetId,
+        dueDate: entry.dueDate, amountCents: entry.amountCents, reviewed: true });
       if (entry.dueDate >= income.start && entry.dueDate <= income.end &&
           (!income.periods.length || income.periods.some(period => entry.dueDate < period.payDate))) {
         warnings.push({ code: 'DUE_BEFORE_PAY_DATE', targetId: entry.targetId, dueDate: entry.dueDate });
@@ -117,7 +133,7 @@ export function buildExpensePlan(incomePlan, base, assumptions = {}) {
     cumulative = cumulative === null || marginCents === null ? null : safe(BigInt(cumulative) + BigInt(marginCents));
     return {
       start: income.start, end: income.end, state, excludedFromFuture: excluded,
-      incomeState: income.incomeState, coverage: income.coverage, warnings, pending,
+      incomeState: income.incomeState, coverage: income.coverage, warnings, pending, obligations,
       incomeCents: excluded || !known ? null : income.knownIncomeCents,
       expenses: pending.length ? null : { fixedCents, monthlyProvisionCents, variableCents, totalCents: expenseCents },
       debtCents: pending.length ? null : debtCents, savingCents: pending.length ? null : savingCents,

@@ -1,5 +1,10 @@
 # INT-03B: margen hipotético en memoria
 
+Actualización INT-03C1: ver [contrato de sesión y guardas](int-03c1-planning-session.md).
+Los vínculos mensuales se rechazan; vínculos semanales requieren capacidad
+agregada suficiente y destino único por gasto. La futura UI V1 no los expondrá.
+Las semanas ahora incluyen copia de todas las obligaciones revisadas válidas.
+
 Alcance aprobado: https://github.com/marcosgaier/taura-roster-pay/issues/13#issuecomment-6864949672
 
 `expensePlanning.js` no está conectado a la UI ni al estado operativo. No lee

@@ -160,3 +160,43 @@ test('frozen inputs detached; forbidden operational fields and side effects neve
     names.forEach((n, i) => { if (descriptors[i]) Object.defineProperty(globalThis, n, descriptors[i]); else delete globalThis[n]; });
   }
 });
+
+test('C1 rejects excess, summed excess, duplicate destinations, monthly and missing funding', async () => {
+  const p = await plan();
+  const link = (id, destination, amountCents, fundingExpenseId = 'rent') => ({ id, destination, amountCents, fundingExpenseId });
+  for (const [assignments, code] of [
+    [[link('a', 'debt', 2001)], 'assignment.excessFunding'],
+    [[link('a', 'debt', 1200), link('b', 'saving', 801)], 'assignment.excessFunding'],
+    [[link('a', 'debt', 500), link('b', 'debt', 500)], 'assignment.duplicateFundingDestination'],
+    [[link('a', 'debt', 1, 'phone')], 'assignment.monthlyFundingUnsupported'],
+    [[link('a', 'debt', 1, 'missing')], 'assignment.unknownExpense'],
+    [[link('a', 'debt', 1), link('a', 'saving', 1)], 'assignment.invalid'],
+  ]) {
+    const r = reviews(p); r[p.weeks[0].start].assignments = assignments;
+    const w = buildExpensePlan(p, budget(), r).weeks[0];
+    assert.equal(w.state, 'pending-review'); assert.equal(w.marginCents, null);
+    assert.ok(w.pending.includes(code), code);
+  }
+  const r = reviews(p);
+  r[p.weeks[0].start].assignments = [link('a', 'debt', 1200), link('b', 'saving', 800)];
+  const w = buildExpensePlan(p, budget(), r).weeks[0];
+  assert.equal(w.marginCents, 6953); assert.equal(w.debtCents, 0); assert.equal(w.savingCents, 0);
+  r[p.weeks[0].start].adjustments = [{ targetId: 'rent', amountCents: 1999 }];
+  assert.equal(buildExpensePlan(p, budget(), r).weeks[0].marginCents, null);
+});
+
+test('C1 all reviewed obligations are detached annotations, before and after pay date', async () => {
+  const p = await plan([10000], {}, ['2026-09-24']), r = reviews(p);
+  const obligations = ['2026-09-23', '2026-09-25', '2026-10-01'].map(dueDate => ({
+    targetId: 'rent', dueDate, amountCents: 2000, reviewed: true }));
+  r[p.weeks[0].start].obligations = obligations;
+  freeze(p); freeze(r);
+  const out = buildExpensePlan(p, freeze(budget()), r);
+  assert.deepEqual(out.weeks[0].obligations, obligations);
+  assert.equal(out.weeks[0].marginCents, 6953);
+  assert.equal(out.weeks[0].warnings.filter(w => w.code === 'DUE_BEFORE_PAY_DATE').length, 1);
+  out.weeks[0].obligations[0].amountCents = 1;
+  assert.equal(obligations[0].amountCents, 2000);
+  const pending = structuredClone(r); pending[p.weeks[0].start].reviewed = false;
+  assert.deepEqual(buildExpensePlan(p, budget(), pending).weeks[0].obligations, []);
+});

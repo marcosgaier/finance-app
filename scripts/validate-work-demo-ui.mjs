@@ -103,8 +103,34 @@ try {
       assert.equal(await page.locator('#finance-region').evaluate(el=>getComputedStyle(el).display),'none');
       assert.equal(await page.locator('#work-demo-title').evaluate(el=>el===document.activeElement),true);
       assert.match(await page.locator('#work-demo').innerText(),/DEMOSTRACIÓN — datos ficticios; no es tu roster/);
-      assert.match(await page.locator('#work-demo').innerText(),/2026-09-24/);
       const work=page.locator('#work-demo');
+      const details=work.locator('details').first();
+      await details.locator('summary').click();
+      assert.match(await details.innerText(),/2026-09-24/);
+      assert.match(await details.innerText(),/no se guardan ni se importan a Finanzas/);
+      await details.locator('summary').click();
+      const nav=work.getByRole('navigation',{name:'Vistas de Trabajo'});
+      assert.deepEqual(await nav.getByRole('button').allTextContents(),['Resumen','Roster','Pagos']);
+      await page.keyboard.press('Tab');
+      for(const label of ['Resumen','Roster','Pagos']) {
+        const button=nav.getByRole('button',{name:label,exact:true});
+        const box=await button.boundingBox();
+        assert.ok(box.width>=44&&box.height>=44);
+        await button.focus();
+        assert.equal(await button.evaluate(el=>getComputedStyle(el).outlineStyle),'solid');
+        await page.keyboard.press('Enter');
+        assert.equal(await button.getAttribute('aria-current'),'page');
+        assert.equal(await nav.locator('[aria-current="page"]').count(),1);
+      }
+      await nav.getByRole('button',{name:'Resumen',exact:true}).click();
+      const back=work.getByRole('button',{name:'Volver a Finanzas',exact:true});
+      await back.focus();await page.keyboard.press('Tab');
+      assert.equal(await details.locator('summary').evaluate(el=>el===document.activeElement),true);
+      await page.keyboard.press('Tab');
+      assert.equal(await nav.getByRole('button',{name:'Resumen',exact:true}).evaluate(el=>el===document.activeElement),true);
+      assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+      await page.evaluate(()=>window.scrollTo(0,0));
+      await page.screenshot({path:fileURLToPath(new URL('toolbar-'+width+'.png',output))});
       assert.equal(await work.getByRole('button',{name:'Pagos',exact:true}).count(),1);
       assert.equal(await work.locator('input,select,textarea,a[download]').count(),0);
       assert.equal(await work.getByRole('button',{name:/Agregar|Editar|Borrar|Cancelar|Copiar|Pegar|Seleccionar/}).count(),0);
@@ -137,7 +163,7 @@ try {
       await page.evaluate(()=>window.scrollTo(0,350));
       const rosterScroll=await page.evaluate(()=>window.scrollY);
       // Programmatic click preserves the scroll being tested (Playwright would scroll to the button).
-      await work.getByRole('button',{name:'Atrás al resumen',exact:true}).evaluate(el=>el.click());
+      await work.getByRole('button',{name:'Resumen',exact:true}).evaluate(el=>el.click());
       assert.equal(await page.locator('#work-summary-title').evaluate(el=>el===document.activeElement),true);
       assert.equal(await work.getByRole('region',{name:'Resumen del ejemplo'}).innerText(),summary);
       await work.getByRole('button',{name:'Roster',exact:true}).evaluate(el=>el.click());
@@ -209,7 +235,7 @@ try {
       await work.getByRole('button',{name:'Roster',exact:true}).evaluate(el=>el.click());
       await work.getByRole('button',{name:'Pagos',exact:true}).evaluate(el=>el.click());
       assert.equal(await page.evaluate(()=>window.scrollY),paymentsScroll);
-      await work.getByRole('button',{name:'Atrás al resumen',exact:true}).click();
+      await work.getByRole('button',{name:'Resumen',exact:true}).click();
       assert.equal(await page.locator('#work-summary-title').evaluate(el=>el===document.activeElement),true);
       await work.getByRole('button',{name:'Pagos',exact:true}).focus();
       await page.keyboard.press('Enter');

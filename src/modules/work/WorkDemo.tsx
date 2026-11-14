@@ -37,7 +37,7 @@ function DemoSession({view}:{view:WorkView}) {
     if(!window.confirm('¿Restablecer ejemplo? Se descartan los cambios ficticios de esta demo.'))return;
     change(structuredClone(validateDemo().shifts));setRevision(value=>value+1);
   }
-  return <><button type="button" onClick={reset}>Restablecer ejemplo</button>
+  return <><div className={styles.sessionTools}><button className={styles.quietButton} type="button" onClick={reset}>Restablecer ejemplo</button></div>
     <Pages view={view} shifts={shifts} onShifts={change} onBatch={batch} generation={generation.current} revision={revision}/></>;
 }
 export function WorkDemo({onClose}:{onClose:()=>void}) {
@@ -54,16 +54,23 @@ export function WorkDemo({onClose}:{onClose:()=>void}) {
   },[view]);
   return <section className={styles.workDemo} aria-labelledby="work-demo-title">
     <div className={styles.banner}>DEMOSTRACIÓN — datos ficticios; no es tu roster</div>
-    <h1 id="work-demo-title" tabIndex={-1}>Trabajo · Taura</h1>
-    <p>Fecha fija del ejemplo: {referenceDay} · año fiscal 2026–27.</p>
-    <p>MODO DEMOSTRACIÓN — datos ficticios. Los cambios solo viven en memoria; no se guardan ni se importan a Finanzas. Todos los importes y estados son ejemplos.</p>
-    <p>Salir de Trabajo o recargar restaura el ejemplo original. Resumen y Pagos recalculan únicamente este escenario ficticio con el motor fijado; no editan recibos ni cobros reales.</p>
-    <button type="button" onClick={onClose}>Volver a Finanzas</button>
-    <nav aria-label="Vistas de Trabajo" className={styles.controls}>
-      <button type="button" aria-current={view==='summary'?'page':undefined} onClick={()=>navigate('summary')}>Resumen</button>
-      <button type="button" aria-current={view==='roster'?'page':undefined} onClick={()=>navigate('roster')}>Roster</button>
-      <button type="button" aria-current={view==='payments'?'page':undefined} onClick={()=>navigate('payments')}>Pagos</button>
-      {view!=='summary'?<button type="button" onClick={()=>navigate('summary')}>Atrás al resumen</button>:null}
+    <header className={styles.workHeader}>
+      <h1 id="work-demo-title" tabIndex={-1}>Trabajo · Taura</h1>
+      <button className={styles.quietButton} type="button" onClick={onClose}><span aria-hidden="true">←</span> Volver a Finanzas</button>
+    </header>
+    <details className={styles.demoDetails}>
+      <summary>Solo en memoria · detalles del ejemplo</summary>
+      <p>Fecha fija del ejemplo: {referenceDay} · año fiscal 2026–27.</p>
+      <p>Los cambios solo viven en memoria; no se guardan ni se importan a Finanzas. Todos los importes y estados son ejemplos.</p>
+      <p>Salir de Trabajo o recargar restaura el ejemplo original. Resumen y Pagos recalculan únicamente este escenario ficticio con el motor fijado; no editan recibos ni cobros reales.</p>
+    </details>
+    <nav aria-label="Vistas de Trabajo" className={styles.viewNav}>
+      {(['summary','roster','payments'] as const).map((id,index)=><button key={id} type="button" aria-current={view===id?'page':undefined} onClick={()=>navigate(id)}>
+        <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          {index===0?<path d="m3 10 9-7 9 7v10H3V10Zm6 10v-7h6v7"/>:index===1?<><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 11h18M8 15h2m4 0h2"/></>:<><rect x="3" y="5" width="18" height="15" rx="2"/><path d="M3 10h18m-5 5h2"/></>}
+        </svg>
+        {['Resumen','Roster','Pagos'][index]}
+      </button>)}
     </nav>
     <DemoBoundary><DemoSession view={view}/></DemoBoundary>
   </section>;

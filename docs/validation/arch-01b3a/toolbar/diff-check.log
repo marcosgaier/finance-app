@@ -1,0 +1,1 @@
+PASS: git diff --check; staged diff checked before commit.

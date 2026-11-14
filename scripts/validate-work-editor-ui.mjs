@@ -79,7 +79,7 @@ try {
     const shifts=()=>work.locator('[data-shift-id]');
     const unchanged=async()=>assert.deepEqual(await snapshot(page),baseline);
     await openWork();
-    assert.match(await work.innerText(),/MODO DEMOSTRACIÓN/);
+    assert.match(await work.innerText(),/DEMOSTRACIÓN — datos ficticios; no es tu roster/);
     await work.getByRole('button',{name:'Seleccionar varios días',exact:true}).click();
     assert.equal(await work.getByRole('button',{name:'Día 06:00–18:00',exact:true}).isDisabled(),true);
     await day('2026-09-20').click();await work.getByRole('button',{name:'Día 06:00–18:00',exact:true}).click();

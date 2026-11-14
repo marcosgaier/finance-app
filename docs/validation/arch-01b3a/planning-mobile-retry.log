@@ -1,0 +1,802 @@
+CHECK 12 periods: planning first, four visible summaries, collapsed salary details, no false reset notice
+CHECK validated Taura producer fixture → visible planner, payDate mapping, no automatic review
+CHECK explicit no assignments review; exact cents including monthly 7/30
+CHECK expense replacement/addition, manual debt/saving, all due dates and negative margin
+CHECK invalid and sub-cent manual inputs block calculation accessibly
+CHECK zero roster vs unknown, later individual margin with blocked total
+CHECK tab retention and unchanged Dashboard/history/debts/reserves, exported backup and persistence
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+... Skipped lines
+
+  'FINANZAS PERSONALES\n' +
+    '\n' +
+    'Plan semanal de deudas\n' +
+    '\n' +
+    'Calculá cuánto reservar esta semana con prioridad real para vencimientos cercanos, sin castigar el presupuesto por planes lejanos.\n' +
+...
+    '\n' +
++   'Ver detalle\n' +
+-   'Vencido\n' +
+-   '\n' +
+-   'Atrasado\n' +
+-   '\n' +
+-   'Mínimo para no vencer\n' +
+-   '\n' +
+-   '520 NZD\n' +
+-   '\n' +
+-   'Referencia para acelerar\n' +
+-   '\n' +
+-   '520 NZD\n' +
+-   '\n' +
+-   'Reserva total\n' +
+-   '\n' +
+-   '520 NZD\n' +
+-   '\n' +
+-   'Cobertura al vencimiento: Vencido.\n' +
+-   '\n' +
+-   'Proyección con tu presupuesto semanal actual.\n' +
+-   '\n' +
+-   'Faltan 520 NZD acumulados hasta esta fecha.\n' +
+-   '\n' +
+-   'Este resultado es acumulado hasta esta fecha, no una asignación exclusiva del plan.\n' +
+-   '\n' +
+-   'La fecha ya pasó, conviene resolverlo antes de nuevos planes. Como ya venció, necesitás reservar 520 NZD por semana para cubrirlo a tiempo.\n' +
+-   '\n' +
+-   'Ocultar detalle\n' +
+    'Editar\n' +
+    'Eliminar\n' +
+    'Heladera\n' +
+    'Plan promocional\n' +
+    'Atrasado\n' +
+...
+    '\n' +
++   'Ver detalle\n' +
+-   'Vencido\n' +
+-   '\n' +
+-   'Atrasado\n' +
+-   '\n' +
+-   'Mínimo para no vencer\n' +
+-   '\n' +
+-   '860 NZD\n' +
+-   '\n' +
+-   'Referencia para acelerar\n' +
+-   '\n' +
+-   '860 NZD\n' +
+-   '\n' +
+-   'Reserva total\n' +
+-   '\n' +
+-   '1380 NZD\n' +
+-   '\n' +
+-   'Cobertura al vencimiento: Vencido.\n' +
+-   '\n' +
+-   'Proyección con tu presupuesto semanal actual.\n' +
+-   '\n' +
+-   'Faltan 1380 NZD acumulados hasta esta fecha.\n' +
+-   '\n' +
+-   'Este resultado es acumulado hasta esta fecha, no una asignación exclusiva del plan.\n' +
+-   '\n' +
+-   'La fecha ya pasó, conviene resolverlo antes de nuevos planes. Como ya venció, necesitás reservar 860 NZD por semana para cubrirlo a tiempo.\n' +
+-   '\n' +
+-   'Ocultar detalle\n' +
+    'Editar\n' +
+    'Eliminar\n' +
+    'Dentista\n' +
+    'Plan promocional\n' +
+    'Atrasado\n' +
+...
+    '\n' +
++   'Ver detalle\n' +
+-   'Vencido\n' +
+-   '\n' +
+-   'Atrasado\n' +
+-   '\n' +
+-   'Mínimo para no vencer\n' +
+-   '\n' +
+-   '1140 NZD\n' +
+-   '\n' +
+-   'Referencia para acelerar\n' +
+-   '\n' +
+-   '1140 NZD\n' +
+-   '\n' +
+-   'Reserva total\n' +
+-   '\n' +
+-   '2520 NZD\n' +
+-   '\n' +
+-   'Cobertura al vencimiento: Vencido.\n' +
+-   '\n' +
+-   'Proyección con tu presupuesto semanal actual.\n' +
+-   '\n' +
+-   'Faltan 2520 NZD acumulados hasta esta fecha.\n' +
+-   '\n' +
+-   'Este resultado es acumulado hasta esta fecha, no una asignación exclusiva del plan.\n' +
+-   '\n' +
+-   'La fecha ya pasó, conviene resolverlo antes de nuevos planes. Como ya venció, necesitás reservar 1140 NZD por semana para cubrirlo a tiempo.\n' +
+-   '\n' +
+-   'Ocultar detalle\n' +
+    'Editar\n' +
+    'Eliminar\n' +
+    'Notebook\n' +
+    'Plan promocional\n' +
+    'Tranquilo\n' +
+
+    at file:///C:/Users/marco/OneDrive/Documentos/ChatGPT/Finance%202.0%20%E2%80%94%20Desarrollo/scripts/validate-planning-ui.mjs:214:68
+    at async check (file:///C:/Users/marco/OneDrive/Documentos/ChatGPT/Finance%202.0%20%E2%80%94%20Desarrollo/scripts/validate-planning-ui.mjs:82:65)
+    at async file:///C:/Users/marco/OneDrive/Documentos/ChatGPT/Finance%202.0%20%E2%80%94%20Desarrollo/scripts/validate-planning-ui.mjs:213:3 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: 'FINANZAS PERSONALES\n' +
+    '\n' +
+    'Plan semanal de deudas\n' +
+    '\n' +
+    'Calculá cuánto reservar esta semana con prioridad real para vencimientos cercanos, sin castigar el presupuesto por planes lejanos.\n' +
+    '\n' +
+    'Accesos a mis aplicaciones\n' +
+    '\n' +
+    'Trabajo / Taura: roster, turnos y pagos estimados en la aplicación actual.\n' +
+    '\n' +
+    'Abrir Taura en otra pestañaVer demostración de Trabajo\n' +
+    '\n' +
+    'https://taura-roster-pay-676l.vercel.app\n' +
+    '\n' +
+    'Finance y Taura siguen siendo aplicaciones separadas. Sus datos siguen separados: este enlace no los comparte ni importa.\n' +
+    '\n' +
+    'Si usás Taura instalada, podés seguir abriéndola desde su icono. Si el enlace no está disponible, podés continuar usando Finance.\n' +
+    '\n' +
+    'Dashboard\n' +
+    'Deudas\n' +
+    'Presupuesto\n' +
+    'Historial\n' +
+    'Reservas\n' +
+    'Simulador\n' +
+    'Estimaciones Taura\n' +
+    'Ajustes\n' +
+    'Resumen por tarjeta\n' +
+    '\n' +
+    'Vista rápida de cuánto necesita cada tarjeta para llegar a sus vencimientos.\n' +
+    '\n' +
+    'GEM Visa\n' +
+    '\n' +
+    '2 obligaciones\n' +
+    '\n' +
+    'Saldo\n' +
+    '\n' +
+    '3310 NZD\n' +
+    '\n' +
+    'Necesario vencimientos\n' +
+    '\n' +
+    '860,00 NZD\n' +
+    '\n' +
+    'Colchón GEM\n' +
+    '\n' +
+    '18,53 NZD\n' +
+    '\n' +
+    'Piso GEM esta semana\n' +
+    '\n' +
+    '878,53 NZD\n' +
+    '\n' +
+    'Próximo\n' +
+    '\n' +
+    '23/06/2026\n' +
+    '\n' +
+    'Para acelerar\n' +
+    '\n' +
+    'Manual\n' +
+    '\n' +
+    'GEM incluye colchón porque puede aplicar parte del pago a planes largos. Heladera vence atrasado.\n' +
+    '\n' +
+    'Purple Visa\n' +
+    '\n' +
+    '1 obligación\n' +
+    '\n' +
+    'Saldo\n' +
+    '\n' +
+    '1140 NZD\n' +
+    '\n' +
+    'Necesario vencimientos\n' +
+    '\n' +
+    '1140,00 NZD\n' +
+    '\n' +
+    'Colchón GEM\n' +
+    '\n' +
+    'No aplica\n' +
+    '\n' +
+    'Piso esta tarjeta\n' +
+    '\n' +
+    '1140,00 NZD\n' +
+    '\n' +
+    'Próximo\n' +
+    '\n' +
+    '04/08/2026\n' +
+    '\n' +
+    'Para acelerar\n' +
+    '\n' +
+    'Manual\n' +
+    '\n' +
+    'Este piso mira solo vencimientos cargados para esta tarjeta. Dentista vence atrasado.\n' +
+    '\n' +
+    'Travel Card\n' +
+    '\n' +
+    '1 obligación\n' +
+    '\n' +
+    'Saldo\n' +
+    '\n' +
+    '520 NZD\n' +
+    '\n' +
+    'Necesario vencimientos\n' +
+    '\n' +
+    '520,00 NZD\n' +
+    '\n' +
+    'Colchón GEM\n' +
+    '\n' +
+    'No aplica\n' +
+    '\n' +
+    'Piso esta tarjeta\n' +
+    '\n' +
+    '520,00 NZD\n' +
+    '\n' +
+    'Próximo\n' +
+    '\n' +
+    '18/05/2026\n' +
+    '\n' +
+    'Para acelerar\n' +
+    '\n' +
+    'Manual\n' +
+    '\n' +
+    'Este piso mira solo vencimientos cargados para esta tarjeta. Vuelos familiares vence atrasado.\n' +
+    '\n' +
+    'Si ya usaste el cobro de esta semana para una tarjeta, revisá manualmente si queda una oportunidad de pago menos antes del vencimiento.\n' +
+    '\n' +
+    'MÍNIMOS GEM\n' +
+    '\n' +
+    'Ciclo actual\n' +
+    '\n' +
+    '20/09/2026 al 19/10/2026\n' +
+    '\n' +
+    '2 planes con mínimo\n' +
+    '\n' +
+    '¿CUÁNTO DEBERÍA PAGAR ESTA SEMANA?\n' +
+    '\n' +
+    'PAGO SEMANAL SEGURO\n' +
+    '\n' +
+    '2538,53 NZD\n' +
+    '\n' +
+    'El piso serio para esta semana.\n' +
+    '\n' +
+    'BASE INTEREST-FREE\n' +
+    '\n' +
+    '2520 NZD\n' +
+    '\n' +
+    'Para llegar a vencimientos.\n' +
+    '\n' +
+    'COLCHÓN GEM\n' +
+    '\n' +
+    '18,53 NZD\n' +
+    '\n' +
+    'Protege contra desvíos GEM.\n' +
+    '\n' +
+    'Se arma con una base interest-free de 2520 NZD, un colchón GEM de 18,53 NZD.\n' +
+    '\n' +
+    'GEM puede aplicar parte de tus pagos a planes largos. Este colchón reduce el riesgo de que el pago requerido suba cuando actualices saldos. Si querés acelerar deuda, podés pagar más manualmente.\n' +
+    '\n' +
+    'DETALLE INTEREST-FREE\n' +
+    'Base 2520 NZD\n' +
+    'Ver\n' +
+    'ESTADO DEL CICLO GEM\n' +
+    'Faltante 79,40 NZD\n' +
+    'Ocultar\n' +
+    '\n' +
+    'MÍNIMO MENSUAL DEL CICLO\n' +
+    '\n' +
+    '79,40 NZD\n' +
+    '\n' +
+    'PAGOS REGISTRADOS DEL CICLO\n' +
+    '\n' +
+    '0 NZD\n' +
+    '\n' +
+    'FALTANTE DEL CICLO\n' +
+    '\n' +
+    '79,40 NZD\n' +
+    '\n' +
+    'PLANES CON MÍNIMOS OBLIGATORIOS\n' +
+    '2 planes\n' +
+    'Ver\n' +
+    '\n' +
+    'GEM aplica pagos según su criterio. Actualizá saldos cuando impacten.\n' +
+    '\n' +
+    'Obligaciones activas\n' +
+    '\n' +
+    'Planes promocionales y compras generales ordenados por urgencia y fecha.\n' +
+    '\n' +
+    'Contraer todos\n' +
+    'Expandir urgentes\n' +
+    'Agregar compras generales\n' +
+    'Agregar plan\n' +
+    'Vuelos familiares\n' +
+    'Plan promocional\n' +
+    'Atrasado\n' +
+    'Cobertura: Vencido\n' +
+    '\n' +
+    'Travel Card · vence 18/05/2026\n' +
+    '\n' +
+    'Tarjeta\n' +
+    '\n' +
+    'Travel Card\n' +
+    '\n' +
+    'Saldo ajustado\n' +
+    '\n' +
+    '520 NZD\n' +
+    '\n' +
+    'Vencimiento\n' +
+    '\n' +
+    '18/05/2026\n' +
+    '\n' +
+    'Tiempo\n' +
+    '\n' +
+    'Atrasado\n' +
+    '\n' +
+    'Ver detalle\n' +
+    'Editar\n' +
+    'Eliminar\n' +
+    'Heladera\n' +
+    'Plan promocional\n' +
+    'Atrasado\n' +
+    'Cobertura: Vencido\n' +
+    '\n' +
+    'GEM Visa · vence 23/06/2026\n' +
+    '\n' +
+    'Tarjeta\n' +
+    '\n' +
+    'GEM Visa\n' +
+    '\n' +
+    'Saldo ajustado\n' +
+    '\n' +
+    '860 NZD\n' +
+    '\n' +
+    'Vencimiento\n' +
+    '\n' +
+    '23/06/2026\n' +
+    '\n' +
+    'Tiempo\n' +
+    '\n' +
+    'Atrasado\n' +
+    '\n' +
+    'Ver detalle\n' +
+    'Editar\n' +
+    'Eliminar\n' +
+    'Dentista\n' +
+    'Plan promocional\n' +
+    'Atrasado\n' +
+    'Cobertura: Vencido\n' +
+    '\n' +
+    'Purple Visa · vence 04/08/2026\n' +
+    '\n' +
+    'Tarjeta\n' +
+    '\n' +
+    'Purple Visa\n' +
+    '\n' +
+    'Saldo ajustado\n' +
+    '\n' +
+    '1140 NZD\n' +
+    '\n' +
+    'Vencimiento\n' +
+    '\n' +
+    '04/08/2026\n' +
+    '\n' +
+    'Tiempo\n' +
+    '\n' +
+    'Atrasado\n' +
+    '\n' +
+    'Ver detalle\n' +
+    'Editar\n' +
+    'Eliminar\n' +
+    'Notebook\n' +
+    'Plan promocional\n' +
+    'Tranquilo\n' +
+    'Cobertura: En riesgo\n' +
+    '\n' +
+    'GEM Visa · vence 28/08/2027\n' +
+    '\n' +
+    'Tarjeta\n' +
+    '\n' +
+    'GEM Visa\n' +
+    '\n' +
+    'Saldo ajustado\n' +
+    '\n' +
+    '2450 NZD\n' +
+    '\n' +
+    'Vencimiento\n' +
+    '\n' +
+    '28/08/2027\n' +
+    '\n' +
+    'Tiempo\n' +
+    '\n' +
+    'Tranquilo\n' +
+    '\n' +
+    'Ver detalle\n' +
+    'Editar\n' +
+    'Eliminar\n' +
+    'OBLIGACIONES COMPLETADAS\n' +
+    '0 obligaciones con saldo en cero.\n' +
+    'Ver',
+  expected: 'FINANZAS PERSONALES\n' +
+    '\n' +
+    'Plan semanal de deudas\n' +
+    '\n' +
+    'Calculá cuánto reservar esta semana con prioridad real para vencimientos cercanos, sin castigar el presupuesto por planes lejanos.\n' +
+    '\n' +
+    'Accesos a mis aplicaciones\n' +
+    '\n' +
+    'Trabajo / Taura: roster, turnos y pagos estimados en la aplicación actual.\n' +
+    '\n' +
+    'Abrir Taura en otra pestañaVer demostración de Trabajo\n' +
+    '\n' +
+    'https://taura-roster-pay-676l.vercel.app\n' +
+    '\n' +
+    'Finance y Taura siguen siendo aplicaciones separadas. Sus datos siguen separados: este enlace no los comparte ni importa.\n' +
+    '\n' +
+    'Si usás Taura instalada, podés seguir abriéndola desde su icono. Si el enlace no está disponible, podés continuar usando Finance.\n' +
+    '\n' +
+    'Dashboard\n' +
+    'Deudas\n' +
+    'Presupuesto\n' +
+    'Historial\n' +
+    'Reservas\n' +
+    'Simulador\n' +
+    'Estimaciones Taura\n' +
+    'Ajustes\n' +
+    'Resumen por tarjeta\n' +
+    '\n' +
+    'Vista rápida de cuánto necesita cada tarjeta para llegar a sus vencimientos.\n' +
+    '\n' +
+    'GEM Visa\n' +
+    '\n' +
+    '2 obligaciones\n' +
+    '\n' +
+    'Saldo\n' +
+    '\n' +
+    '3310 NZD\n' +
+    '\n' +
+    'Necesario vencimientos\n' +
+    '\n' +
+    '860,00 NZD\n' +
+    '\n' +
+    'Colchón GEM\n' +
+    '\n' +
+    '18,53 NZD\n' +
+    '\n' +
+    'Piso GEM esta semana\n' +
+    '\n' +
+    '878,53 NZD\n' +
+    '\n' +
+    'Próximo\n' +
+    '\n' +
+    '23/06/2026\n' +
+    '\n' +
+    'Para acelerar\n' +
+    '\n' +
+    'Manual\n' +
+    '\n' +
+    'GEM incluye colchón porque puede aplicar parte del pago a planes largos. Heladera vence atrasado.\n' +
+    '\n' +
+    'Purple Visa\n' +
+    '\n' +
+    '1 obligación\n' +
+    '\n' +
+    'Saldo\n' +
+    '\n' +
+    '1140 NZD\n' +
+    '\n' +
+    'Necesario vencimientos\n' +
+    '\n' +
+    '1140,00 NZD\n' +
+    '\n' +
+    'Colchón GEM\n' +
+    '\n' +
+    'No aplica\n' +
+    '\n' +
+    'Piso esta tarjeta\n' +
+    '\n' +
+    '1140,00 NZD\n' +
+    '\n' +
+    'Próximo\n' +
+    '\n' +
+    '04/08/2026\n' +
+    '\n' +
+    'Para acelerar\n' +
+    '\n' +
+    'Manual\n' +
+    '\n' +
+    'Este piso mira solo vencimientos cargados para esta tarjeta. Dentista vence atrasado.\n' +
+    '\n' +
+    'Travel Card\n' +
+    '\n' +
+    '1 obligación\n' +
+    '\n' +
+    'Saldo\n' +
+    '\n' +
+    '520 NZD\n' +
+    '\n' +
+    'Necesario vencimientos\n' +
+    '\n' +
+    '520,00 NZD\n' +
+    '\n' +
+    'Colchón GEM\n' +
+    '\n' +
+    'No aplica\n' +
+    '\n' +
+    'Piso esta tarjeta\n' +
+    '\n' +
+    '520,00 NZD\n' +
+    '\n' +
+    'Próximo\n' +
+    '\n' +
+    '18/05/2026\n' +
+    '\n' +
+    'Para acelerar\n' +
+    '\n' +
+    'Manual\n' +
+    '\n' +
+    'Este piso mira solo vencimientos cargados para esta tarjeta. Vuelos familiares vence atrasado.\n' +
+    '\n' +
+    'Si ya usaste el cobro de esta semana para una tarjeta, revisá manualmente si queda una oportunidad de pago menos antes del vencimiento.\n' +
+    '\n' +
+    'MÍNIMOS GEM\n' +
+    '\n' +
+    'Ciclo actual\n' +
+    '\n' +
+    '20/09/2026 al 19/10/2026\n' +
+    '\n' +
+    '2 planes con mínimo\n' +
+    '\n' +
+    '¿CUÁNTO DEBERÍA PAGAR ESTA SEMANA?\n' +
+    '\n' +
+    'PAGO SEMANAL SEGURO\n' +
+    '\n' +
+    '2538,53 NZD\n' +
+    '\n' +
+    'El piso serio para esta semana.\n' +
+    '\n' +
+    'BASE INTEREST-FREE\n' +
+    '\n' +
+    '2520 NZD\n' +
+    '\n' +
+    'Para llegar a vencimientos.\n' +
+    '\n' +
+    'COLCHÓN GEM\n' +
+    '\n' +
+    '18,53 NZD\n' +
+    '\n' +
+    'Protege contra desvíos GEM.\n' +
+    '\n' +
+    'Se arma con una base interest-free de 2520 NZD, un colchón GEM de 18,53 NZD.\n' +
+    '\n' +
+    'GEM puede aplicar parte de tus pagos a planes largos. Este colchón reduce el riesgo de que el pago requerido suba cuando actualices saldos. Si querés acelerar deuda, podés pagar más manualmente.\n' +
+    '\n' +
+    'DETALLE INTEREST-FREE\n' +
+    'Base 2520 NZD\n' +
+    'Ver\n' +
+    'ESTADO DEL CICLO GEM\n' +
+    'Faltante 79,40 NZD\n' +
+    'Ocultar\n' +
+    '\n' +
+    'MÍNIMO MENSUAL DEL CICLO\n' +
+    '\n' +
+    '79,40 NZD\n' +
+    '\n' +
+    'PAGOS REGISTRADOS DEL CICLO\n' +
+    '\n' +
+    '0 NZD\n' +
+    '\n' +
+    'FALTANTE DEL CICLO\n' +
+    '\n' +
+    '79,40 NZD\n' +
+    '\n' +
+    'PLANES CON MÍNIMOS OBLIGATORIOS\n' +
+    '2 planes\n' +
+    'Ver\n' +
+    '\n' +
+    'GEM aplica pagos según su criterio. Actualizá saldos cuando impacten.\n' +
+    '\n' +
+    'Obligaciones activas\n' +
+    '\n' +
+    'Planes promocionales y compras generales ordenados por urgencia y fecha.\n' +
+    '\n' +
+    'Contraer todos\n' +
+    'Expandir urgentes\n' +
+    'Agregar compras generales\n' +
+    'Agregar plan\n' +
+    'Vuelos familiares\n' +
+    'Plan promocional\n' +
+    'Atrasado\n' +
+    'Cobertura: Vencido\n' +
+    '\n' +
+    'Travel Card · vence 18/05/2026\n' +
+    '\n' +
+    'Tarjeta\n' +
+    '\n' +
+    'Travel Card\n' +
+    '\n' +
+    'Saldo ajustado\n' +
+    '\n' +
+    '520 NZD\n' +
+    '\n' +
+    'Vencimiento\n' +
+    '\n' +
+    '18/05/2026\n' +
+    '\n' +
+    'Tiempo\n' +
+    '\n' +
+    'Atrasado\n' +
+    '\n' +
+    'Vencido\n' +
+    '\n' +
+    'Atrasado\n' +
+    '\n' +
+    'Mínimo para no vencer\n' +
+    '\n' +
+    '520 NZD\n' +
+    '\n' +
+    'Referencia para acelerar\n' +
+    '\n' +
+    '520 NZD\n' +
+    '\n' +
+    'Reserva total\n' +
+    '\n' +
+    '520 NZD\n' +
+    '\n' +
+    'Cobertura al vencimiento: Vencido.\n' +
+    '\n' +
+    'Proyección con tu presupuesto semanal actual.\n' +
+    '\n' +
+    'Faltan 520 NZD acumulados hasta esta fecha.\n' +
+    '\n' +
+    'Este resultado es acumulado hasta esta fecha, no una asignación exclusiva del plan.\n' +
+    '\n' +
+    'La fecha ya pasó, conviene resolverlo antes de nuevos planes. Como ya venció, necesitás reservar 520 NZD por semana para cubrirlo a tiempo.\n' +
+    '\n' +
+    'Ocultar detalle\n' +
+    'Editar\n' +
+    'Eliminar\n' +
+    'Heladera\n' +
+    'Plan promocional\n' +
+    'Atrasado\n' +
+    'Cobertura: Vencido\n' +
+    '\n' +
+    'GEM Visa · vence 23/06/2026\n' +
+    '\n' +
+    'Tarjeta\n' +
+    '\n' +
+    'GEM Visa\n' +
+    '\n' +
+    'Saldo ajustado\n' +
+    '\n' +
+    '860 NZD\n' +
+    '\n' +
+    'Vencimiento\n' +
+    '\n' +
+    '23/06/2026\n' +
+    '\n' +
+    'Tiempo\n' +
+    '\n' +
+    'Atrasado\n' +
+    '\n' +
+    'Vencido\n' +
+    '\n' +
+    'Atrasado\n' +
+    '\n' +
+    'Mínimo para no vencer\n' +
+    '\n' +
+    '860 NZD\n' +
+    '\n' +
+    'Referencia para acelerar\n' +
+    '\n' +
+    '860 NZD\n' +
+    '\n' +
+    'Reserva total\n' +
+    '\n' +
+    '1380 NZD\n' +
+    '\n' +
+    'Cobertura al vencimiento: Vencido.\n' +
+    '\n' +
+    'Proyección con tu presupuesto semanal actual.\n' +
+    '\n' +
+    'Faltan 1380 NZD acumulados hasta esta fecha.\n' +
+    '\n' +
+    'Este resultado es acumulado hasta esta fecha, no una asignación exclusiva del plan.\n' +
+    '\n' +
+    'La fecha ya pasó, conviene resolverlo antes de nuevos planes. Como ya venció, necesitás reservar 860 NZD por semana para cubrirlo a tiempo.\n' +
+    '\n' +
+    'Ocultar detalle\n' +
+    'Editar\n' +
+    'Eliminar\n' +
+    'Dentista\n' +
+    'Plan promocional\n' +
+    'Atrasado\n' +
+    'Cobertura: Vencido\n' +
+    '\n' +
+    'Purple Visa · vence 04/08/2026\n' +
+    '\n' +
+    'Tarjeta\n' +
+    '\n' +
+    'Purple Visa\n' +
+    '\n' +
+    'Saldo ajustado\n' +
+    '\n' +
+    '1140 NZD\n' +
+    '\n' +
+    'Vencimiento\n' +
+    '\n' +
+    '04/08/2026\n' +
+    '\n' +
+    'Tiempo\n' +
+    '\n' +
+    'Atrasado\n' +
+    '\n' +
+    'Vencido\n' +
+    '\n' +
+    'Atrasado\n' +
+    '\n' +
+    'Mínimo para no vencer\n' +
+    '\n' +
+    '1140 NZD\n' +
+    '\n' +
+    'Referencia para acelerar\n' +
+    '\n' +
+    '1140 NZD\n' +
+    '\n' +
+    'Reserva total\n' +
+    '\n' +
+    '2520 NZD\n' +
+    '\n' +
+    'Cobertura al vencimiento: Vencido.\n' +
+    '\n' +
+    'Proyección con tu presupuesto semanal actual.\n' +
+    '\n' +
+    'Faltan 2520 NZD acumulados hasta esta fecha.\n' +
+    '\n' +
+    'Este resultado es acumulado hasta esta fecha, no una asignación exclusiva del plan.\n' +
+    '\n' +
+    'La fecha ya pasó, conviene resolverlo antes de nuevos planes. Como ya venció, necesitás reservar 1140 NZD por semana para cubrirlo a tiempo.\n' +
+    '\n' +
+    'Ocultar detalle\n' +
+    'Editar\n' +
+    'Eliminar\n' +
+    'Notebook\n' +
+    'Plan promocional\n' +
+    'Tranquilo\n' +
+    'Cobertura: En riesgo\n' +
+    '\n' +
+    'GEM Visa · vence 28/08/2027\n' +
+    '\n' +
+    'Tarjeta\n' +
+    '\n' +
+    'GEM Visa\n' +
+    '\n' +
+    'Saldo ajustado\n' +
+    '\n' +
+    '2450 NZD\n' +
+    '\n' +
+    'Vencimiento\n' +
+    '\n' +
+    '28/08/2027\n' +
+    '\n' +
+    'Tiempo\n' +
+    '\n' +
+    'Tranquilo\n' +
+    '\n' +
+    'Ver detalle\n' +
+    'Editar\n' +
+    'Eliminar\n' +
+    'OBLIGACIONES COMPLETADAS\n' +
+    '0 obligaciones con saldo en cero.\n' +
+    'Ver',
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v22.23.2

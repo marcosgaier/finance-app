@@ -10,7 +10,7 @@
     "test:taura-ui": "node scripts/validate-taura-preview.mjs",
     "test:planning-ui": "node scripts/validate-planning-ui.mjs",
     "typecheck:work": "tsc -p tsconfig.work.json",
-    "test:work": "node scripts/work-demo-tests.mjs",
+    "test:work": "node scripts/work-demo-tests.mjs && node scripts/work-editor-tests.mjs",
     "test:work-ui": "node scripts/validate-work-demo-ui.mjs"
   },
   "dependencies": {

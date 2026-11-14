@@ -1,5 +1,7 @@
 import React, {useLayoutEffect, useRef, useState} from 'react';
 import type {Shift,ShiftKind} from '../vendor/taura/types';
+import {quickDraft,quickLabels,type QuickKind} from '../editor/batchPlan';
+import {settings} from '../demo/fixtures';
 import {newDraft,validateDraft} from '../editor/shiftDraft';
 import {kindLabels,statusLabels} from './DayDetails';
 import styles from '../work-demo.module.css';
@@ -9,7 +11,7 @@ export function DemoShiftEditor({initial,editing,onSave,onClose}:{initial:Shift;
   const dialog=useRef<HTMLDialogElement>(null);
   useLayoutEffect(()=>{
     const origin=document.activeElement as HTMLElement|null;
-    const modal=dialog.current!;modal.showModal();
+    const modal=dialog.current!;modal.showModal();modal.querySelector<HTMLInputElement>('input[type="date"]')?.focus();
     return ()=>{modal.close();origin?.focus({preventScroll:true});};
   },[]);
   function patch<K extends keyof Shift>(key:K,next:Shift[K]){setValue(current=>({...current,[key]:next}));setError('');}
@@ -24,6 +26,9 @@ export function DemoShiftEditor({initial,editing,onSave,onClose}:{initial:Shift;
   return <dialog ref={dialog} className={styles.editorDialog} aria-labelledby="demo-editor-title" aria-describedby="demo-editor-help" onCancel={event=>{event.preventDefault();onClose();}}>
     <h2 id="demo-editor-title">{editing?'Editar turno ficticio':'Agregar turno ficticio'}</h2>
     <p id="demo-editor-help">MODO DEMOSTRACIÓN — solo memoria. No edita pagos confirmados. Todos los valores son ficticios; máximo 12 h por turno.</p>
+    <div className={styles.controls} aria-label="Plantillas rápidas del turno">{(Object.keys(quickLabels) as QuickKind[]).map(kind=><button key={kind} type="button" onClick={()=>{
+      try{setValue({...value,...quickDraft(value.shift_date,value.id,kind,settings),created_at:value.created_at});setError('');}catch(reason){setError(reason instanceof Error?reason.message:'Fecha inválida.');}
+    }}>{quickLabels[kind]}</button>)}</div>
     <form onSubmit={submit} noValidate>
       <div className={styles.editorGrid}>
         <label>Fecha del turno ficticio<input autoFocus type="date" value={value.shift_date} onChange={e=>patch('shift_date',e.target.value)}/></label>

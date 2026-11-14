@@ -11,7 +11,7 @@ export function civilDay(value:string):number {
 }
 // NZ has +12/+13 in this example year. Reject missing/ambiguous DST wall times
 // rather than silently normalizing them or inventing an offset for the user.
-function nzInstant(value:string):number {
+export function nzInstant(value:string):number {
   if(!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/.test(value))return fail('Horario inválido.');
   civilDay(value.slice(0,10));
   const [h,m,s=0]=value.slice(11).split(':').map(Number);

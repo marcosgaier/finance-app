@@ -1,0 +1,82 @@
+[
+  {
+    "path": "src/App.jsx",
+    "gitBytesUnchangedFromMain": true,
+    "sha256": "c2c434bcbbb80b19592f512811edab433e5246988e3197e374d0cca9562b0e1c"
+  },
+  {
+    "path": "src/pages/Dashboard.jsx",
+    "gitBytesUnchangedFromMain": true,
+    "sha256": "528679239b16c8767cf6ee5a8e3e1bc49bb2744bd2560b8c2a9d97267e6ea8b0"
+  },
+  {
+    "path": "src/modules/work/demo/fixtures.ts",
+    "gitBytesUnchangedFromMain": true,
+    "sha256": "5b296c42412a4c01d4fe94250f79062d3d7091576e50ab7a0efe29ebbc455884"
+  },
+  {
+    "path": "src/modules/work/pages/DashboardPage.tsx",
+    "gitBytesUnchangedFromMain": true,
+    "sha256": "d77b49aa71b05aa676f007360c1e7662567587bceab48362836f68d4579cc809"
+  },
+  {
+    "path": "src/modules/work/pages/PaymentsPage.tsx",
+    "gitBytesUnchangedFromMain": true,
+    "sha256": "ea12493746997667dd4ce2248a87fe13e6c92cb1bd9e0ca7ca1b825fabd3b6ab"
+  },
+  {
+    "path": "src/services/storageService.js",
+    "gitBytesUnchangedFromMain": true,
+    "sha256": "a314ebc1e4734c23967cea15c0cb1d7f037764e3ea2438625c53d217ce3d8f9b"
+  },
+  {
+    "path": "src/modules/work/vendor/taura/types.ts",
+    "gitBytesUnchangedFromMain": true,
+    "sha256": "69c720576d7b8ea09700e3e290daac0a0d36c8d3d93030f4d13f406b57621b35"
+  },
+  {
+    "path": "src/modules/work/vendor/taura/lib/dates.ts",
+    "gitBytesUnchangedFromMain": true,
+    "sha256": "91a455d145c0fade84a499e05f3fef93889f0b9afd815c0c41207a487795086c"
+  },
+  {
+    "path": "src/modules/work/vendor/taura/lib/payroll.ts",
+    "gitBytesUnchangedFromMain": true,
+    "sha256": "e80bc9620d2bb1f844f8808b0e093af7c267635a1c62aa75ae77c91056ef25f9"
+  },
+  {
+    "path": "src/modules/work/vendor/taura/domain/contractRules.ts",
+    "gitBytesUnchangedFromMain": true,
+    "sha256": "8e750c1c3e77042bfdbeadaeb93b7261c804e42bdcc4f36aeff4ff02b7cb3617"
+  },
+  {
+    "path": "src/modules/work/vendor/taura/domain/payPeriods.ts",
+    "gitBytesUnchangedFromMain": true,
+    "sha256": "8bb2a12c9d69f3836aabad98fec99b8330ef7e08b4bbc789f49d94df9ef06af7"
+  },
+  {
+    "path": "src/modules/work/vendor/taura/domain/weekendAllowance.ts",
+    "gitBytesUnchangedFromMain": true,
+    "sha256": "1ed5deda533272ac5ce78fc959b45289cd95ae921ef20e1ce58b710d08c7207f"
+  },
+  {
+    "path": "src/modules/work/vendor/taura/domain/tax/calculateWeeklyPAYE.ts",
+    "gitBytesUnchangedFromMain": true,
+    "sha256": "7796d05edfea4acdd5e0b31408388006679ec63b87207b6d359e1b0f23c8c408"
+  },
+  {
+    "path": "src/modules/work/vendor/taura/domain/tax/nzTax2026_27.ts",
+    "gitBytesUnchangedFromMain": true,
+    "sha256": "c6cc3a83eeaa2b1199043f79e8786577849da2b57b0d3805c5365e500a57d8fc"
+  },
+  {
+    "path": "src/modules/work/vendor/taura/domain/tax/taxTypes.ts",
+    "gitBytesUnchangedFromMain": true,
+    "sha256": "34e89236200a7c9f9a2f89467f3bf8bddac5bff55a337e8f5c1f27f1d24b4b29"
+  },
+  {
+    "path": "src/modules/work/vendor/taura/domain/rosterWeeks.ts",
+    "gitBytesUnchangedFromMain": true,
+    "sha256": "ab1c7e75f5b35e433d644101a4ce15ce0bc95c70362e9d71a61800df4ac7b931"
+  }
+]

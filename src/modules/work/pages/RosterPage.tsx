@@ -6,12 +6,15 @@ import {calculateContractOvertime} from '../vendor/taura/domain/contractRules';
 import {getContractSummaryWeekForRosterWeek,getRosterWeekDates,getRosterWeekStart,moveRosterWeek} from '../vendor/taura/domain/rosterWeeks';
 import {DayDetails,kindLabels,statusLabels} from '../components/DayDetails';
 import styles from '../work-demo.module.css';
+import {BatchPreview} from '../components/BatchPreview';
+import {planBatch,quickLabels,type QuickKind,type BatchPlan} from '../editor/batchPlan';
 import {DemoShiftEditor} from '../components/DemoShiftEditor';
 import {actOnShift,commitDraft,newDraft} from '../editor/shiftDraft';
 
-interface Props {shifts:readonly Readonly<Shift>[];settings:Readonly<Settings>;overtimePreferences:readonly Readonly<OvertimePreference>[];referenceDate:Date;onShifts?:(next:Shift[])=>void}
-export function RosterPage({shifts,settings,overtimePreferences,referenceDate,onShifts}:Props) {
+interface Props {shifts:readonly Readonly<Shift>[];settings:Readonly<Settings>;overtimePreferences:readonly Readonly<OvertimePreference>[];referenceDate:Date;onShifts?:(next:Shift[])=>void;onBatch?:(plan:BatchPlan)=>void;generation?:number}
+export function RosterPage({shifts,settings,overtimePreferences,referenceDate,onShifts,onBatch,generation=0}:Props) {
   const [cursor,setCursor]=useState(()=>new Date(referenceDate)),[view,setView]=useState<'month'|'week'>('month'),[selected,setSelected]=useState<string|null>(null);
+  const [multi,setMulti]=useState(false),[dates,setDates]=useState<string[]>([]),[preview,setPreview]=useState<BatchPlan|null>(null),[notice,setNotice]=useState('');
   const [editor,setEditor]=useState<{draft:Shift;originalId?:string}|null>(null),[error,setError]=useState('');
   function action(id:string,kind:'cancel'|'duplicate'|'delete'){
     try{
@@ -43,15 +46,29 @@ export function RosterPage({shifts,settings,overtimePreferences,referenceDate,on
       <button type="button" onClick={()=>{setSelected(null);setCursor(new Date(referenceDate));}}>Fecha del ejemplo</button>
       <button type="button" aria-label="Período siguiente" onClick={()=>move(1)}>Siguiente →</button>
     </div>
+    <p className={styles.calendarLegend}>☀ Día · ☾ Noche · – Libre · P Planificado · T Trabajado · ! Otro estado (ver detalle)</p>
+    {onBatch?<section className={styles.batchTools} aria-label="Selección y accesos rápidos">
+      <button type="button" aria-pressed={multi} onClick={()=>{setMulti(!multi);setSelected(null);}}>Seleccionar varios días</button>
+      {multi?<><p role="status">{dates.length} días seleccionados. Se conservan al navegar.</p>
+        <p className={styles.selectedDates}>{dates.slice().sort().join(' · ')||'Tocá días o usá Tab y Espacio para seleccionarlos.'}</p>
+        <div className={styles.controls}><button type="button" disabled={!dates.length} onClick={()=>setDates([])}>Limpiar selección</button>
+        {(Object.keys(quickLabels) as QuickKind[]).map(kind=><button key={kind} type="button" disabled={!dates.length} onClick={()=>{
+          try{setPreview(planBatch(shifts,dates,kind,settings,()=>`demo-${crypto.randomUUID()}`,generation));setError('');}catch(reason){setError(reason instanceof Error?reason.message:'Plan inválido.');}
+        }}>{quickLabels[kind]}</button>)}</div></>:null}
+      <p role="status">{notice}</p>
+    </section>:null}
+    {preview&&onBatch?<BatchPreview plan={preview} onClose={()=>setPreview(null)} onConfirm={()=>{
+      onBatch(preview);setNotice(`Lote aplicado: ${preview.rows.filter(r=>r.action==='create').length} creados, ${preview.rows.filter(r=>r.action==='change').length} cambiados, ${preview.rows.filter(r=>r.action==='skip').length} omitidos.`);setPreview(null);
+    }}/>:null}
     {view==='month'?<div className={styles.weekLabels} aria-hidden="true">{['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'].map(x=><b key={x}>{x}</b>)}</div>:null}
     <ul className={view==='month'?styles.monthDays:styles.weekList} aria-label={view==='month'?'Calendario mensual del ejemplo':'Calendario semanal del ejemplo'}>
       {days.map(date=>{
         const key=toIsoDate(date),items=shifts.filter(s=>s.shift_date===key);
         const description=items.length?items.map(s=>`${kindLabels[s.kind]} · ${statusLabels[s.status]} ficticio · ${s.planned_paid_hours} h`).join('; '):'Sin turnos en este ejemplo';
         return <li key={key} className={view==='month'&&date.getMonth()!==cursor.getMonth()?styles.outside:undefined}>
-          <button type="button" data-day={key} aria-label={`${formatDate(key,{dateStyle:'full'})}. ${description}`} aria-current={key===toIsoDate(referenceDate)?'date':undefined} aria-expanded={selected===key} aria-controls={selected===key?'day-detail-title':undefined} onClick={event=>{origin.current=event.currentTarget;setSelected(key);}}>
+          <button type="button" data-day={key} aria-label={`${formatDate(key,{dateStyle:'full'})}. ${description}`} aria-current={key===toIsoDate(referenceDate)?'date':undefined} aria-pressed={multi?dates.includes(key):undefined} aria-expanded={multi?undefined:selected===key} aria-controls={selected===key?'day-detail-title':undefined} onClick={event=>{origin.current=event.currentTarget;if(multi){setDates(current=>current.includes(key)?current.filter(d=>d!==key):[...current,key]);}else setSelected(key);}}>
             <b>{view==='month'?date.getDate():formatDate(key,{weekday:'long',day:'numeric',month:'long'})}</b>
-            <span>{view==='month'?(items.length?items.map(s=>kindLabels[s.kind]).join(', '):'Sin turnos'):description}</span>
+            <span>{view==='month'?(items.length?items.map(s=>({day:'☀',night:'☾',off:'–'}[s.kind as 'day'|'night'|'off']??'•')+(s.status==='planned'?' P':s.status==='worked'?' T':' !')).join(' '):'·'):description}</span>
           </button>
         </li>;
       })}

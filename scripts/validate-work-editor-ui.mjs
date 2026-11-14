@@ -80,6 +80,45 @@ try {
     const unchanged=async()=>assert.deepEqual(await snapshot(page),baseline);
     await openWork();
     assert.match(await work.innerText(),/MODO DEMOSTRACIÓN/);
+    await work.getByRole('button',{name:'Seleccionar varios días',exact:true}).click();
+    assert.equal(await work.getByRole('button',{name:'Día 06:00–18:00',exact:true}).isDisabled(),true);
+    await day('2026-09-20').click();await day('2026-09-24').focus();await page.keyboard.press('Space');await day('2026-09-28').click();
+    assert.equal(await day('2026-09-24').getAttribute('aria-pressed'),'true');
+    await work.getByRole('button',{name:'Semana',exact:true}).click();
+    assert.match(await work.innerText(),/3 días seleccionados/);
+    await work.getByRole('button',{name:'Mes',exact:true}).click();
+    await page.screenshot({path:fileURLToPath(new URL(`batch-selection-${width}.png`,output)),fullPage:true});
+    await work.getByRole('button',{name:'Noche 18:00–06:00 (+1 día)',exact:true}).click();await dialog.waitFor();
+    assert.match(await dialog.innerText(),/2026-09-20 — Se omitirá/);assert.match(await dialog.innerText(),/2026-09-24 — Se cambiará/);assert.match(await dialog.innerText(),/2026-09-28 — Se agregará/);
+    for(let i=0;i<8;i++){await page.keyboard.press('Tab');assert.equal(await dialog.evaluate(el=>el.contains(document.activeElement)),true);}
+    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+    await page.screenshot({path:fileURLToPath(new URL(`batch-preview-${width}.png`,output))});
+    await page.keyboard.press('Escape');await dialog.waitFor({state:'hidden'});
+    assert.equal(await work.getByRole('button',{name:'Noche 18:00–06:00 (+1 día)',exact:true}).evaluate(el=>el===document.activeElement),true);
+    await unchanged();
+    await work.getByRole('button',{name:'Noche 18:00–06:00 (+1 día)',exact:true}).click();await dialog.getByRole('button',{name:'Confirmar cambios ficticios',exact:true}).click();
+    assert.match(await work.innerText(),/1 creados, 1 cambiados, 1 omitidos/);
+    await work.getByRole('button',{name:'Seleccionar varios días',exact:true}).click();
+    await day('2026-09-24').click();assert.match(await shifts().innerText(),/18:00/);
+    await day('2026-09-28').click();assert.equal(await shifts().count(),1);
+    await unchanged();
+    // A multi-shift date is listed as a conflict; quick off/day never duplicate it.
+    await day('2026-09-24').click();await shifts().getByRole('button',{name:'Duplicar turno',exact:true}).click();
+    await work.getByRole('button',{name:'Seleccionar varios días',exact:true}).click();
+    await work.getByRole('button',{name:'Libre 0 h',exact:true}).click();
+    assert.match(await dialog.innerText(),/Varios turnos/);
+    await dialog.getByRole('button',{name:'Cancelar',exact:true}).click();
+    await work.getByRole('button',{name:'Libre 0 h',exact:true}).click();await dialog.getByRole('button',{name:'Confirmar cambios ficticios',exact:true}).click();
+    await work.getByRole('button',{name:'Seleccionar varios días',exact:true}).click();await day('2026-09-28').click();assert.match(await shifts().innerText(),/0 h planificadas/);
+    await day('2026-09-24').click();assert.equal(await shifts().count(),2);
+    await work.getByRole('button',{name:'Seleccionar varios días',exact:true}).click();
+    await work.getByRole('button',{name:'Limpiar selección',exact:true}).click();assert.match(await work.innerText(),/0 días seleccionados/);
+    await day('2026-09-28').click();await work.getByRole('button',{name:'Día 06:00–18:00',exact:true}).click();await dialog.getByRole('button',{name:'Confirmar cambios ficticios',exact:true}).click();
+    await work.getByRole('button',{name:'Seleccionar varios días',exact:true}).click();await day('2026-09-28').click();assert.equal(await shifts().count(),1);assert.match(await shifts().innerText(),/06:00/);
+    await shifts().getByRole('button',{name:'Editar un turno',exact:true}).click();await dialog.getByRole('button',{name:'Libre 0 h',exact:true}).click();assert.equal(await dialog.getByLabel('Tipo de turno ficticio',{exact:true}).inputValue(),'off');await dialog.getByRole('button',{name:'Cerrar sin guardar',exact:true}).click();assert.match(await shifts().innerText(),/12 h planificadas/);
+    await unchanged();
+    page.once('dialog',d=>d.accept());await work.getByRole('button',{name:'Restablecer ejemplo',exact:true}).click();
+
     await day('2026-09-24').click();
     const original=await shifts().innerText();
     const id=await shifts().getAttribute('data-shift-id');
@@ -158,7 +197,7 @@ try {
     await page.reload();await openWork();await day('2026-09-24').click();assert.equal(await shifts().count(),1);
     // Reload performs Finance's existing one storage read; compare fresh instrumentation with original initial state.
     await unchanged();assert.deepEqual(errors,[]);assert.deepEqual(outbound,[]);
-    checks.push({width,status:'PASS',flows:['edit/ID/invalid/unchanged','dialog keyboard/Escape/focus/scroll','consistent summary/payments','multiple/duplicate/cancel','confirmed deletion','empty day/night/add','month/week navigation','reset confirm','exit/reopen/reload'],workEffects:0,financeUnchanged:true});
+    checks.push({width,status:'PASS',flows:['batch selection/month/week/keyboard/preview/cancel/confirm/conflicts/zero-effects','edit/ID/invalid/unchanged','dialog keyboard/Escape/focus/scroll','consistent summary/payments','multiple/duplicate/cancel','confirmed deletion','empty day/night/add','month/week navigation','reset confirm','exit/reopen/reload'],workEffects:0,financeUnchanged:true});
     await context.close();
   }
   const result={status:'PASS',node:process.version,chromium:browser.version(),checks,limits:'Local build, isolated synthetic profiles. Native Android/PWA, OS zoom and real screen readers remain manual. No Taura production access.'};

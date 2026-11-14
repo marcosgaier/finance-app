@@ -11,6 +11,7 @@ process.env.TZ='Pacific/Auckland';
 const dir=await mkdtemp(join(tmpdir(),'work-editor-'));
 async function load(path,name){const out=join(dir,name+'.mjs');await build({entryPoints:[resolve(path)],outfile:out,bundle:true,platform:'node',format:'esm',loader:{'.css':'empty'}});return import(pathToFileURL(out));}
 const api=await load('src/modules/work/editor/shiftDraft.ts','editor');
+const batch=await load('src/modules/work/editor/batchPlan.ts','batch');
 const fixtures=await load('src/modules/work/demo/fixtures.ts','fixtures');
 const engine=await load('src/modules/work/vendor/taura/domain/contractRules.ts','engine');
 const details=await load('src/modules/work/components/DayDetails.tsx','details');
@@ -83,3 +84,51 @@ test('protected fictitious records render only consultation; add does not author
   }
 });
 test.after(async()=>{assert.equal(JSON.stringify(fixtures.validateDemo()),before);await rm(dir,{recursive:true,force:true});});
+
+
+test('batch 0/1/N dates: create/change/skip, immutable IDs and metadata, no hidden duplicates',()=>{
+  const settings=fixtures.settings;
+  const original={...draft(),created_at:'keep',future:{nested:[1]}};
+  const rows=freeze([original,{...draft(),id:'demo-work',shift_date:'2026-09-25',status:'worked'},{...draft(),id:'demo-m1',shift_date:'2026-09-26'},{...draft(),id:'demo-m2',shift_date:'2026-09-26'}]);
+  const before=JSON.stringify(rows);
+  assert.deepEqual(batch.applyBatch(rows,batch.planBatch(rows,[],'day',settings,d=>'demo-'+d)),rows);
+  const plan=batch.planBatch(rows,['2026-09-24','2026-09-25','2026-09-26','2026-09-27','2026-09-27'],'night',settings,d=>'demo-'+d);
+  assert.deepEqual(plan.rows.map(r=>r.action),['change','skip','skip','create']);
+  assert.ok(plan.rows.filter(r=>r.action==='skip').every(r=>r.reason.length));
+  assert.equal(JSON.stringify(rows),before,'preview/cancel has no mutation');
+  const next=batch.applyBatch(rows,plan);
+  assert.equal(next.length,rows.length+1);assert.equal(new Set(next.map(s=>s.id)).size,next.length);
+  assert.equal(next[0].id,original.id);assert.equal(next[0].created_at,'keep');assert.deepEqual(next[0].future,original.future);
+  assert.deepEqual(next.slice(1,4),rows.slice(1));assert.equal(next[0].planned_start,'2026-09-24T18:00:00');
+  assert.throws(()=>batch.applyBatch(next,plan),/sesión cambió/);
+  assert.throws(()=>batch.applyBatch([{...rows[0],future:{nested:[2]}},...rows.slice(1)],plan));
+  assert.equal(JSON.stringify(rows),before);
+  assert.throws(()=>batch.applyBatch(rows,plan,1),/sesión cambió/);
+  const forged={...plan,rows:plan.rows.map(r=>r.action==='skip'?{...r,action:'change',shift:{...draft(),id:'demo-work',shift_date:r.date}}:r)};
+  assert.throws(()=>batch.applyBatch(rows,forged));
+  assert.equal(JSON.stringify(rows),before);
+});
+
+test('batch protects every nonplanned status and any actual data, including zero and notes',()=>{
+  for(const patch of [{status:'worked'},{status:'modified'},{status:'confirmed'},{status:'payslip'},{status:'paid'},{status:'cancelled'},{status:'paid_leave'},{actual_paid_hours:0},{actual_start:'2026-09-24T07:00:00'},{actual_notes:'keep'},{confirmed_at:'keep'}]){
+    const rows=[{...draft(),...patch}],plan=batch.planBatch(rows,[day],'off',fixtures.settings,()=> 'demo-unused');
+    assert.equal(plan.rows[0].action,'skip',JSON.stringify(patch));assert.ok(plan.rows[0].reason);assert.deepEqual(batch.applyBatch(rows,plan),rows);
+  }
+});
+
+test('quick templates: day/night/off, intermonth/year, NZ DST, atomic invalid batch and unique IDs',()=>{
+  const quick=(date,kind)=>batch.quickDraft(date,'demo-q',kind,fixtures.settings);
+  assert.equal(quick(day,'day').planned_start,day+'T06:00:00');assert.equal(quick(day,'day').planned_end,day+'T18:00:00');
+  assert.equal(quick('2026-09-30','night').planned_end,'2026-10-01T06:00:00');assert.equal(quick('2026-12-31','night').planned_end,'2027-01-01T06:00:00');
+  assert.equal(quick('2026-09-26','night').planned_paid_hours,11);
+  assert.throws(()=>quick('2026-04-04','night'),/13 h/,'13 elapsed hours require individual review');
+  assert.equal(batch.planBatch([],['2026-04-04'],'night',fixtures.settings,()=> 'demo-dst').rows[0].action,'skip');
+  const off=quick(day,'off');assert.equal(off.planned_start,null);assert.equal(off.planned_end,null);assert.equal(off.planned_paid_hours,0);assert.equal(off.planned_rate,0);
+  const source=[draft()],before=JSON.stringify(source);
+  assert.throws(()=>batch.planBatch(source,['2026-09-28','2026-02-30'],'day',fixtures.settings,()=> 'demo-x'));
+  assert.throws(()=>batch.planBatch([],['2026-09-28','2026-09-29'],'day',fixtures.settings,()=> 'demo-x'));
+  assert.equal(JSON.stringify(source),before);
+  const changed=batch.applyBatch(source,batch.planBatch(source,[day],'off',fixtures.settings,()=> 'demo-x'));
+  const hours=rows=>[...engine.calculateContractOvertime(rows,fixtures.settings,[]).values()].reduce((n,row)=>n+row.ordinary+row.overtime,0);
+  assert.equal(hours(changed),0);assert.equal(hours(source),12);
+});

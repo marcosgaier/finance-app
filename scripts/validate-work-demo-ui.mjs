@@ -207,4 +207,3 @@ try {
   await browser.close();
   await new Promise(done => server.close(done));
 }
-

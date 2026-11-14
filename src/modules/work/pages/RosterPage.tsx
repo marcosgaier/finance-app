@@ -6,10 +6,20 @@ import {calculateContractOvertime} from '../vendor/taura/domain/contractRules';
 import {getContractSummaryWeekForRosterWeek,getRosterWeekDates,getRosterWeekStart,moveRosterWeek} from '../vendor/taura/domain/rosterWeeks';
 import {DayDetails,kindLabels,statusLabels} from '../components/DayDetails';
 import styles from '../work-demo.module.css';
+import {DemoShiftEditor} from '../components/DemoShiftEditor';
+import {actOnShift,commitDraft,newDraft} from '../editor/shiftDraft';
 
-interface Props {shifts:readonly Readonly<Shift>[];settings:Readonly<Settings>;overtimePreferences:readonly Readonly<OvertimePreference>[];referenceDate:Date}
-export function RosterPage({shifts,settings,overtimePreferences,referenceDate}:Props) {
+interface Props {shifts:readonly Readonly<Shift>[];settings:Readonly<Settings>;overtimePreferences:readonly Readonly<OvertimePreference>[];referenceDate:Date;onShifts?:(next:Shift[])=>void}
+export function RosterPage({shifts,settings,overtimePreferences,referenceDate,onShifts}:Props) {
   const [cursor,setCursor]=useState(()=>new Date(referenceDate)),[view,setView]=useState<'month'|'week'>('month'),[selected,setSelected]=useState<string|null>(null);
+  const [editor,setEditor]=useState<{draft:Shift;originalId?:string}|null>(null),[error,setError]=useState('');
+  function action(id:string,kind:'cancel'|'duplicate'|'delete'){
+    try{
+      if(kind==='delete'&&!window.confirm('¿Eliminar turno ficticio? No se puede deshacer dentro de esta demo. Los otros turnos se conservan.'))return;
+      onShifts?.(actOnShift(shifts,id,kind,kind==='duplicate'?`demo-${crypto.randomUUID()}`:undefined,kind==='delete'));setError('');
+      document.getElementById('day-detail-title')?.focus({preventScroll:true});
+    }catch(reason){setError(reason instanceof Error?reason.message:'Acción ficticia inválida.');}
+  }
   const origin=useRef<HTMLButtonElement|null>(null);
   useLayoutEffect(()=>{if(selected)document.getElementById('day-detail-title')?.focus();},[selected]);
   const monthStart=new Date(cursor.getFullYear(),cursor.getMonth(),1);
@@ -23,7 +33,7 @@ export function RosterPage({shifts,settings,overtimePreferences,referenceDate}:P
   function closeDetail(){setSelected(null);origin.current?.focus();}
   return <>
     <h2 id="work-roster-title" tabIndex={-1}>Roster del ejemplo</h2>
-    <div className={styles.hero}><h3>{view==='month'?formatDate(toIsoDate(cursor),{month:'long',year:'numeric'}):`${formatDate(start)} – ${formatDate(end,{day:'numeric',month:'long',year:'numeric'})}`}</h3><span>Solo lectura · domingo a sábado</span></div>
+    <div className={styles.hero}><h3>{view==='month'?formatDate(toIsoDate(cursor),{month:'long',year:'numeric'}):`${formatDate(start)} – ${formatDate(end,{day:'numeric',month:'long',year:'numeric'})}`}</h3><span>Edición ficticia en memoria · domingo a sábado</span></div>
     <div className={styles.controls} aria-label="Vista del calendario">
       <button type="button" aria-pressed={view==='month'} onClick={()=>changeView('month')}>Mes</button>
       <button type="button" aria-pressed={view==='week'} onClick={()=>changeView('week')}>Semana</button>
@@ -46,7 +56,12 @@ export function RosterPage({shifts,settings,overtimePreferences,referenceDate}:P
         </li>;
       })}
     </ul>
-    {selected?<DayDetails date={selected} shifts={shifts.filter(s=>s.shift_date===selected)} onClose={closeDetail}/>:null}
+    {selected?<DayDetails date={selected} shifts={shifts.filter(s=>s.shift_date===selected)} onClose={closeDetail}
+      onAdd={onShifts?()=>setEditor({draft:newDraft(selected,`demo-${crypto.randomUUID()}`)}):undefined}
+      onEdit={onShifts?s=>setEditor({draft:structuredClone(s),originalId:s.id}):undefined}
+      onAction={onShifts?action:undefined}/>:null}
+    {error?<p role="alert">{error}</p>:null}
+    {editor?<DemoShiftEditor initial={editor.draft} editing={Boolean(editor.originalId)} onClose={()=>setEditor(null)} onSave={draft=>onShifts?.(commitDraft(shifts,draft,editor.originalId))}/>:null}
     <section className={styles.card} aria-labelledby="roster-week-summary">
       <h3 id="roster-week-summary">Resumen semanal del ejemplo</h3>
       <p>{formatDate(start,{dateStyle:'long'})} – {formatDate(end,{dateStyle:'long'})} · Domingo a sábado</p>

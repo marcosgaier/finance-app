@@ -6,7 +6,7 @@ import { resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { sampleFinanceData } from '../src/data/sampleData.js';
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE ? pathToFileURL(resolve(process.env.PLAYWRIGHT_MODULE)).href : 'playwright');
-const output = new URL('../docs/validation/arch-01b2-2b/', import.meta.url);
+const output = process.env.VALIDATION_OUTPUT_DIR ? pathToFileURL(resolve(process.env.VALIDATION_OUTPUT_DIR)+'/') : new URL('../docs/validation/arch-01b2-2b/', import.meta.url);
 await mkdir(output, { recursive: true });
 const server = createServer(async (req, res) => {
   try {

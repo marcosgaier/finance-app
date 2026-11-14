@@ -1,0 +1,119 @@
+
+> test
+> node scripts/finance-engine-coverage-tests.mjs && node scripts/persistence-tests.mjs && node scripts/historical-payment-tests.mjs && node scripts/week-reopening-tests.mjs && node --test scripts/card-payment-safety-tests.mjs scripts/taura-preview-tests.mjs scripts/income-planning-tests.mjs scripts/expense-planning-tests.mjs scripts/planning-session-tests.mjs scripts/arch-01a-contract-tests.mjs && npm run test:work
+
+financeEngine coverage tests passed
+Persistence and compatibility tests passed
+Historical payment editing tests passed
+Week reopening and reclosure tests passed
+✔ real exporter fixture: exact cents, independent SHA-256 and allowed contract metadata (31.636611ms)
+✔ several periods same payDate: unique cents sum, partial selection and no inferred cash (10.983212ms)
+✔ payDate mapping Monday/Tuesday, month/year and NZ DST civil boundaries (21.52161ms)
+✔ changed payDate requires new revision, keeps period identity, replaces instead of accumulating (3.322764ms)
+✔ same period revised amount conflicts; generatedAt is not a payment identity or sequence (13.719198ms)
+✔ adversarial future contract drift: exact fields/version/status fail legibly even with valid hash (9.227347ms)
+✔ corrupt hashes, cents, missing zero, invalid dates and net arithmetic rejected (5.438767ms)
+✔ backups, malformed JSON, item/UTF-8 size limits rejected without side effects (9.539882ms)
+✔ closed/reopened week metadata is read only and excluded; errors also leave all inputs intact (3.677968ms)
+✔ legacy missing: shared identities, one deletion/refund, retries and addition (4.98111ms)
+✔ legacy duplicate: shared identities, one deletion/refund, retries and addition (3.403868ms)
+✔ legacy collision: shared identities, one deletion/refund, retries and addition (0.488355ms)
+✔ 80 from arbitrary reserve ID: one debit/event, no plan or weekly-income double charge (35.370585ms)
+✔ insufficient funds and future date produce warnings without mutations; explicit continuation supported (0.564706ms)
+✔ duplicates compare card+effective date+cents across active and historical, independent of funding (10.473945ms)
+✔ weekly-income and other funding remain legitimate; no unrelated reserve debit (0.425847ms)
+✔ active deletion/replacement with cents refunds once, repeated deletion is harmless (0.383277ms)
+✔ history: real payment dates; stable unique keys including missing/duplicate legacy IDs; no mutation (1.107786ms)
+✔ closing/reopening/reclosing preserves snapshots, payments, dates and balances; historical correction blocked (4.206415ms)
+✔ cycle 19/20 unchanged after safe recording; Latitude update only changes plan-derived calculations (2.476296ms)
+✔ display suppresses only sub-half-cent negative zero; raw amounts and financial engine unchanged (0.751541ms)
+✔ device-local date helper preserves NZ midnight and DST civil dates (127.650609ms)
+✔ reviewed base: single 7/30 rounding, explicit zero, partial estimates and theoretical sum (28.500874ms)
+✔ missing, invalid and zero differ; no implicit debt/saving/obligation review (5.476355ms)
+✔ manual replacements/additions, debt, saving, negative margin and no double funding (4.903285ms)
+✔ unknown income blocks suffix; explicit zero stays hypothetical and warns (3.216114ms)
+✔ closed, active and reopened weeks never contribute estimates or accumulations (5.935983ms)
+✔ due dates are annotations, missing date/amount/review remains unknown (4.689598ms)
+✔ safe arithmetic: monthly intermediate, debt and accumulated margins (6.972241ms)
+✔ several validated pay periods in one week are consumed once (6.765714ms)
+✔ frozen inputs detached; forbidden operational fields and side effects never accessed (5.471452ms)
+✔ C1 rejects excess, summed excess, duplicate destinations, monthly and missing funding (3.960946ms)
+✔ C1 all reviewed obligations are detached annotations, before and after pay date (2.260736ms)
+✔ NZ clock is explicit; strictly next Tuesday at civil midnight, Monday and Tuesday (22.997933ms)
+✔ complete Tuesday–Monday grid, default four and every supported horizon (18.14244ms)
+✔ invalid Tuesday/horizon inputs fail instead of normalizing (3.802768ms)
+✔ same payDate and different periods sum once in cents, retaining metadata (6.071517ms)
+✔ Monday belongs to prior week; Tuesday starts new week; outside items listed not summed (8.888266ms)
+✔ zero is mathematical zero with roster warning; absence stays unknown/null (8.946913ms)
+✔ zero warning survives alongside positive items; selection never becomes exhaustive (6.006563ms)
+✔ no items within horizon means unknown weeks and only a zero known subtotal (1.577349ms)
+✔ duplicates/conflicts stay owned by v1; changed payDate replaces previous calculation (4.318631ms)
+✔ active, closed, legacy and reopened are read-only and excluded; realIncome never consulted (3.859368ms)
+✔ month/year/leap and both NZ DST boundaries use civil days (3.455927ms)
+✔ output independent of host TZ for clocks and grids (254.968919ms)
+✔ safe cent arithmetic rejects overflow in week and across weeks, even excluded weeks (6.583468ms)
+✔ 104 distinct validated periods preserve exact cents and reject aggregate overflow (64.700125ms)
+✔ deep frozen inputs unchanged; nested output metadata is detached (1.548774ms)
+✔ no persistent effects or clock reads on import, success and failure (4.822678ms)
+✔ validated producer → 4/8 weeks → allowed snapshot → pending → explicit review (16.781354ms)
+✔ explicit arrays and valid assumptions required; failed review does not commit (1.873354ms)
+✔ integration keeps explicit zero, absent income, negative margin and registered exclusions (2.324232ms)
+✔ invalid mutable IDs cannot leak operational references into a snapshot (2.245495ms)
+✔ replacement, invalid import, discard, refresh and obsolete async completions (3.33382ms)
+✔ navigation is no session action; budget staleness is sticky and rebuild resets review (3.190574ms)
+✔ deeply frozen inputs, detached outputs; no operational reads or storage/network access (4.584526ms)
+✔ UI reconfiguration 4..8 discards assumptions, keeps civil start and invalidates closed/reopened calculations (8.731905ms)
+✔ render synchronization preserves reviews; a new horizon cannot clear stale-budget blocking (2.518234ms)
+✔ exact Taura PR #9 producer fixture, positive and explicit zero, no input mutation (28.148406ms)
+✔ malformed JSON and both apps’ backups are rejected (1.64441ms)
+✔ envelope values and exact allowlist (5.066644ms)
+✔ byte and item limits, absent versus explicit zero (15.998331ms)
+✔ full item, nested rules, warnings and deduction allowlists (10.829855ms)
+✔ invalid/unsafe/fractional/negative amounts, ACC and net arithmetic (1.225615ms)
+✔ calendar, worked week, identity, payment, status and fiscal coverage (2.147437ms)
+✔ revision integrity, deterministic exporter canonical order, not a signature (6.959413ms)
+✔ identical duplicates collapse; changed content or payDate revision conflicts reject the batch (3.009011ms)
+✔ successive exports replace whole sessions without ordering opaque revisions (2.65441ms)
+✔ Monday/Tuesday, month/year boundaries and DST are civil-date based (1.172189ms)
+✔ closed, legacy, active and reopened weeks read only; no storage writes on success/failure (1.964004ms)
+ℹ tests 70
+ℹ suites 0
+ℹ pass 70
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1561.733637
+
+> test:work
+> node scripts/work-demo-tests.mjs && node --test scripts/work-editor-tests.mjs
+
+Module import graph: WorkDemo.tsx, components/DayDetails.tsx, components/DemoShiftEditor.tsx, demo/fixtures.ts, editor/shiftDraft.ts, pages/DashboardPage.tsx, pages/PaymentsPage.tsx, pages/RosterPage.tsx, vendor/taura/domain/contractRules.ts, vendor/taura/domain/payPeriods.ts, vendor/taura/domain/rosterWeeks.ts, vendor/taura/domain/tax/calculateWeeklyPAYE.ts, vendor/taura/domain/tax/nzTax2026_27.ts, vendor/taura/domain/tax/taxTypes.ts, vendor/taura/domain/weekendAllowance.ts, vendor/taura/lib/dates.ts, vendor/taura/lib/payroll.ts, vendor/taura/types.ts
+PASS: independent pinned upstream bytes and executable roster/payroll parity
+PASS: exact upstream blobs, closed import graph, no effects, synthetic overtime pay/bank, night/weekend, dates, payroll/tax and optional upstream parity
+✔ commit updates only chosen ID, preserves created_at and unknown nested fields, without mutating source (36.13199ms)
+✔ zero/multiple same-day shifts add without overwriting; duplicate ID rejected; unique duplicate clears actuals (2.962288ms)
+✔ cancel keeps record and excludes hours/pay; delete requires confirmation and preserves others (2.23538ms)
+✔ payslip/confirmed (and invalid paid status) cannot be created or altered by any action (0.457543ms)
+✔ invalid dates, times, optional types, negatives, >12 hours and incompatible status leave source unchanged (3.641595ms)
+✔ night crosses midnight; NZ DST gap/fold rejected; transition nights validate elapsed time and paid maximum (8.56354ms)
+✔ off/leave and optional actual data maintain compatible model; original frozen fixture resets byte-identically (4.275356ms)
+✔ protected fictitious records render only consultation; add does not authorize editing them (10.571599ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 337.280663
+npm notice
+npm notice New major version of npm available! 11.9.0 -> 12.2.2
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.2
+npm notice To update run: npm install -g npm@12.2.2
+npm notice
+npm notice
+npm notice New major version of npm available! 11.9.0 -> 12.2.2
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.2
+npm notice To update run: npm install -g npm@12.2.2
+npm notice

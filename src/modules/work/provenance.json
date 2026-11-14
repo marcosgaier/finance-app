@@ -73,5 +73,17 @@
       "complete fixture rated before weekly filtering",
       "local CSS Modules and native accessible navigation"
     ]
+  },
+  "paymentsPresentation": {
+    "ref": "22665a594a0dc8230aa7ed6a28736297a1ed32f2",
+    "path": "pages/PaymentsPage.tsx",
+    "gitBlob": "8694a226789b857d32b9e33042cdac2c97c11522",
+    "adaptations": [
+      "fixed referenceDate and unchanged compiled fixtures",
+      "four upcoming and two recent projections relative to referenceDay",
+      "read-only overtime treatment; no export or operational callbacks",
+      "calculated pay dates; fictitious status and estimated amounts",
+      "local CSS Modules; no icon dependency; no holiday rule changes"
+    ]
   }
 }

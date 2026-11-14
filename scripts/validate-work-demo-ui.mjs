@@ -6,7 +6,7 @@ import { resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { sampleFinanceData } from '../src/data/sampleData.js';
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE ? pathToFileURL(resolve(process.env.PLAYWRIGHT_MODULE)).href : 'playwright');
-const output = new URL('../docs/validation/arch-01b2-2a/', import.meta.url);
+const output = new URL('../docs/validation/arch-01b2-2b/', import.meta.url);
 await mkdir(output, { recursive: true });
 const server = createServer(async (req, res) => {
   try {
@@ -70,6 +70,7 @@ try {
     const { context, page, outbound, setMode } = await makeContext(width);
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
+    page.on('download', () => errors.push('Unexpected download during demonstration'));
     const region = page.getByRole('region', { name: 'Accesos a mis aplicaciones' });
     const link = region.getByRole('link', { name: 'Abrir Taura en otra pestaña', exact: true });
     await link.waitFor();
@@ -89,7 +90,7 @@ try {
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
     await page.screenshot({ path: fileURLToPath(new URL(`access-${width}.png`, output)), fullPage: true });
     const before = await snapshot(page);
-    let calendarChecked=false;
+    let calendarChecked=false, paymentsChecked=false;
     async function roundTrip() {
       const state = await snapshot(page);
       const financeNode = await page.locator('#finance-region').elementHandle();
@@ -104,7 +105,7 @@ try {
       assert.match(await page.locator('#work-demo').innerText(),/DEMOSTRACIÓN — datos ficticios; no es tu roster/);
       assert.match(await page.locator('#work-demo').innerText(),/2026-09-24/);
       const work=page.locator('#work-demo');
-      assert.equal(await work.getByRole('button',{name:'Pagos',exact:true}).count(),0);
+      assert.equal(await work.getByRole('button',{name:'Pagos',exact:true}).count(),1);
       assert.equal(await work.locator('input,select,textarea,a[download]').count(),0);
       assert.equal(await work.getByRole('button',{name:/Agregar|Editar|Borrar|Cancelar|Copiar|Pegar|Seleccionar/}).count(),0);
       assert.equal(await work.getByRole('heading',{name:'Resumen del ejemplo',exact:true}).isVisible(),true);
@@ -119,6 +120,10 @@ try {
       assert.equal(await page.locator('#day-detail-title').evaluate(el=>el===document.activeElement),true);
       assert.match(await work.innerText(),/Nocturno/);
       assert.match(await work.innerText(),/2026-09-24 07:00:00/);
+      await work.getByRole('button',{name:'Pagos',exact:true}).click();
+      await work.getByRole('button',{name:'Roster',exact:true}).click();
+      assert.equal(await calendarDay.getAttribute('aria-expanded'),'true');
+      assert.equal(await page.getByRole('region',{name:/Detalle del ejemplo/}).isVisible(),true);
       await page.screenshot({path:fileURLToPath(new URL('detail-'+width+'.png',output)),fullPage:true});
       await work.getByRole('button',{name:'Cerrar detalle',exact:true}).click();
       assert.equal(await calendarDay.evaluate(el=>el===document.activeElement),true);
@@ -163,6 +168,46 @@ try {
       await page.screenshot({path:fileURLToPath(new URL('week-'+width+'.png',output)),fullPage:true});
       calendarChecked=true;
       }
+      // Payments is exercised on every round trip, including from all Finance tabs.
+      await work.getByRole('button',{name:'Pagos',exact:true}).click();
+      assert.equal(await page.locator('#work-payments-title').evaluate(el=>el===document.activeElement),true);
+      const paymentsRegion=work.getByRole('region',{name:'Pagos del ejemplo',exact:true});
+      assert.equal(await paymentsRegion.locator('[data-payment]').count(),6);
+      const paidWeek=paymentsRegion.locator('[data-payment="2026-09-20"]');
+      assert.equal(await paidWeek.getAttribute('data-pay-date'),'2026-09-30');
+      assert.match(await paidWeek.innerText(),/miércoles/);
+      const money=value=>new Intl.NumberFormat('es-NZ',{style:'currency',currency:'NZD'}).format(value);
+      for(const [key,value] of Object.entries({base:1800,enhanced:0,night:36,weekend:48,gross:1884,paye:460.02,kiwisaver:56.52,net:1367.46})) {
+        assert.equal(await paidWeek.locator('[data-amount="'+key+'"]').innerText(),(key==='paye'||key==='kiwisaver'?'− ':'')+money(value));
+      }
+      assert.match(await paidWeek.innerText(),/Hours Bank del ejemplo: \+10 h/);
+      assert.match(await paymentsRegion.innerText(),/Semana sin turnos en este ejemplo/);
+      assert.equal(await paymentsRegion.locator('input,select,textarea,button,a[download]').count(),0);
+      assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+      if(!paymentsChecked) {
+        await page.screenshot({path:fileURLToPath(new URL('payments-'+width+'.png',output)),fullPage:true});
+        // 1280px at 200% => 640 CSS px. Finance's existing 320px body minimum
+        // makes 360px at 200% (180 CSS px) outside the host's supported reflow.
+        if(width===1280) {
+        // CSS zoom provides deterministic 200% reflow; native browser/OS zoom remains manual.
+        await page.evaluate(()=>{document.documentElement.style.zoom='2';window.scrollTo(0,0);});
+        assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Payments 200% CSS zoom reflow');
+        assert.equal(await paidWeek.locator('[data-amount="net"]').isVisible(),true);
+        await page.screenshot({path:fileURLToPath(new URL('payments-zoom200-'+width+'.png',output)),fullPage:true});
+        await page.evaluate(()=>{document.documentElement.style.zoom='';});
+        }
+        paymentsChecked=true;
+      }
+      await page.evaluate(()=>window.scrollTo(0,400));
+      const paymentsScroll=await page.evaluate(()=>window.scrollY);
+      await work.getByRole('button',{name:'Roster',exact:true}).evaluate(el=>el.click());
+      await work.getByRole('button',{name:'Pagos',exact:true}).evaluate(el=>el.click());
+      assert.equal(await page.evaluate(()=>window.scrollY),paymentsScroll);
+      await work.getByRole('button',{name:'Atrás al resumen',exact:true}).click();
+      assert.equal(await page.locator('#work-summary-title').evaluate(el=>el===document.activeElement),true);
+      await work.getByRole('button',{name:'Pagos',exact:true}).focus();
+      await page.keyboard.press('Enter');
+      assert.equal(await page.locator('#work-payments-title').evaluate(el=>el===document.activeElement),true);
       await page.getByRole('button',{name:'Volver a Finanzas',exact:true}).click();
       assert.equal(await page.locator('#open-work-demo').evaluate(el=>el===document.activeElement),true);
       assert.equal(await page.evaluate(()=>window.scrollY),financeScroll);
@@ -226,7 +271,7 @@ try {
     await popup.close();
     assert.equal(await budget.inputValue(), '42');
     assert.deepEqual(await snapshot(page), edited);
-    checks.push(`${width}px: month 42 days, week 7 days, previous/next/fixed date, overnight/empty inline details, keyboard and returned focus, sticky banner, preserved calendar/scroll and unchanged summary; demo round trips from every tab, DOM identity/hidden/focus/scroll/CSS, zero demo effects, eight tabs, touch/layout, synthetic planning session and budget, native popup/Enter, noopener/no referrer, 404/offline, unchanged Finance storage/history`);
+    checks.push(`${width}px: payments: exact bank amounts, computed Wednesday, 4 upcoming/2 recent, zero weeks, keyboard/scroll/return; month 42 days, week 7 days, previous/next/fixed date, overnight/empty inline details, keyboard and returned focus, sticky banner, preserved calendar/scroll and unchanged summary; demo round trips from every tab, DOM identity/hidden/focus/scroll/CSS, zero demo effects, eight tabs, touch/layout, synthetic planning session and budget, native popup/Enter, noopener/no referrer, 404/offline, unchanged Finance storage/history`);
     await context.close();
   }
   for (const [label, raw, readError] of [['incompatible', '{"schemaVersion":999}', false], ['read-error', '{}', true]]) {
@@ -261,7 +306,7 @@ try {
   assert.equal(await page.getByRole('button', { name: 'Descargar cambios sin guardar' }).count(), 1);
   checks.push('unsaved: original recovery gate and recovery download retained');
   await context.close();
-  await writeFile(new URL('ui-results.json', output), JSON.stringify({ status: 'PASS', checks, syntheticOnly: true, externalNetwork: 'intercepted; no live Taura requests', limitations: ['No physical Android/PWA or screen reader testing'] }, null, 2) + '\n');
+  await writeFile(new URL('ui-results.json', output), JSON.stringify({ status: 'PASS', checks, zoom: 'Payments 200% CSS zoom/reflow at 1280px PASS; native browser zoom and mobile pinch remain manual', syntheticOnly: true, externalNetwork: 'intercepted; no live Taura requests', limitations: ['No physical Android/PWA or screen reader testing', 'Existing Finance body min-width 320px overflows at 360px with CSS zoom 200% (180 CSS px); no global redesign', 'Recovery gates and download button availability tested; recovery file contents/retry not exercised here'] }, null, 2) + '\n');
   console.log(checks.join('\n'));
 } finally {
   await browser.close();

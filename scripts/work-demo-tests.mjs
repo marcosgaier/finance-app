@@ -5,10 +5,12 @@ import {tmpdir} from 'node:os';
 import {join,resolve,dirname} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {build} from 'esbuild';
+import React from 'react';
+import {renderToStaticMarkup} from 'react-dom/server';
 const root=resolve('src/modules/work');
 const manifest=JSON.parse(await readFile(join(root,'provenance.json')));
 const temp=await mkdtemp(join(tmpdir(),'work-parity-'));
-const bundle=async(entry,name)=>{const file=join(temp,name+'.mjs');await build({entryPoints:[entry],bundle:true,platform:'node',format:'esm',outfile:file});return import(pathToFileURL(file));};
+const bundle=async(entry,name)=>{const file=join(temp,name+'.mjs');await build({entryPoints:[entry],bundle:true,platform:'node',format:'esm',loader:{'.css':'empty'},outfile:file});return import(pathToFileURL(file));};
 try {
   for(const f of manifest.files){
     const content=await readFile(join(root,'vendor/taura',f.path));
@@ -69,6 +71,19 @@ try {
   assert.equal(payroll.hoursBetween('2026-09-23T19:00:00','2026-09-24T07:00:00'),12);
   assert.ok(bank.nightAllowance>0);assert.ok(bank.weekendAllowance>0);
   const projections=periods.buildPayProjections(shifts,settings,referenceDate,4,overtimePreferences);assert.ok(projections.length);assert.ok(projections.every(p=>p.estimatedGross>=p.estimatedNet));
+  const payments=await bundle(join(root,'pages/PaymentsPage.tsx'),'payments-ui');
+  const renderPayments=(prefs)=>renderToStaticMarkup(React.createElement(payments.PaymentsPage,{shifts,settings,referenceDate,overtimePreferences:prefs}));
+  const bankHtml=renderPayments(overtimePreferences),payHtml=renderPayments([]);
+  for(const html of [bankHtml,payHtml]) {
+    assert.equal((html.match(/data-payment=/g)||[]).length,6,'Four upcoming and two recent cards');
+    assert.match(html,/data-pay-date="2026-09-30"/,'Calculated Wednesday, not hardcoded Tuesday');
+    assert.match(html,/PAYE estimado \(incluye ACC\)/);
+    assert.match(html,/Semana sin turnos en este ejemplo/);
+    assert.doesNotMatch(html,/<(?:select|input|button)\b|download=|Confirmado por payslips/);
+  }
+  assert.match(bankHtml,/Hours Bank del ejemplo: \+10 h/);
+  assert.doesNotMatch(payHtml,/Hours Bank del ejemplo: \+10 h/);
+  assert.notEqual(bankHtml,payHtml,'Both overtime treatments are rendered from engine results');
   assert.equal(JSON.stringify({shifts,settings,overtimePreferences}),before);assert.deepEqual(attempts,[]);
   // Optional independent upstream tree; exact blob identity above is always enforced offline.
   if(process.env.TAURA_PARITY_ROOT){
@@ -83,6 +98,8 @@ try {
     }
     console.log('PASS: independent pinned upstream bytes and executable roster/payroll parity');
   }
+  assert.equal(JSON.stringify({shifts,settings,overtimePreferences}),before);
+  assert.deepEqual(attempts,[]);
   assert.ok(tax.calculateEstimatedWeeklyNet(1800,'2026-09-30',3,'M'));
   console.log('PASS: exact upstream blobs, closed import graph, no effects, synthetic overtime pay/bank, night/weekend, dates, payroll/tax and optional upstream parity');
 } finally {await rm(temp,{recursive:true,force:true});}

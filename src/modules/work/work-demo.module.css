@@ -44,4 +44,19 @@
 .weekList {display:grid;gap:8px}
 .weekList button {width:100%;text-align:left;display:flex;flex-direction:column;gap:6px;margin:0;background:white;color:#163e35;border:1px solid #bacdc3}
 .workDemo h3[tabindex] {scroll-margin-top:110px}
+.paymentsList {display:grid;gap:14px}
+.paymentCard {min-width:0}
+.paymentCard h4 {font-size:22px;line-height:1.35;margin:8px 0}
+.paymentCard h5 {font-size:16px;margin:0}
+.paymentStatus {display:inline-block;border:1px solid #bacdc3;border-radius:12px;padding:6px 10px;background:#e7efec}
+.paymentHours {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:16px 0}
+.paymentHours div {background:#e7efec;border-radius:12px;padding:10px}
+.paymentHours dd,.paymentAmounts dd {margin:0;font-weight:750}
+.paymentOvertime {background:#f4f7f5;border:1px solid #bacdc3;border-radius:12px;padding:14px;margin:14px 0}
+.paymentNet {background:#163e35;color:white;border-radius:16px;padding:18px;margin:16px 0}
+.paymentNet span,.paymentNet strong {display:block}
+.paymentNet strong {font-size:32px;line-height:1.4}
+.paymentAmounts {display:grid;gap:12px;margin:16px 0}
+.paymentAmounts div {display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 12px}
+.paymentAmounts dd {white-space:nowrap}
 @media(max-width:400px) {.nextPaymentCard {grid-template-columns:1fr}.workDemo {padding:16px}}

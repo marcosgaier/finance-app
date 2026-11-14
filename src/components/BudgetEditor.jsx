@@ -1,5 +1,6 @@
 import React from 'react';
-import { formatActionMoney, normalizeFinanceData } from '../utils/financeEngine.js';
+import { normalizeFinanceData } from '../utils/financeEngine.js';
+import { formatActionMoney } from '../utils/moneyDisplay.js';
 
 export function BudgetEditor({ financeData, onChange }) {
   function updateField(path, value) {

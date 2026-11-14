@@ -1,0 +1,62 @@
+[
+  {
+    "name": "single save, double click, reserve note, cycle, deletion refund",
+    "width": 360,
+    "status": "PASS"
+  },
+  {
+    "name": "insufficient cancel untouched then explicit accept saves once",
+    "width": 360,
+    "status": "PASS"
+  },
+  {
+    "name": "future cancel untouched then explicit accept saves once",
+    "width": 360,
+    "status": "PASS"
+  },
+  {
+    "name": "duplicate cancel untouched then explicit accept saves once",
+    "width": 360,
+    "status": "PASS"
+  },
+  {
+    "name": "two legitimate equal payments require acknowledgement and retain identity",
+    "width": 360,
+    "status": "PASS"
+  },
+  {
+    "name": "manual withdrawal note, local NZ midnight date and double click",
+    "width": 360,
+    "status": "PASS"
+  },
+  {
+    "name": "single save, double click, reserve note, cycle, deletion refund",
+    "width": 1280,
+    "status": "PASS"
+  },
+  {
+    "name": "insufficient cancel untouched then explicit accept saves once",
+    "width": 1280,
+    "status": "PASS"
+  },
+  {
+    "name": "future cancel untouched then explicit accept saves once",
+    "width": 1280,
+    "status": "PASS"
+  },
+  {
+    "name": "duplicate cancel untouched then explicit accept saves once",
+    "width": 1280,
+    "status": "PASS"
+  },
+  {
+    "name": "two legitimate equal payments require acknowledgement and retain identity",
+    "width": 1280,
+    "status": "PASS"
+  },
+  {
+    "name": "manual withdrawal note, local NZ midnight date and double click",
+    "width": 1280,
+    "status": "PASS"
+  }
+]

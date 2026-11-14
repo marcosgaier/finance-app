@@ -13,13 +13,11 @@ import { UpcomingDueSummary } from '../components/UpcomingDueSummary.jsx';
 import { WeeklyTracker } from '../components/WeeklyTracker.jsx';
 import { WeeklyActionPlan } from '../components/WeeklyActionPlan.jsx';
 import { WeeklyStatus } from '../components/WeeklyStatus.jsx';
-import {
-  PROMOTIONAL_PLAN_TYPE,
-  STATEMENT_BALANCE_TYPE,
-  calculateWeeklyDebtReserve,
-  formatActionMoney,
-} from '../utils/financeEngine.js';
+import { PROMOTIONAL_PLAN_TYPE, STATEMENT_BALANCE_TYPE, calculateWeeklyDebtReserve } from '../utils/financeEngine.js';
+import { formatActionMoney } from '../utils/moneyDisplay.js';
 
+import { formatIsoDate } from '../utils/dateUtils.js';
+import { recordCardPayment, removeActiveCardPayment } from '../utils/cardPaymentUtils.js';
 import { closeFinancialWeek, reopenFinancialWeek } from '../utils/weekReopeningUtils.js';
 
 const dashboardTabs = [
@@ -175,7 +173,7 @@ export function Dashboard({ financeData, setFinanceData }) {
       const signedAmount = type === 'deposit' ? movementAmount : -movementAmount;
       const movement = {
         id: `reserve-manual-${Date.now()}`,
-        date: new Date().toISOString().slice(0, 10),
+        date: formatIsoDate(new Date()),
         bucketId,
         bucketName: targetBucket?.name || 'Reserva',
         type,
@@ -418,6 +416,8 @@ export function Dashboard({ financeData, setFinanceData }) {
             onUpdateWeek={updateWeeklyRecord}
             onCloseWeek={closeActiveWeek}
             onReserveBucketBalanceChange={adjustReserveBucketBalance}
+            onAddCardPayment={(payment) => setFinanceData((current) => recordCardPayment(current, payment))}
+            onDeleteCardPayment={(id) => setFinanceData((current) => removeActiveCardPayment(current, id))}
             onStartActiveWeek={startActiveWeek}
             onUpdateActiveWeek={updateActiveWeek}
           />

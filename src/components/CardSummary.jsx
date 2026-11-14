@@ -1,6 +1,6 @@
 import React from 'react';
 import { formatShortDate } from '../utils/dateUtils.js';
-import { formatActionMoney, formatMoney } from '../utils/financeEngine.js';
+import { formatActionMoney, formatMoney } from '../utils/moneyDisplay.js';
 
 export function CardSummary({ cards, gemMinimumSummary }) {
   const gemCardIds = new Set(gemMinimumSummary?.cardIds || []);

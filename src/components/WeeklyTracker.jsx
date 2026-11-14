@@ -226,7 +226,7 @@ export function WeeklyTracker({
     : null;
   const activeWeekWeeklyMargin = Number(activeWeekMoneyFlowSummary?.margin ?? 0);
   const activeWeekResultLabel =
-    activeWeekWeeklyMargin > 0 ? 'Sobró' : activeWeekWeeklyMargin < 0 ? 'Faltó' : 'Quedó justo';
+    activeWeekWeeklyMargin > 0 ? 'Margen calculado' : activeWeekWeeklyMargin < 0 ? 'Faltante calculado' : 'Resultado calculado en cero';
   const marginAfterChosenPayment = weeklySummary.availableForDebt - weeklyFundedPaid;
   const chosenPaymentMessage = buildChosenPaymentMessage({
     totalPaid,
@@ -671,7 +671,7 @@ export function WeeklyTracker({
       <div className="grid gap-3">
         <CollapsiblePanel
           title="Control de la semana financiera"
-          summary={`${formatDisplayDate(normalizedActiveWeek.weekStartDate)} · total disponible ${formatMoney(totalIncome)}`}
+          summary={`${formatDisplayDate(normalizedActiveWeek.weekStartDate)} · saldo inicial + ingresos ingresados ${formatMoney(totalIncome)}`}
           defaultOpen={false}
         >
           <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
@@ -689,7 +689,7 @@ export function WeeklyTracker({
                   {formatDisplayDate(normalizedActiveWeek.weekStartDate)}
                 </span>
               </label>
-              <MoneyInput label="Ingreso real cobrado" value={normalizedActiveWeek.realIncome} onChange={updateRealIncome} />
+              <MoneyInput label="Ingreso principal ingresado" value={normalizedActiveWeek.realIncome} onChange={updateRealIncome} />
             </div>
           </div>
 
@@ -722,7 +722,7 @@ export function WeeklyTracker({
             ) : null}
             <SummaryTile label="Ingreso principal" value={normalizedActiveWeek.realIncome} />
             <SummaryTile label="Otros ingresos" value={extraIncomeTotal} />
-            <SummaryTile label="Total disponible" value={totalIncome} tone="positive" />
+            <SummaryTile label="Saldo inicial + ingresos ingresados" value={totalIncome} tone="positive" />
             <SummaryTile label="Mínimo semanal seguro" value={minimumSafeWeeklyPayment} tone="warning" />
             <SummaryTile
               helper="Si pagás el mínimo seguro y usás el presupuesto completo."
@@ -790,19 +790,20 @@ export function WeeklyTracker({
           </div>
         </CollapsiblePanel>
 
+        <p className="my-2 text-sm text-stone-600">Movimientos registrados: pueden ser parciales. No es el saldo del banco. Las compras que no cargaste no están incluidas. Incluye gastos fijos y mensuales según presupuesto.</p>
         <CollapsiblePanel
-          title="Gastos de la semana"
-          summary={`${variableTransactions.length} gastos · ${formatMoney(actualVariableSpent)}`}
+          title="Compras registradas (opcional)"
+          summary={variableTransactions.length ? `${variableTransactions.length} compras registradas · ${formatMoney(actualVariableSpent)}` : 'No cargaste compras'}
           defaultOpen={false}
         >
           <div className="rounded-lg border border-stone-200 bg-stone-50 p-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
-              <h3 className="text-sm font-semibold uppercase tracking-wide text-stone-600">Gastos de la semana</h3>
-              <p className="mt-1 text-sm text-stone-500">Cargá cada compra y la app suma por categoría.</p>
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-stone-600">Compras registradas (opcional)</h3>
+              <p className="mt-1 text-sm text-stone-500">Podés cargar compras por categoría si querés llevar el detalle. No hace falta cargarlas todas para cerrar la semana.</p>
             </div>
             <span className="rounded-full border border-stone-200 bg-white px-3 py-1 text-xs font-semibold text-stone-600">
-              {variableTransactions.length} gastos
+              {variableTransactions.length ? `${variableTransactions.length} compras registradas` : 'No cargaste compras'}
             </span>
           </div>
 
@@ -867,7 +868,7 @@ export function WeeklyTracker({
             </div>
           ) : (
             <p className="mt-4 rounded-md border border-dashed border-stone-300 bg-white p-3 text-sm text-stone-500">
-              Todavía no cargaste gastos variables para esta semana.
+              No cargaste compras. Esto no significa que no hayas gastado.
             </p>
           )}
 
@@ -884,12 +885,12 @@ export function WeeklyTracker({
         </CollapsiblePanel>
 
         <CollapsiblePanel
-          title="Resultado real de la semana"
+          title="Resultado calculado con movimientos registrados"
           summary={`${activeWeekResultLabel} ${formatMoney(Math.abs(activeWeekWeeklyMargin))}`}
           defaultOpen={false}
         >
           <div className="rounded-lg border border-sky-200 bg-sky-50 p-4">
-            <p className="text-sm font-semibold uppercase tracking-wide text-sky-700">Resultado real de la semana</p>
+            <p className="text-sm font-semibold uppercase tracking-wide text-sky-700">Resultado calculado con movimientos registrados</p>
             <MoneyFlowPanel summary={activeWeekMoneyFlowSummary} />
           </div>
         </CollapsiblePanel>
@@ -1114,7 +1115,7 @@ function ReopenedWeekPanel({ record, financeData, weeklySummary, onUpdate, onClo
     <div className="grid gap-4">
       <h2 className="text-lg font-semibold">Semana histórica reabierta · {formatDisplayDate(record.weekStartDate || record.weekDate)}</h2>
       <div className="grid gap-3 sm:grid-cols-2">
-        <label className="text-sm">Ingreso real cobrado
+        <label className="text-sm">Ingreso principal ingresado
           <input className="mt-1 w-full rounded-md border p-2" type="number" min="0" step="0.01" value={draft.income} onChange={(event) => setDraft({ ...draft, income: event.target.value })} />
         </label>
         <label className="text-sm">Nota
@@ -1276,7 +1277,7 @@ function WeeklyRecordItem({
       <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <p>
-            <strong className="text-stone-950">{formatDisplayDate(previewRecord.weekDate)}</strong> · Ingreso principal {formatMoney(previewRecord.realIncome)} · Total disponible {formatMoney(previewRecord.totalIncome)} · Pagado a deudas {formatMoney(previewRecord.totalPaid)}
+            <strong className="text-stone-950">{formatDisplayDate(previewRecord.weekDate)}</strong> · Ingreso principal {formatMoney(previewRecord.realIncome)} · Saldo inicial + ingresos ingresados {formatMoney(previewRecord.totalIncome)} · Pagado a deudas {formatMoney(previewRecord.totalPaid)}
           </p>
           <p className="mt-1 text-stone-500">
             {previewRecord.openingBalance > 0 ? `Saldo inicial ${formatMoney(previewRecord.openingBalance)} · ` : ''}Otros ingresos {formatMoney(previewRecord.extraIncomeTotal)} · Supermercado {formatMoney(previewRecord.totals.groceries)} · Combustible {formatMoney(previewRecord.totals.fuel)} · Otros {formatMoney(previewRecord.totals.other)} · Reservas {formatMoney(previewRecord.reserveTransferTotal)} · {previewRecord.variableTransactions.length} transacciones
@@ -1319,19 +1320,20 @@ function WeeklyRecordItem({
         </div>
       </div>
 
+      <p className="my-2 text-sm text-stone-600">Movimientos registrados: pueden ser parciales. No es el saldo del banco. Las compras que no cargaste no están incluidas. Incluye gastos fijos y mensuales según presupuesto.</p>
       <div className="mt-3 grid gap-2 sm:grid-cols-4">
         <SmallResult
-          label={previewRecord.variableDifference >= 0 ? 'Gasté de menos' : 'Gasté de más'}
+          label={previewRecord.variableDifference >= 0 ? 'Registrado por debajo del presupuesto' : 'Registrado por encima del presupuesto'}
           value={formatMoney(Math.abs(previewRecord.variableDifference))}
           tone={variableTone}
         />
         <SmallResult
-          label={previewRecord.realWeeklyMargin >= 0 ? 'Margen real' : 'Faltante real'}
+          label={previewRecord.realWeeklyMargin >= 0 ? 'Margen calculado con registros' : 'Faltante calculado con registros'}
           value={formatMoney(Math.abs(previewRecord.realWeeklyMargin))}
           tone={marginTone}
         />
         <SmallResult label="Movido a reservas" value={formatMoney(previewRecord.reserveTransferTotal)} />
-        <SmallResult label="Gasto variable real" value={formatMoney(previewRecord.totals.total)} />
+        <SmallResult label="Compras registradas" value={formatMoney(previewRecord.totals.total)} />
       </div>
 
       {editingDraft ? (
@@ -1379,7 +1381,7 @@ function WeeklyRecordItem({
               <SmallResult label="Saldo inicial" value={formatMoney(previewRecord.openingBalance)} tone="positive" />
             ) : null}
             <SmallResult label="Otros ingresos" value={formatMoney(previewRecord.extraIncomeTotal)} tone={previewRecord.extraIncomeTotal > 0 ? 'positive' : 'default'} />
-            <SmallResult label="Total disponible" value={formatMoney(previewRecord.totalIncome)} tone="positive" />
+            <SmallResult label="Saldo inicial + ingresos ingresados" value={formatMoney(previewRecord.totalIncome)} tone="positive" />
           </div>
           {previewRecord.extraIncome.length > 0 ? (
             <div className="grid gap-2">
@@ -1441,7 +1443,7 @@ function ClosedWeekEditor({
     <div className="mt-3 rounded-md border border-sky-200 bg-white p-3">
       <div className="grid gap-3 md:grid-cols-[0.8fr_1.2fr]">
         <MoneyInput
-          label="Ingreso real cobrado"
+          label="Ingreso principal ingresado"
           value={draft.realIncome}
           onChange={(value) => onUpdateDraft({ realIncome: Number(value || 0) })}
         />
@@ -1458,7 +1460,7 @@ function ClosedWeekEditor({
 
       <div className="mt-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">Otros ingresos reales</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">Otros ingresos ingresados</p>
           <button
             className="rounded-md border border-stone-300 bg-white px-3 py-2 text-xs font-semibold text-stone-700 hover:bg-stone-100"
             type="button"
@@ -1518,7 +1520,7 @@ function ClosedWeekEditor({
 
       <div className="mt-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">Gastos variables reales</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">Compras registradas</p>
           <button
             className="rounded-md border border-stone-300 bg-white px-3 py-2 text-xs font-semibold text-stone-700 hover:bg-stone-100"
             type="button"
@@ -1586,7 +1588,7 @@ function ClosedWeekEditor({
       </div>
 
       <div className="mt-4">
-        <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">Pagos reales a deudas</p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">Pagos registrados a deudas</p>
         <div className="mt-2 grid gap-3 md:grid-cols-2">
           {draft.payments.map((payment, index) => {
             const reserveFunded = !isWeeklyIncomeFunded(payment);
@@ -1637,7 +1639,7 @@ function CollapsiblePanel({ title, summary, defaultOpen = false, children }) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
-    <div className="rounded-lg border border-stone-200 bg-white shadow-sm">
+    <div className="min-w-0 rounded-lg border border-stone-200 bg-white shadow-sm">
       <button
         className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
         type="button"
@@ -1658,14 +1660,14 @@ function CollapsiblePanel({ title, summary, defaultOpen = false, children }) {
 
 function MoneyFlowPanel({ summary }) {
   const weeklyMargin = Number(summary.margin ?? 0);
-  const resultLabel = weeklyMargin > 0 ? 'Sobró' : weeklyMargin < 0 ? 'Faltó' : 'Quedó justo';
+  const resultLabel = weeklyMargin > 0 ? 'Margen calculado' : weeklyMargin < 0 ? 'Faltante calculado' : 'Resultado calculado en cero';
   const resultTone = weeklyMargin > 0 ? 'positive' : weeklyMargin < 0 ? 'warning' : 'default';
   const totalOutflowMargin = Number(summary.totalOutflowMargin ?? 0);
 
   return (
     <div className="mt-3 grid gap-3">
       <div className="grid gap-3 sm:grid-cols-3">
-        <SummaryTile label="Ingresó" value={summary.totalIncome} tone="positive" />
+        <SummaryTile label="Saldo inicial + ingresos ingresados" value={summary.totalIncome} tone="positive" />
         <SummaryTile label="Salió de semana actual" value={summary.weeklyIncomeOutflow} tone="warning" />
         <SummaryTile
           label={resultLabel}
@@ -1681,7 +1683,7 @@ function MoneyFlowPanel({ summary }) {
           ) : null}
           <MoneyFlowRow label="Ingreso principal" value={summary.primaryIncome} tone="positive" />
           <MoneyFlowRow label="Otros ingresos" value={summary.extraIncomeTotal} tone={summary.extraIncomeTotal > 0 ? 'positive' : 'default'} />
-          <MoneyFlowRow label="Total disponible" value={summary.totalIncome} strong tone="positive" />
+          <MoneyFlowRow label="Saldo inicial + ingresos ingresados" value={summary.totalIncome} strong tone="positive" />
         </CollapsibleMoneySection>
 
         <CollapsibleMoneySection title="Dinero comprometido" total={summary.fixedAndReservedTotal} defaultOpen>
@@ -1712,12 +1714,12 @@ function MoneyFlowPanel({ summary }) {
           <MoneyFlowRow label="Total movido a reservas" value={summary.reserveTransferTotal} strong tone="positive" />
         </CollapsibleMoneySection>
 
-        <CollapsibleMoneySection title="Gasto real" total={summary.variableTotals.total + summary.totalPaid} defaultOpen>
+        <CollapsibleMoneySection title="Compras y pagos registrados" total={summary.variableTotals.total + summary.totalPaid} defaultOpen>
           <MoneyFlowRow label="Supermercado" value={summary.variableTotals.groceries} />
           <MoneyFlowRow label="Combustible" value={summary.variableTotals.fuel} />
           <MoneyFlowRow label="Otros variables" value={summary.variableTotals.other} />
           <MoneyFlowRow label="Pagos a deudas" value={summary.totalPaid} />
-          <MoneyFlowRow label="Total gasto real" value={summary.variableTotals.total + summary.totalPaid} strong tone="warning" />
+          <MoneyFlowRow label="Total de compras y pagos registrados" value={summary.variableTotals.total + summary.totalPaid} strong tone="warning" />
         </CollapsibleMoneySection>
 
         <CollapsibleMoneySection title="Usado desde reservas" total={summary.reserveFundedTotal} defaultOpen={summary.reserveFundedTotal > 0}>

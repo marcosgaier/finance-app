@@ -1,0 +1,9 @@
+PASS 360 empty
+PASS 360 partial
+PASS 360 reserve
+PASS 360 expected
+PASS 1280 empty
+PASS 1280 partial
+PASS 1280 reserve
+PASS 1280 expected
+UI TOTAL 8 PASS

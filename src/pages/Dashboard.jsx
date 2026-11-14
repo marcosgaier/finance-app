@@ -348,7 +348,7 @@ export function Dashboard({ financeData, setFinanceData }) {
 
             <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
               <StatCard label="Ingreso usado esta semana" value={weeklySummary.weeklyIncome} helper="Saldo inicial + ingreso principal usado + ingresos extra de la semana activa." actionAmount />
-              <StatCard label="Disponible para deudas" value={weeklySummary.availableForDebt} helper="Después de números semanales, servicios, supermercado y combustible." tone="strong" actionAmount />
+              <StatCard label="Estimado para deudas" value={weeklySummary.availableForDebt} helper="Proyección según presupuesto e ingresos esperados o ingresados; no es saldo bancario." tone="strong" actionAmount />
               <StatCard
                 label={marginAfterMinimumSafe < 0 ? 'Faltante para mínimo seguro' : 'Margen después del mínimo seguro'}
                 value={Math.abs(marginAfterMinimumSafe)}

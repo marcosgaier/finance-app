@@ -58,8 +58,8 @@ export function WeeklyActionPlan({ financeData, weeklySummary }) {
     <section className="rounded-lg border border-teal-200 bg-white p-4 shadow-sm">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-wide text-teal-700">Plan de esta semana</p>
-          <h2 className="mt-1 text-xl font-bold text-stone-950">Hoy cobré. ¿Qué hago con la plata?</h2>
+          <p className="text-sm font-semibold uppercase tracking-wide text-teal-700">Plan estimado con presupuesto</p>
+          <h2 className="mt-1 text-xl font-bold text-stone-950">¿Cómo organizar esta semana?</h2>
         </div>
         <div className={`rounded-md border px-3 py-2 ${estimatedFree >= 0 ? 'border-emerald-200 bg-emerald-50' : 'border-amber-200 bg-amber-50'}`}>
           <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">Planificado: te quedaría</p>
@@ -67,16 +67,17 @@ export function WeeklyActionPlan({ financeData, weeklySummary }) {
         </div>
       </div>
 
+      <p className="mt-3 text-sm text-stone-600">Usa ingresos esperados o ingresados manualmente; no confirma un depósito bancario. Los importes son una proyección según presupuesto.</p>
       <div className="mt-4 grid gap-3 lg:grid-cols-4">
         <ActionStep
-          label="Total disponible"
+          label="Fondos considerados en el plan"
           value={formatActionMoney(totalIncome)}
           helper={
             openingBalance > 0
               ? `Saldo inicial ${formatActionMoney(openingBalance)} + ingreso principal ${formatActionMoney(baseIncomeUsed)}${extraIncomeTotal > 0 ? ` + extras ${formatActionMoney(extraIncomeTotal)}` : ''}.`
               : extraIncomeTotal > 0
                 ? `Ingreso principal ${formatActionMoney(baseIncomeUsed)} + extras ${formatActionMoney(extraIncomeTotal)}.`
-                : 'Ingreso real cobrado si existe; si no, ingreso base esperado.'
+                : 'Ingreso principal ingresado si es positivo; si no, ingreso base esperado.'
           }
         />
         <ActionStep
@@ -101,17 +102,18 @@ export function WeeklyActionPlan({ financeData, weeklySummary }) {
         <div className="mt-4 rounded-md border border-stone-200 bg-stone-50 p-3">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-sm font-semibold text-stone-900">Ya registrado esta semana</p>
+              <p className="text-sm font-semibold text-stone-900">Movimientos registrados (pueden ser parciales)</p>
+              <p className="mt-1 text-sm text-stone-600">No es el saldo del banco. Las compras que no cargaste no están incluidas.</p>
               <p className="mt-1 text-sm text-stone-600">
                 Super {formatActionMoney(weeklyFundedTransactionTotals.groceries)} · combustible {formatActionMoney(weeklyFundedTransactionTotals.fuel)} · otros {formatActionMoney(weeklyFundedTransactionTotals.other)} · deudas {formatActionMoney(weeklyFundedDebtPayments)} · reservas {formatActionMoney(weeklyFundedReserveTransfers)}
               </p>
               {reserveFundedTotal > 0 ? (
                 <p className="mt-1 text-sm text-stone-500">Usado desde reservas: {formatActionMoney(reserveFundedTotal)}</p>
               ) : null}
-              <p className="mt-1 text-xs text-stone-500">El margen descuenta solo lo que salió de semana actual.</p>
+              <p className="mt-1 text-xs text-stone-500">Incluye gastos fijos y mensuales presupuestados. Descuenta solo los movimientos registrados con origen semana actual.</p>
             </div>
             <div className={`rounded-md border px-3 py-2 ${actualRemaining >= 0 ? 'border-emerald-200 bg-white' : 'border-amber-200 bg-amber-50'}`}>
-              <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">Real hasta ahora</p>
+              <p className="max-w-64 text-xs font-semibold uppercase tracking-wide text-stone-500">Calculado con movimientos registrados</p>
               <p className="text-base font-bold text-stone-950">{formatActionMoney(actualRemaining)}</p>
             </div>
           </div>

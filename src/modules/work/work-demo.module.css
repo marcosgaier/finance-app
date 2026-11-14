@@ -67,3 +67,14 @@
 .paymentAmounts div {display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 12px}
 .paymentAmounts dd {white-space:nowrap}
 @media(max-width:400px) {.nextPaymentCard {grid-template-columns:1fr}.workDemo {padding:16px}}
+.editor {width:min(650px,calc(100vw - 24px));max-height:85dvh;overflow:auto;border:1px solid #bacdc3;border-radius:20px;padding:22px;background:#f4f7f5;color:#152622;margin:auto}
+.editor::backdrop {background:#102c24b3}
+.editorGrid {display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+.editor label {display:flex;flex-direction:column;gap:5px;min-width:0;font-weight:650}
+.editor input,.editor select {display:block;box-sizing:border-box;width:100%;min-width:0;min-height:44px;border:1px solid #78978a;border-radius:8px;padding:8px;background:white;color:#152622;font:inherit}
+.editor input:focus-visible,.editor select:focus-visible {outline:3px solid #3c725e;outline-offset:2px}
+.editor fieldset {border:1px solid #bacdc3;border-radius:12px;padding:14px;margin:18px 0;min-width:0}
+.editor [role="alert"] {background:#fff0e7;color:#702508;border:1px solid #b7643c;padding:12px}
+.workDemo button:disabled {opacity:.55;cursor:not-allowed}
+.shiftActions {display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px}
+.shiftActions button {margin:0}

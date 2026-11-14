@@ -1,0 +1,48 @@
+import assert from 'node:assert/strict';
+import {build} from 'esbuild';
+import {mkdtemp,rm} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {pathToFileURL} from 'node:url';
+process.env.TZ='Pacific/Auckland';
+const temp=await mkdtemp(join(tmpdir(),'work-editor-'));
+try {
+  const file=join(temp,'editor.mjs');
+  await build({stdin:{contents:`export * from './src/modules/work/demo/editor';export * as fixture from './src/modules/work/demo/fixtures';export {calculateContractOvertime} from './src/modules/work/vendor/taura/domain/contractRules';export {buildPayProjections} from './src/modules/work/vendor/taura/domain/payPeriods';`,resolveDir:process.cwd()},bundle:true,format:'esm',platform:'node',outfile:file});
+  const {copyExample,changeExample,template,validateShift,civilDate,fixture,calculateContractOvertime,buildPayProjections}=await import(pathToFileURL(file));
+  const before=JSON.stringify(fixture.validateDemo());
+  const effects=[];
+  for(const key of ['localStorage','sessionStorage','indexedDB','caches','fetch','XMLHttpRequest','WebSocket','EventSource','Worker','SharedWorker','BroadcastChannel'])Object.defineProperty(globalThis,key,{configurable:true,get(){effects.push(key);throw Error(key);}});
+  const source=copyExample(),original={...source[0],created_at:'original',extra:{preserve:true}};
+  let state=[original,...source.slice(1)];
+  const edit={...original,planned_unpaid_break:1,actual_paid_hours:11};
+  state=changeExample(state,{type:'save',shift:edit});
+  assert.equal(state[0].id,original.id);assert.equal(state[0].created_at,'original');assert.deepEqual(state[0].extra,{preserve:true});assert.equal(state[0].planned_paid_hours,11);
+  const other=JSON.stringify(state.slice(1));
+  state=changeExample(state,{type:'duplicate',id:original.id});
+  assert.equal(new Set(state.map(s=>s.id)).size,state.length);assert.equal(state.at(-1).status,'planned');assert.equal(state.at(-1).actual_paid_hours,null);
+  assert.equal(state.filter(s=>s.shift_date===original.shift_date).length,2);
+  state=changeExample(state,{type:'cancel',id:original.id});assert.equal(state[0].status,'cancelled');
+  const rated=calculateContractOvertime(state,fixture.settings,fixture.overtimePreferences);assert.equal(rated.has(original.id),false);
+  const count=state.length;state=changeExample(state,{type:'delete',id:original.id});assert.equal(state.length,count-1);assert.equal(JSON.stringify(state.slice(0,-1)),other);
+  const empty=template('2026-10-01');assert.equal(changeExample(state,{type:'save',shift:empty}).length,state.length+1);
+  const frozen=JSON.stringify(state);
+  const invalid=[{shift_date:'2026-02-30'},{shift_date:'2026-09-31'},{shift_date:'bad'},{kind:'holiday'},{status:'confirmed'},{status:'payslip'},{planned_rate:-1},{planned_rate:NaN},{actual_rate:Infinity},{actual_paid_hours:'5'},{actual_paid_hours:13},{actual_unpaid_break:-1},{planned_unpaid_break:13},{planned_start:null},{planned_end:'2026-10-01T06:00:00'},{planned_end:'2026-10-01T20:00:00'},{planned_start:'2026-10-01T25:00:00'},{actual_start:'bad',actual_end:'bad'},{actual_start:'2026-10-01T07:00:00',actual_end:null}];
+  for(const patch of invalid){assert.throws(()=>changeExample(state,{type:'save',shift:{...empty,...patch}}),JSON.stringify(patch));assert.equal(JSON.stringify(state),frozen);}
+  for(const value of ['2026-04-31','2027-02-29','2026-13-01','2026-00-01','2026-03-31'])assert.throws(()=>civilDate(value));
+  assert.equal(validateShift(template('2026-09-23','night')).planned_paid_hours,12);
+  assert.equal(validateShift({...template('2026-09-23','night'),planned_end:'2026-09-24T00:00:00'}).planned_paid_hours,5);
+  assert.equal(validateShift(template('2026-09-26','night')).planned_paid_hours,11,'NZ spring DST elapsed hours');
+  assert.throws(()=>validateShift({...template('2026-09-27'),planned_start:'2026-09-27T02:30:00'}),'Nonexistent NZ time');
+  assert.throws(()=>validateShift({...template('2026-04-05'),planned_start:'2026-04-05T02:30:00'}),'Ambiguous NZ time');
+  assert.equal(validateShift(template('2026-09-24','off')).planned_paid_hours,0);
+  assert.throws(()=>validateShift({...template('2026-09-24','off'),actual_paid_hours:1}));
+  for(const kind of ['annual_leave','sick_leave','custom'])assert.equal(validateShift(template('2026-09-24',kind)).kind,kind);
+  for(const status of ['paid_leave','unpaid_leave'])assert.equal(validateShift({...empty,status}).status,status);
+  for(const status of ['payslip','confirmed'])for(const type of ['save','duplicate','cancel','delete'])assert.throws(()=>changeExample([{...empty,status}],type==='save'?{type,shift:{...empty,status:'planned'}}:{type,id:empty.id}));
+  const base=copyExample();const changed=changeExample(base,{type:'cancel',id:'demo-4'});
+  const pay=s=>buildPayProjections(s,fixture.settings,fixture.validateDemo().referenceDate,4,fixture.overtimePreferences);
+  assert.notDeepEqual(pay(changed),pay(base),'Scenario payroll recalculates');
+  assert.deepEqual(copyExample(),base);assert.equal(JSON.stringify(fixture.validateDemo()),before);assert.deepEqual(effects,[]);
+  console.log('PASS editor: immutable fixture/copy; preserve ID/created_at/unknown fields; unique duplicate; per-ID actions; cancelled excluded; delete isolation; empty/multiple days; validation atomic; civil dates; midnight; NZ DST; 12h; off/leave; protected statuses; payroll recalculation; reset; zero effects.');
+} finally {await rm(temp,{recursive:true,force:true});}

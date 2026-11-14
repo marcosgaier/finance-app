@@ -1,0 +1,7 @@
+{
+  "repository": "marcosgaier/taura-roster-pay",
+  "ref": "22665a594a0dc8230aa7ed6a28736297a1ed32f2",
+  "readThrough": "GitHub connector raw files pinned to ref (local Taura checkout does not contain this Git object)",
+  "paths": ["src/components/ShiftEditor.tsx", "src/domain/shiftTemplates.ts", "src/types.ts"],
+  "usage": "Read as reference only; original components/hooks/storage not imported. Vendored pure engine identity is checked separately by provenance.json and tests."
+}

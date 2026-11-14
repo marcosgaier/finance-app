@@ -104,7 +104,9 @@ const unchanged = async before => assert.deepEqual(await snapshot(), before);
 try {
   await page.goto(baseURL);
   await page.getByRole('button', {name:'Estimaciones Taura', exact:true}).waitFor();
-  const tab = name => page.getByRole('button', {name, exact:true}).click();
+  // PlanList expands priority details in a passive effect after a tab mounts.
+  // Read its settled UI rather than racing that effect under the mocked clock.
+  const tab = async name => {await page.getByRole('button', {name, exact:true}).click();await page.clock.runFor(32);};
   const backup = async () => {
     await tab('Ajustes');
     const pending = page.waitForEvent('download');

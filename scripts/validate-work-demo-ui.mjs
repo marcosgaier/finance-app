@@ -6,7 +6,7 @@ import { resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { sampleFinanceData } from '../src/data/sampleData.js';
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE ? pathToFileURL(resolve(process.env.PLAYWRIGHT_MODULE)).href : 'playwright');
-const output = new URL('../docs/validation/arch-01b2-2b/', import.meta.url);
+const output = process.env.VALIDATION_OUTPUT_DIR ? pathToFileURL(resolve(process.env.VALIDATION_OUTPUT_DIR) + '/') : new URL('../docs/validation/arch-01b2-2b/', import.meta.url);
 await mkdir(output, { recursive: true });
 const server = createServer(async (req, res) => {
   try {
@@ -157,7 +157,7 @@ try {
       await page.keyboard.press('Tab');await page.keyboard.press('Shift+Tab');
       assert.equal(await calendarDay.evaluate(el=>getComputedStyle(el).outlineStyle),'solid');
       await page.evaluate(()=>window.scrollTo(0,350));
-      const banner=await work.getByText('DEMOSTRACIÓN — datos ficticios; no es tu roster',{exact:true}).boundingBox();
+      const banner=await work.getByText('MODO DEMOSTRACIÓN — datos ficticios; no es tu roster',{exact:true}).boundingBox();
       assert.ok(Math.abs(banner.y)<2,'Demo banner remains visible while scrolling');
       assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
       assert.equal(await page.getByText('Demostración no disponible.',{exact:false}).count(),0);

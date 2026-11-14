@@ -67,3 +67,17 @@
 .paymentAmounts div {display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 12px}
 .paymentAmounts dd {white-space:nowrap}
 @media(max-width:400px) {.nextPaymentCard {grid-template-columns:1fr}.workDemo {padding:16px}}
+.editorDialog {width:min(640px,calc(100% - 24px));max-height:88dvh;overflow:auto;padding:20px;border:2px solid #173e35;border-radius:18px;background:#f4f7f5;color:#152622;box-sizing:border-box}
+.editorDialog::backdrop {background:#102c25aa}
+.editorDialog h2 {font-size:23px;font-weight:750}
+.editorDialog p {margin:12px 0}
+.editorGrid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:12px 0}
+.editorGrid label {display:flex;flex-direction:column;gap:5px;min-width:0;font-weight:600}
+.editorGrid input,.editorGrid select {width:100%;min-width:0;box-sizing:border-box;background:white;border:1px solid #68877a;border-radius:8px;padding:10px;min-height:44px;color:#152622}
+.editorDialog fieldset {border:1px solid #bacdc3;padding:10px;min-width:0}
+.editorDialog legend {font-weight:750}
+.editorDialog button {background:#173e35;color:white;padding:12px;border-radius:10px;min-height:44px}
+.editorDialog :focus-visible {outline:3px solid #3c725e;outline-offset:2px}
+.editorError {color:#8b2020;border:1px solid #8b2020;padding:10px;border-radius:8px}
+.workDemo button:disabled {opacity:.55;cursor:not-allowed}
+@media(max-width:480px){.editorGrid {grid-template-columns:1fr}.editorDialog {padding:14px}}

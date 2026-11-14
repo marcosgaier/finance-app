@@ -1,0 +1,71 @@
+
+> test:work-editor-ui
+> node scripts/validate-work-editor-ui.mjs
+
+Checking editor width 360
+Checking editor width 390
+Checking editor width 1280
+{
+  "status": "PASS",
+  "node": "v24.22.1",
+  "chromium": "156.0.8078.79",
+  "checks": [
+    {
+      "width": 360,
+      "status": "PASS",
+      "flows": [
+        "edit/ID/invalid/unchanged",
+        "dialog keyboard/Escape/focus/scroll",
+        "consistent summary/payments",
+        "multiple/duplicate/cancel",
+        "confirmed deletion",
+        "empty day/night/add",
+        "month/week navigation",
+        "reset confirm",
+        "exit/reopen/reload"
+      ],
+      "workEffects": 0,
+      "financeUnchanged": true
+    },
+    {
+      "width": 390,
+      "status": "PASS",
+      "flows": [
+        "edit/ID/invalid/unchanged",
+        "dialog keyboard/Escape/focus/scroll",
+        "consistent summary/payments",
+        "multiple/duplicate/cancel",
+        "confirmed deletion",
+        "empty day/night/add",
+        "month/week navigation",
+        "reset confirm",
+        "exit/reopen/reload"
+      ],
+      "workEffects": 0,
+      "financeUnchanged": true
+    },
+    {
+      "width": 1280,
+      "status": "PASS",
+      "flows": [
+        "edit/ID/invalid/unchanged",
+        "dialog keyboard/Escape/focus/scroll",
+        "consistent summary/payments",
+        "multiple/duplicate/cancel",
+        "confirmed deletion",
+        "empty day/night/add",
+        "month/week navigation",
+        "reset confirm",
+        "exit/reopen/reload"
+      ],
+      "workEffects": 0,
+      "financeUnchanged": true
+    }
+  ],
+  "limits": "Local build, isolated synthetic profiles. Native Android/PWA, OS zoom and real screen readers remain manual. No Taura production access."
+}
+npm notice
+npm notice New major version of npm available! 11.9.0 -> 12.2.2
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.2
+npm notice To update run: npm install -g npm@12.2.2
+npm notice

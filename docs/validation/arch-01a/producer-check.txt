@@ -1,0 +1,2 @@
+Producer SHA-256: 5152a593238218f6a2470a423d2180bcd5c87f2c5201b8348838a0b12fae0974
+PASS real Taura exporter → Finance parser; deterministic fixture --check

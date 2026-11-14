@@ -1,6 +1,6 @@
 # ARCH-01A — contrato Taura → Finance, fase 0
 
-Alcance: [issue #24](https://github.com/marcosgaier/taura-roster-pay/issues/24), basado en [ARCH-01](https://github.com/marcosgaier/taura-roster-pay/issues/23). Solo tests, fixture sintético y documentación en Finance; sin cambios a src, package.json, dependencias, UI, configuración, persistencia ni Taura.
+Alcance: [issue #24](https://github.com/marcosgaier/taura-roster-pay/issues/24), basado en [ARCH-01](https://github.com/marcosgaier/taura-roster-pay/issues/23). Solo tests, fixture sintético y documentación en Finance; único cambio en package.json: incluir la suite en npm test; sin cambios a src, dependencias, UI, configuración, persistencia ni Taura.
 
 ## Fuentes y procedencia
 
@@ -26,7 +26,7 @@ npm run build
 git diff --check
 ```
 
-El nuevo test offline no requiere red, Taura instalado, deployment, navegador ni perfil. No se cambia package.json: el comando Node directo es suficiente y debe ejecutarse junto a npm test para revisar ARCH-01A; **npm test por sí solo no incorpora esta nueva suite**.
+El test offline no requiere red, Taura instalado, deployment, navegador ni perfil. Tras la revisión del PR #10, npm test incluye las nueve pruebas ARCH-01A y conserva todos los scripts y suites anteriores. El comando Node directo permite ejecutar solo esta suite. El gate externo --check sigue siendo manual: npm test no descarga ni ejecuta código remoto.
 
 Para reproducir el productor, guardar fuera del repo los bytes UTF-8 de la URL raw fijada:
 
@@ -58,8 +58,10 @@ node scripts/arch-01a-producer-fixture.mjs C:/ruta/externa/incomeProjections.ts 
 
 ## Resultados reales
 
+Validación repetida tras incorporar ARCH-01A a npm test. Los logs npm-test.txt, contract-tests.txt y build.txt corresponden a esta revisión; producer-check.txt y adversarial-check.txt conservan la evidencia anterior del gate externo sin cambios.
+
 - Nuevo script: **9/9 PASS**, sin skips ([contract-tests.txt](contract-tests.txt)).
-- `npm test`: cuatro scripts existentes y **61/61 Node PASS** ([npm-test.txt](npm-test.txt)).
+- `npm test`: cuatro scripts existentes y **70/70 Node PASS** (61 existentes + 9 ARCH-01A) ([npm-test.txt](npm-test.txt)).
 - `npm run build`: **PASS** ([build.txt](build.txt)).
 - Exportador real `--check`: **PASS**, fixture reproducido determinísticamente y parser compatible ([producer-check.txt](producer-check.txt)).
 - Prueba adversarial adicional: copia temporal del exportador con `status:'confirmed'` en lugar de estimated, sin otro cambio; `--check` devuelve error y mensaje legible de contrato incompatible. El original y Taura permanecen intactos ([adversarial-check.txt](adversarial-check.txt)).

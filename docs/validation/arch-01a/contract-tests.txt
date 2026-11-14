@@ -2,55 +2,55 @@ TAP version 13
 # Subtest: real exporter fixture: exact cents, independent SHA-256 and allowed contract metadata
 ok 1 - real exporter fixture: exact cents, independent SHA-256 and allowed contract metadata
   ---
-  duration_ms: 44.5416
+  duration_ms: 52.9647
   type: 'test'
   ...
 # Subtest: several periods same payDate: unique cents sum, partial selection and no inferred cash
 ok 2 - several periods same payDate: unique cents sum, partial selection and no inferred cash
   ---
-  duration_ms: 8.8037
+  duration_ms: 9.4994
   type: 'test'
   ...
 # Subtest: payDate mapping Monday/Tuesday, month/year and NZ DST civil boundaries
 ok 3 - payDate mapping Monday/Tuesday, month/year and NZ DST civil boundaries
   ---
-  duration_ms: 18.5293
+  duration_ms: 30.2328
   type: 'test'
   ...
 # Subtest: changed payDate requires new revision, keeps period identity, replaces instead of accumulating
 ok 4 - changed payDate requires new revision, keeps period identity, replaces instead of accumulating
   ---
-  duration_ms: 5.1092
+  duration_ms: 6.0615
   type: 'test'
   ...
 # Subtest: same period revised amount conflicts; generatedAt is not a payment identity or sequence
 ok 5 - same period revised amount conflicts; generatedAt is not a payment identity or sequence
   ---
-  duration_ms: 11.5097
+  duration_ms: 10.066
   type: 'test'
   ...
 # Subtest: adversarial future contract drift: exact fields/version/status fail legibly even with valid hash
 ok 6 - adversarial future contract drift: exact fields/version/status fail legibly even with valid hash
   ---
-  duration_ms: 8.9472
+  duration_ms: 11.1676
   type: 'test'
   ...
 # Subtest: corrupt hashes, cents, missing zero, invalid dates and net arithmetic rejected
 ok 7 - corrupt hashes, cents, missing zero, invalid dates and net arithmetic rejected
   ---
-  duration_ms: 5.7384
+  duration_ms: 9.1869
   type: 'test'
   ...
 # Subtest: backups, malformed JSON, item/UTF-8 size limits rejected without side effects
 ok 8 - backups, malformed JSON, item/UTF-8 size limits rejected without side effects
   ---
-  duration_ms: 4.9438
+  duration_ms: 4.748
   type: 'test'
   ...
 # Subtest: closed/reopened week metadata is read only and excluded; errors also leave all inputs intact
 ok 9 - closed/reopened week metadata is read only and excluded; errors also leave all inputs intact
   ---
-  duration_ms: 5.5417
+  duration_ms: 7.5537
   type: 'test'
   ...
 1..9
@@ -61,4 +61,4 @@ ok 9 - closed/reopened week metadata is read only and excluded; errors also leav
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 325.4871
+# duration_ms 404.9393

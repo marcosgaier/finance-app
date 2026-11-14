@@ -1,0 +1,4 @@
+
+> typecheck:work
+> tsc -p tsconfig.work.json
+

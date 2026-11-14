@@ -25,6 +25,10 @@ export function RosterPage({shifts,settings,overtimePreferences,referenceDate,on
     }catch(reason){setError(reason instanceof Error?reason.message:'Acción ficticia inválida.');}
   }
   const origin=useRef<HTMLButtonElement|null>(null);
+  const focusSelection=useRef(false);
+  useLayoutEffect(()=>{
+    if(!preview&&focusSelection.current){focusSelection.current=false;document.getElementById('roster-batch-actions')?.focus({preventScroll:true});}
+  },[preview]);
   useLayoutEffect(()=>{if(selected)document.getElementById('day-detail-title')?.focus();},[selected]);
   const monthStart=new Date(cursor.getFullYear(),cursor.getMonth(),1);
   const days=view==='month'?Array.from({length:42},(_,i)=>addDays(getRosterWeekStart(monthStart),i)):getRosterWeekDates(cursor);
@@ -54,7 +58,14 @@ export function RosterPage({shifts,settings,overtimePreferences,referenceDate,on
       {multi?<a href="#roster-batch-actions" onClick={event=>{event.preventDefault();document.getElementById('roster-batch-actions')?.focus();}}>Elegir turno · {dates.length}</a>:null}
     </div>:null}
     {preview&&onBatch?<BatchPreview plan={preview} onClose={()=>setPreview(null)} onConfirm={()=>{
+      const changes=preview.rows.some(row=>{
+        if(row.action==='create')return true;
+        if(row.action!=='change'||!row.shift)return false;
+        const original=shifts.find(s=>s.id===row.shift!.id);
+        return (['kind','planned_start','planned_end','planned_paid_hours','planned_unpaid_break','planned_rate'] as const).some(key=>row.shift![key]!==original?.[key]);
+      });
       onBatch(preview);setNotice(`Lote aplicado: ${preview.rows.filter(r=>r.action==='create').length} creados, ${preview.rows.filter(r=>r.action==='change').length} cambiados, ${preview.rows.filter(r=>r.action==='skip').length} omitidos.`);setPreview(null);
+      if(changes){setDates([]);focusSelection.current=true;}
     }}/>:null}
     {view==='month'?<div className={styles.weekLabels} aria-hidden="true">{['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'].map(x=><b key={x}>{x}</b>)}</div>:null}
     <ul className={view==='month'?styles.monthDays:styles.weekList} aria-label={view==='month'?'Calendario mensual del ejemplo':'Calendario semanal del ejemplo'}>

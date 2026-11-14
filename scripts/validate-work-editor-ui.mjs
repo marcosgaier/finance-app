@@ -82,6 +82,11 @@ try {
     assert.match(await work.innerText(),/MODO DEMOSTRACIÓN/);
     await work.getByRole('button',{name:'Seleccionar varios días',exact:true}).click();
     assert.equal(await work.getByRole('button',{name:'Día 06:00–18:00',exact:true}).isDisabled(),true);
+    await day('2026-09-20').click();await work.getByRole('button',{name:'Día 06:00–18:00',exact:true}).click();
+    assert.equal(await dialog.getByRole('button',{name:'Confirmar cambios ficticios',exact:true}).isDisabled(),true);
+    await dialog.getByRole('button',{name:'Cancelar',exact:true}).click();
+    assert.equal(await day('2026-09-20').getAttribute('aria-pressed'),'true');
+    await work.getByRole('button',{name:'Limpiar selección',exact:true}).click();
     await day('2026-09-20').click();await day('2026-09-24').focus();await page.keyboard.press('Space');await day('2026-09-28').click();
     assert.equal(await day('2026-09-24').getAttribute('aria-pressed'),'true');
     // Calendar-first: DOM/visual order, accessible targets, and a keyboard shortcut to the footer.
@@ -110,10 +115,39 @@ try {
     assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
     await page.screenshot({path:fileURLToPath(new URL(`batch-preview-${width}.png`,output))});
     await page.keyboard.press('Escape');await dialog.waitFor({state:'hidden'});
+    assert.match(await work.innerText(),/3 días seleccionados/);
+    assert.equal(await work.locator('[data-day][aria-pressed="true"]').count(),3);
     assert.equal(await work.getByRole('button',{name:'Noche 18:00–06:00 (+1 día)',exact:true}).evaluate(el=>el===document.activeElement),true);
     await unchanged();
     await work.getByRole('button',{name:'Noche 18:00–06:00 (+1 día)',exact:true}).click();await dialog.getByRole('button',{name:'Confirmar cambios ficticios',exact:true}).click();
     assert.match(await work.innerText(),/1 creados, 1 cambiados, 1 omitidos/);
+    const cleared=async()=>{
+      assert.match(await work.innerText(),/0 días seleccionados/);
+      assert.equal(await work.locator('[data-day][aria-pressed="true"]').count(),0);
+      assert.equal(await work.getByRole('button',{name:'Seleccionar varios días',exact:true}).getAttribute('aria-pressed'),'true');
+      assert.equal(await actions.evaluate(el=>el===document.activeElement),true);
+      assert.equal(await work.getByRole('button',{name:'Día 06:00–18:00',exact:true}).isDisabled(),true);
+      assert.equal(await work.getByRole('link',{name:'Elegir turno · 0',exact:true}).count(),1);
+    };
+    await cleared();
+    await page.screenshot({path:fileURLToPath(new URL(`batch-cleared-${width}.png`,output)),fullPage:true});
+    // A second, different batch uses only newly selected dates, without toggling multi mode.
+    await day('2026-09-29').click();
+    await work.getByRole('button',{name:'Día 06:00–18:00',exact:true}).click();
+    assert.match(await dialog.innerText(),/2026-09-29 — Se agregará/);
+    await dialog.getByRole('button',{name:'Cancelar',exact:true}).click();
+    assert.match(await work.innerText(),/1 días seleccionados/);
+    assert.equal(await day('2026-09-29').getAttribute('aria-pressed'),'true');
+    await work.getByRole('button',{name:'Día 06:00–18:00',exact:true}).click();
+    await dialog.getByRole('button',{name:'Confirmar cambios ficticios',exact:true}).click();
+    await cleared();
+    assert.match(await day('2026-09-29').getAttribute('aria-label'),/Diurno/);
+    assert.match(await day('2026-09-28').getAttribute('aria-label'),/Nocturno/);
+    // Applying an identical template makes no effective change and preserves selection.
+    await day('2026-09-29').click();await work.getByRole('button',{name:'Día 06:00–18:00',exact:true}).click();
+    await dialog.getByRole('button',{name:'Confirmar cambios ficticios',exact:true}).click();
+    assert.equal(await day('2026-09-29').getAttribute('aria-pressed'),'true');
+    await work.getByRole('button',{name:'Limpiar selección',exact:true}).click();
     await work.getByRole('button',{name:'Seleccionar varios días',exact:true}).click();
     await day('2026-09-24').click();assert.match(await shifts().innerText(),/18:00/);
     await day('2026-09-28').click();assert.equal(await shifts().count(),1);
@@ -121,6 +155,7 @@ try {
     // A multi-shift date is listed as a conflict; quick off/day never duplicate it.
     await day('2026-09-24').click();await shifts().getByRole('button',{name:'Duplicar turno',exact:true}).click();
     await work.getByRole('button',{name:'Seleccionar varios días',exact:true}).click();
+    await day('2026-09-24').click();await day('2026-09-28').click();
     await work.getByRole('button',{name:'Libre 0 h',exact:true}).click();
     assert.match(await dialog.innerText(),/Varios turnos/);
     await dialog.getByRole('button',{name:'Cancelar',exact:true}).click();
@@ -128,7 +163,7 @@ try {
     await work.getByRole('button',{name:'Seleccionar varios días',exact:true}).click();await day('2026-09-28').click();assert.match(await shifts().innerText(),/0 h planificadas/);
     await day('2026-09-24').click();assert.equal(await shifts().count(),2);
     await work.getByRole('button',{name:'Seleccionar varios días',exact:true}).click();
-    await work.getByRole('button',{name:'Limpiar selección',exact:true}).click();assert.match(await work.innerText(),/0 días seleccionados/);
+    assert.match(await work.innerText(),/0 días seleccionados/);
     await day('2026-09-28').click();await work.getByRole('button',{name:'Día 06:00–18:00',exact:true}).click();await dialog.getByRole('button',{name:'Confirmar cambios ficticios',exact:true}).click();
     await work.getByRole('button',{name:'Seleccionar varios días',exact:true}).click();await day('2026-09-28').click();assert.equal(await shifts().count(),1);assert.match(await shifts().innerText(),/06:00/);
     await shifts().getByRole('button',{name:'Editar un turno',exact:true}).click();await dialog.getByRole('button',{name:'Libre 0 h',exact:true}).click();assert.equal(await dialog.getByLabel('Tipo de turno ficticio',{exact:true}).inputValue(),'off');await dialog.getByRole('button',{name:'Cerrar sin guardar',exact:true}).click();assert.match(await shifts().innerText(),/12 h planificadas/);

@@ -3,20 +3,27 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "test": "node scripts/finance-engine-coverage-tests.mjs && node scripts/persistence-tests.mjs && node scripts/historical-payment-tests.mjs && node scripts/week-reopening-tests.mjs && node --test scripts/card-payment-safety-tests.mjs scripts/taura-preview-tests.mjs scripts/income-planning-tests.mjs scripts/expense-planning-tests.mjs scripts/planning-session-tests.mjs scripts/arch-01a-contract-tests.mjs",
+    "test": "node scripts/finance-engine-coverage-tests.mjs && node scripts/persistence-tests.mjs && node scripts/historical-payment-tests.mjs && node scripts/week-reopening-tests.mjs && node --test scripts/card-payment-safety-tests.mjs scripts/taura-preview-tests.mjs scripts/income-planning-tests.mjs scripts/expense-planning-tests.mjs scripts/planning-session-tests.mjs scripts/arch-01a-contract-tests.mjs && npm run test:work",
     "preview": "vite preview",
     "serve": "node scripts/serve-dist.mjs",
     "test:payments-ui": "node scripts/validate-card-payments-ui.mjs",
     "test:taura-ui": "node scripts/validate-taura-preview.mjs",
-    "test:planning-ui": "node scripts/validate-planning-ui.mjs"
+    "test:planning-ui": "node scripts/validate-planning-ui.mjs",
+    "typecheck:work": "tsc -p tsconfig.work.json",
+    "test:work": "node scripts/work-demo-tests.mjs",
+    "test:work-ui": "node scripts/validate-work-demo-ui.mjs"
   },
   "dependencies": {
     "autoprefixer": "^10.4.20",
     "postcss": "^8.4.49",
-    "vite": "^6.4.2",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "tailwindcss": "^3.4.17"
+    "tailwindcss": "^3.4.17",
+    "vite": "^6.4.2"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "@types/react": "^18.3.31",
+    "@types/react-dom": "^18.3.7",
+    "typescript": "~5.6.2"
+  }
 }

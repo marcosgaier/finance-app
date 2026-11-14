@@ -1,0 +1,61 @@
+{
+  "repository": "marcosgaier/taura-roster-pay",
+  "ref": "22665a594a0dc8230aa7ed6a28736297a1ed32f2",
+  "files": [
+    {
+      "path": "types.ts",
+      "gitBlob": "60650758da946fbb633b1223aaff2e2c32e6b100",
+      "sha256": "69c720576d7b8ea09700e3e290daac0a0d36c8d3d93030f4d13f406b57621b35"
+    },
+    {
+      "path": "lib/dates.ts",
+      "gitBlob": "05e3fd827521b71968cb03524ddf35033b01b781",
+      "sha256": "91a455d145c0fade84a499e05f3fef93889f0b9afd815c0c41207a487795086c"
+    },
+    {
+      "path": "lib/payroll.ts",
+      "gitBlob": "86529ee0136442ec5cff81c772a41c09175a0f68",
+      "sha256": "e80bc9620d2bb1f844f8808b0e093af7c267635a1c62aa75ae77c91056ef25f9"
+    },
+    {
+      "path": "domain/contractRules.ts",
+      "gitBlob": "f9bbf654ccb0c12f4fb79885272fbb0b09c13ab6",
+      "sha256": "8e750c1c3e77042bfdbeadaeb93b7261c804e42bdcc4f36aeff4ff02b7cb3617"
+    },
+    {
+      "path": "domain/payPeriods.ts",
+      "gitBlob": "cb631c21cf3c2c832e48eb0bc7ed35f275acb579",
+      "sha256": "8bb2a12c9d69f3836aabad98fec99b8330ef7e08b4bbc789f49d94df9ef06af7"
+    },
+    {
+      "path": "domain/weekendAllowance.ts",
+      "gitBlob": "5efd9fdd154b3a5c882c04d0b88b810fe3e566ba",
+      "sha256": "1ed5deda533272ac5ce78fc959b45289cd95ae921ef20e1ce58b710d08c7207f"
+    },
+    {
+      "path": "domain/tax/calculateWeeklyPAYE.ts",
+      "gitBlob": "30a36435ef81fc6c0e8a6ef6bcc8562c612843ac",
+      "sha256": "7796d05edfea4acdd5e0b31408388006679ec63b87207b6d359e1b0f23c8c408"
+    },
+    {
+      "path": "domain/tax/nzTax2026_27.ts",
+      "gitBlob": "8dd4a5c8e1e5f58caf3041ff617630df612dca6f",
+      "sha256": "c6cc3a83eeaa2b1199043f79e8786577849da2b57b0d3805c5365e500a57d8fc"
+    },
+    {
+      "path": "domain/tax/taxTypes.ts",
+      "gitBlob": "ec266a436f02848cfe1474b065befe918e4b542f",
+      "sha256": "34e89236200a7c9f9a2f89467f3bf8bddac5bff55a337e8f5c1f27f1d24b4b29"
+    }
+  ],
+  "presentation": {
+    "path": "pages/DashboardPage.tsx",
+    "gitBlob": "1c855a6327ebd993cb8594457b46afeca23fffde",
+    "adaptations": [
+      "readonly actions removed; next payment article",
+      "fixed referenceDate prop",
+      "fictitious copy and Sunday–Saturday label",
+      "CSS Modules; no icons dependency"
+    ]
+  }
+}

@@ -1,0 +1,6 @@
+
+> test:work
+> node scripts/work-demo-tests.mjs
+
+Module import graph: WorkDemo.tsx, demo\fixtures.ts, pages\DashboardPage.tsx, vendor\taura\domain\contractRules.ts, vendor\taura\domain\payPeriods.ts, vendor\taura\domain\tax\calculateWeeklyPAYE.ts, vendor\taura\domain\tax\nzTax2026_27.ts, vendor\taura\domain\tax\taxTypes.ts, vendor\taura\domain\weekendAllowance.ts, vendor\taura\lib\dates.ts, vendor\taura\lib\payroll.ts, vendor\taura\types.ts
+PASS: exact upstream blobs, closed import graph, no effects, synthetic overtime pay/bank, night/weekend, dates, payroll/tax and optional upstream parity

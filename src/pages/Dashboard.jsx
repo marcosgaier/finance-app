@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from 'react';
+import React, { useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { WorkDemo } from '../modules/work/WorkDemo.tsx';
 import { TauraIncomePreview } from '../components/TauraIncomePreview.jsx';
 import { AppTabs } from '../components/AppTabs.jsx';
 import { ModuleAccessLinks } from '../components/ModuleAccessLinks.jsx';
@@ -34,6 +35,19 @@ const dashboardTabs = [
 
 export function Dashboard({ financeData, setFinanceData }) {
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [workDemoOpen, setWorkDemoOpen] = useState(false);
+  const demoScroll = useRef(0);
+  const didOpenDemo = useRef(false);
+  useLayoutEffect(() => {
+    if (workDemoOpen) {
+      didOpenDemo.current = true;
+      document.getElementById('work-demo-title')?.focus();
+      window.scrollTo(0, 0);
+    } else if (didOpenDemo.current) {
+      document.getElementById('open-work-demo')?.focus({ preventScroll: true });
+      window.scrollTo(0, demoScroll.current);
+    }
+  }, [workDemoOpen]);
   const planningBudget = useMemo(() => ({
     weeklyExpenses: financeData.weeklyExpenses?.map(({ id, amount, name }) => ({ id, amount, name: typeof name === 'string' ? name : '' })),
     monthlyExpenses: financeData.monthlyExpenses?.map(({ id, amount, name }) => ({ id, amount, name: typeof name === 'string' ? name : '' })),
@@ -329,6 +343,10 @@ export function Dashboard({ financeData, setFinanceData }) {
 
   return (
     <main className="min-h-screen bg-[#f6f7f4]">
+      <div id="work-demo" hidden={!workDemoOpen}>
+        {workDemoOpen && <WorkDemo onClose={() => setWorkDemoOpen(false)} />}
+      </div>
+      <div id="finance-region" hidden={workDemoOpen}>
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-5 px-4 py-5 sm:px-6 lg:px-8">
         <header className="border-b border-stone-200 pb-5">
           <div>
@@ -340,7 +358,7 @@ export function Dashboard({ financeData, setFinanceData }) {
           </div>
         </header>
 
-        <ModuleAccessLinks />
+        <ModuleAccessLinks onOpenDemo={() => { demoScroll.current = window.scrollY; setWorkDemoOpen(true); }} />
 
         <AppTabs tabs={dashboardTabs} activeTab={activeTab} onChange={setActiveTab} />
 
@@ -450,6 +468,7 @@ export function Dashboard({ financeData, setFinanceData }) {
         {activeTab === 'settings' && (
           <SettingsPanel financeData={financeData} onReplaceFinanceData={setFinanceData} />
         )}
+      </div>
       </div>
     </main>
   );

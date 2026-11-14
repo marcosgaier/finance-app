@@ -136,6 +136,11 @@ try {
       assert.equal(await work.getByRole('button',{name:/Agregar|Editar|Borrar|Cancelar|Copiar|Pegar|Seleccionar/}).count(),0);
       assert.equal(await work.getByRole('heading',{name:'Resumen del ejemplo',exact:true}).isVisible(),true);
       if(!calendarChecked) {
+      await page.screenshot({path:fileURLToPath(new URL('summary-'+width+'.png',output)),fullPage:true});
+      const summaryDetails=work.locator('section[aria-labelledby="work-summary-title"] details');
+      await summaryDetails.locator('summary').focus();await page.keyboard.press('Enter');
+      assert.equal(await summaryDetails.getAttribute('open'),'');
+      await page.keyboard.press('Space');assert.equal(await summaryDetails.getAttribute('open'),null);
       const summary=await work.getByRole('region',{name:'Resumen del ejemplo'}).innerText();
       await work.getByRole('button',{name:'Roster',exact:true}).click();
       assert.equal(await page.locator('#work-roster-title').evaluate(el=>el===document.activeElement),true);
@@ -183,7 +188,7 @@ try {
       await page.keyboard.press('Tab');await page.keyboard.press('Shift+Tab');
       assert.equal(await calendarDay.evaluate(el=>getComputedStyle(el).outlineStyle),'solid');
       await page.evaluate(()=>window.scrollTo(0,350));
-      const banner=await work.getByText('DEMOSTRACIÓN — datos ficticios; no es tu roster',{exact:true}).boundingBox();
+      const banner=await work.getByText('DEMOSTRACIÓN — datos ficticios; no es tu roster. No son sueldos reales ni depósitos confirmados. No se guardan ni se incorporan a Finanzas.',{exact:true}).boundingBox();
       assert.ok(Math.abs(banner.y)<2,'Demo banner remains visible while scrolling');
       assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
       assert.equal(await page.getByText('Demostración no disponible.',{exact:false}).count(),0);
@@ -200,11 +205,20 @@ try {
       const paymentsRegion=work.getByRole('region',{name:'Pagos del ejemplo',exact:true});
       assert.equal(await paymentsRegion.locator('[data-payment]').count(),6);
       assert.deepEqual(await paymentsRegion.locator('[data-payment]').evaluateAll(nodes=>nodes.map(el=>el.dataset.payDate)),['2026-09-30','2026-10-07','2026-10-14','2026-10-21','2026-09-23','2026-09-16']);
-      assert.equal(await paymentsRegion.getByText('Próximo pago estimado',{exact:true}).count(),1);
-      assert.equal(await paymentsRegion.getByText('Fecha estimada de cobro',{exact:true}).count(),6);
-      assert.equal(await paymentsRegion.getByText('Semana / período trabajado del ejemplo',{exact:true}).count(),6);
+      assert.equal(await paymentsRegion.getByText('Próximo pago',{exact:true}).count(),1);
+      assert.equal(await paymentsRegion.getByRole('heading',{name:/^Fecha estimada de cobro/}).count(),6);
+      assert.equal(await paymentsRegion.getByText('Período trabajado',{exact:true}).count(),6);
       assert.equal(await paymentsRegion.getByRole('region',{name:'Próximos pagos',exact:true}).locator('[data-payment]').count(),4);
       assert.equal(await paymentsRegion.getByRole('region',{name:'Pagos anteriores',exact:true}).locator('[data-payment]').count(),2);
+      await page.screenshot({path:fileURLToPath(new URL('payments-compact-'+width+'.png',output)),fullPage:true});
+      for(const disclosure of await paymentsRegion.locator('details').all()) {
+        const toggle=disclosure.locator(':scope > summary');
+        const box=await toggle.boundingBox();assert.ok(box.width>=44&&box.height>=44);
+        await toggle.focus();await page.keyboard.press('Enter');assert.equal(await disclosure.getAttribute('open'),'');
+        assert.equal(await toggle.evaluate(el=>getComputedStyle(el).outlineStyle),'solid');
+        await page.keyboard.press('Space');assert.equal(await disclosure.getAttribute('open'),null);
+        await page.keyboard.press('Enter');
+      }
       const paidWeek=paymentsRegion.locator('[data-payment="2026-09-20"]');
       assert.equal(await paidWeek.getAttribute('data-pay-date'),'2026-09-30');
       assert.match(await paidWeek.innerText(),/miércoles/);
@@ -212,7 +226,7 @@ try {
       for(const [key,value] of Object.entries({base:1800,enhanced:0,night:36,weekend:48,gross:1884,paye:460.02,kiwisaver:56.52,net:1367.46})) {
         assert.equal(await paidWeek.locator('[data-amount="'+key+'"]').innerText(),(key==='paye'||key==='kiwisaver'?'− ':'')+money(value));
       }
-      assert.match(await paidWeek.innerText(),/Hours Bank del ejemplo: \+10 h/);
+      assert.match(await paidWeek.innerText(),/Hours Bank: \+10 h/);
       assert.match(await paymentsRegion.innerText(),/Semana sin turnos en este ejemplo/);
       assert.equal(await paymentsRegion.locator('input,select,textarea,button,a[download]').count(),0);
       assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));

@@ -101,3 +101,48 @@
 .monthDays [aria-pressed="true"],.weekList [aria-pressed="true"] {background:#173e35;color:white;box-shadow:inset 0 0 0 3px #75b69b}
 .monthDays button span {font-size:12px;white-space:pre-line}
 .calendarLegend {font-size:12px}
+/* Stage one: payment/summary presentation only. Calendar/editor rules stay intact. */
+.paymentsList {gap:10px}
+.paymentCard {margin-top:0;padding:14px;border-radius:16px;box-shadow:none}
+.featuredPayment {border:2px solid #3c725e;box-shadow:none}
+.paymentCard .paymentEyebrow {margin:0 0 4px;font-size:11px;letter-spacing:.06em}
+.featuredPayment .paymentEyebrow {background:transparent;color:#173e35;padding:0;border-radius:0}
+.paymentCard h4 {font-size:18px;margin:0 0 6px}
+.paymentCard .paymentStatus {font-size:12px;padding:3px 8px;margin:0 0 8px}
+.paymentNet {padding:10px 12px;margin:0 0 10px;border-radius:12px}
+.paymentNet span {font-size:11px;letter-spacing:.06em}
+.paymentNet strong {font-size:30px;line-height:1.25;font-variant-numeric:tabular-nums}
+.paymentCard .workedPeriod {padding:0;border:0;font-size:12px;margin:6px 0}
+.workedPeriod span {display:inline;margin-right:6px;font-weight:600}
+.disclosure {border-top:1px solid #cbd8d3;margin-top:8px;color:#152622}
+.disclosure>summary {min-height:44px;padding:8px 2px;box-sizing:border-box;align-content:center;cursor:pointer;font-size:13px;font-weight:700;border-radius:4px}
+.disclosure>summary:hover {background:#edf3f1}
+.disclosure>summary:focus-visible {outline:3px solid #3c725e;outline-offset:2px}
+.paymentHours {margin:4px 0 10px;gap:6px;font-size:12px}
+.paymentHours div {padding:7px 10px;border-radius:8px}
+.paymentOvertime {padding:10px;margin:6px 0;font-size:13px}
+.paymentOvertime h5 {font-size:13px}
+.paymentAmounts {gap:8px;margin:4px 0 10px;font-size:13px}
+.paymentAmounts div {flex-wrap:nowrap}
+.paymentCard .muted {font-size:12px}
+.previousPayments {margin-top:20px;padding-top:6px;border-top:1px solid #bacdc3}
+.summaryOverview {display:grid;gap:10px}
+.weeklyHero {padding:16px;border-radius:16px}
+.weeklyHero p {margin:0;font-size:11px;letter-spacing:.06em}
+.weeklyHero h2 {font-size:32px;margin:4px 0;line-height:1.2}
+.weeklyHero span {font-size:13px}
+.weeklyHero .chips {margin:10px 0 0;gap:6px}
+.weeklyHero .chips b {padding:4px 8px}
+.summaryOverview .nextPaymentCard {margin:0;padding:14px;gap:8px;grid-template-columns:1fr 1fr;border-radius:16px;box-shadow:none}
+.nextPaymentCard strong {font-variant-numeric:tabular-nums}
+.dashboardGrid {gap:6px}
+.dashboardGrid article {padding:9px 12px;border-radius:10px}
+.dashboardGrid strong {font-size:20px}
+.payBreakdown {margin-top:10px}
+.payBreakdown .breakdownLines {padding:6px 2px 12px;font-size:13px}
+.nextGrid {gap:8px;margin-top:10px}
+.nextGrid .card {padding:12px;margin:0;border-radius:12px;box-shadow:none}
+.nextGrid h3 {font-size:16px;margin:4px 0}
+.nextGrid p {font-size:13px;margin:4px 0}
+@media(min-width:600px){.dashboardGrid {grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:400px){.summaryOverview .nextPaymentCard {grid-template-columns:1fr}.nextGrid {grid-template-columns:1fr}}

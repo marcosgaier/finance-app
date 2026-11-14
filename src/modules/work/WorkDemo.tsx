@@ -53,7 +53,7 @@ export function WorkDemo({onClose}:{onClose:()=>void}) {
     window.scrollTo(0,scroll.current[view]);
   },[view]);
   return <section className={styles.workDemo} aria-labelledby="work-demo-title">
-    <div className={styles.banner}>DEMOSTRACIÓN — datos ficticios; no es tu roster</div>
+    <div className={styles.banner}>DEMOSTRACIÓN — datos ficticios; no es tu roster. No son sueldos reales ni depósitos confirmados. No se guardan ni se incorporan a Finanzas.</div>
     <header className={styles.workHeader}>
       <h1 id="work-demo-title" tabIndex={-1}>Trabajo · Taura</h1>
       <button className={styles.quietButton} type="button" onClick={onClose}><span aria-hidden="true">←</span> Volver a Finanzas</button>

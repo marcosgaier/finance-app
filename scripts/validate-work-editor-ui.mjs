@@ -202,6 +202,7 @@ try {
     await work.getByRole('button',{name:'Resumen',exact:true}).click();
     assert.match(await work.getByRole('region',{name:'Resumen del ejemplo',exact:true}).innerText(),/58 h/);
     await work.getByRole('button',{name:'Pagos',exact:true}).click();
+    for(const detail of await work.locator('[data-payment="2026-09-20"] details').all())await detail.locator(':scope > summary').click();
     assert.match(await work.locator('[data-payment="2026-09-20"]').innerText(),/18 h en esta proyección/);
     assert.equal(await work.locator('[data-payment="2026-09-20"] [data-amount="gross"]').innerText(),new Intl.NumberFormat('es-NZ',{style:'currency',currency:'NZD'}).format(1824));
     await work.getByRole('button',{name:'Roster',exact:true}).click();

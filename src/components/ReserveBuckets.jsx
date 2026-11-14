@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { formatDisplayDate, formatIsoDate } from '../utils/dateUtils.js';
-import { isReserveFunded } from '../utils/fundingSourceUtils.js';
+import { buildReserveMovementHistory } from '../utils/reserveHistoryUtils.js';
+import { displayMoneyValue } from '../utils/moneyDisplay.js';
 
 function getTodayIsoDate() {
   return formatIsoDate(new Date());
@@ -12,11 +13,11 @@ function formatReserveMoney(value) {
     currency: 'NZD',
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  }).format(Number(value || 0));
+  }).format(displayMoneyValue(value));
 }
 
 function formatReserveInputValue(value) {
-  return Number(value || 0).toFixed(2);
+  return displayMoneyValue(value).toFixed(2);
 }
 
 export function ReserveBuckets({
@@ -31,6 +32,7 @@ export function ReserveBuckets({
   reserveBucketMovements = [],
   weeklyRecords = [],
 }) {
+  const manualSubmission = useRef(false);
   const [movementDraft, setMovementDraft] = useState({
     bucketId: buckets[0]?.id || '',
     type: 'deposit',
@@ -66,6 +68,7 @@ export function ReserveBuckets({
   const hasHiddenMovements = filteredMovements.length > 10;
 
   function updateMovementDraft(patch) {
+    manualSubmission.current = false;
     setMovementDraft((currentDraft) => ({ ...currentDraft, ...patch }));
   }
 
@@ -89,7 +92,8 @@ export function ReserveBuckets({
 
   function addMovement() {
     const amount = Number(movementDraft.amount || 0);
-    if (!movementDraft.bucketId || amount <= 0) return;
+    if (manualSubmission.current || !movementDraft.bucketId || !Number.isFinite(amount) || amount <= 0) return;
+    manualSubmission.current = true;
 
     onAddMovement({
       bucketId: movementDraft.bucketId,
@@ -212,6 +216,7 @@ export function ReserveBuckets({
 
       <div className="mt-4 rounded-lg border border-sky-200 bg-sky-50 p-3">
         <p className="text-sm font-semibold uppercase tracking-wide text-sky-700">Movimiento manual</p>
+        <p className="mt-2 text-sm text-amber-900">Si es un pago de tarjeta (por ejemplo GEM), usá Agregar pago en Historial y elegí este sobre como origen. Ese registro ya descuenta el saldo: no registres ambas cosas.</p>
         <div className="mt-3 grid gap-3 md:grid-cols-[1fr_0.8fr_0.8fr_1.4fr_auto] md:items-end">
           <label className="text-sm font-medium text-stone-600">
             Sobre
@@ -421,90 +426,4 @@ function MoneyInput({ label, value, onChange }) {
       </span>
     </label>
   );
-}
-
-function buildReserveMovementHistory({ activeWeek, buckets, reserveBucketMovements, weeklyRecords }) {
-  const bucketNameById = Object.fromEntries(buckets.map((bucket) => [bucket.id, bucket.name]));
-  const closedRecords = [...(weeklyRecords || [])];
-
-  const manualMovements = (reserveBucketMovements || []).map((movement) => ({
-    id: movement.id,
-    movementId: movement.id,
-    date: movement.date,
-    bucketId: movement.bucketId,
-    bucketName: movement.bucketName || bucketNameById[movement.bucketId] || 'Reserva',
-    amount: movement.type === 'withdrawal' ? -Number(movement.amount || 0) : Number(movement.amount || 0),
-    label: movement.type === 'withdrawal' ? 'Retiro manual' : 'Depósito manual',
-    note: movement.note || '',
-    source: 'manual-reserve-movement',
-    canDelete: true,
-  }));
-
-  const activeWeekReserveMovements = (activeWeek?.reserveMovements || []).map((movement) => ({
-    id: movement.id,
-    movementId: movement.id,
-    date: movement.date || activeWeek.weekDate || activeWeek.weekStartDate,
-    bucketId: movement.bucketId,
-    bucketName: movement.bucketName || bucketNameById[movement.bucketId] || 'Reserva',
-    amount: movement.type === 'withdrawal' ? -Number(movement.amount || 0) : Number(movement.amount || 0),
-    label: 'Transferido desde semana actual',
-    note: movement.note || '',
-    source: 'active-week-reserve-transfer',
-    canDelete: !activeWeek.reopenedFromHistory,
-  }));
-
-  const closedWeekReserveMovements = closedRecords.flatMap((record) =>
-    (record.reserveMovements || []).map((movement) => ({
-      id: movement.id,
-      date: movement.date || record.weekDate || record.weekStartDate,
-      bucketId: movement.bucketId,
-      bucketName: movement.bucketName || bucketNameById[movement.bucketId] || 'Reserva',
-      amount: movement.type === 'withdrawal' ? -Number(movement.amount || 0) : Number(movement.amount || 0),
-      label: 'Transferido desde semana actual',
-      note: movement.note || '',
-      source: 'closed-week-reserve-transfer',
-      canDelete: false,
-    })),
-  );
-
-  const records = [...closedRecords];
-  if (activeWeek) records.push(activeWeek);
-
-  const reserveFundedExpenses = records.flatMap((record) =>
-    (record.variableTransactions || [])
-      .filter((transaction) => isReserveFunded(transaction))
-      .map((transaction) => ({
-        id: transaction.id,
-        date: transaction.date || record.weekDate || record.weekStartDate,
-        bucketId: transaction.fundingSource,
-        bucketName: bucketNameById[transaction.fundingSource] || 'Reserva',
-        amount: -Number(transaction.amount || 0),
-        label: 'Usado en gasto',
-        note: transaction.description || '',
-      })),
-  );
-
-  const reserveFundedPayments = records.flatMap((record) =>
-    (record.payments || [])
-      .filter((payment) => isReserveFunded(payment))
-      .map((payment, index) => ({
-        id: `${record.id || record.weekDate || 'week'}-${payment.cardId || index}-reserve-payment`,
-        date: record.weekDate || record.weekStartDate,
-        bucketId: payment.fundingSource,
-        bucketName: bucketNameById[payment.fundingSource] || 'Reserva',
-        amount: -Number(payment.amount || 0),
-        label: 'Usado en pago de deuda',
-        note: payment.cardName || 'Pago de deuda',
-      })),
-  );
-
-  return [
-    ...manualMovements,
-    ...activeWeekReserveMovements,
-    ...closedWeekReserveMovements,
-    ...reserveFundedExpenses,
-    ...reserveFundedPayments,
-  ]
-    .filter((movement) => movement.date && Number(movement.amount || 0) !== 0)
-    .sort((firstMovement, secondMovement) => String(secondMovement.date).localeCompare(String(firstMovement.date)));
 }

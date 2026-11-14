@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { formatDisplayDate } from '../utils/dateUtils.js';
-import { formatMoney } from '../utils/financeEngine.js';
+import { formatMoney } from '../utils/moneyDisplay.js';
 
 export function GemMinimumSummary({ summary }) {
   if (!summary) return null;

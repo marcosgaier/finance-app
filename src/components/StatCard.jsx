@@ -1,5 +1,5 @@
 import React from 'react';
-import { formatActionMoney, formatMoney } from '../utils/financeEngine.js';
+import { formatActionMoney, formatMoney } from '../utils/moneyDisplay.js';
 
 export function StatCard({ label, value, helper, tone = 'default', actionAmount = false }) {
   const toneClass = {

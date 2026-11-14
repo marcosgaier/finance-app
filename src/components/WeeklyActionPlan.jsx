@@ -1,6 +1,6 @@
 import React from 'react';
 import { isWeeklyIncomeFunded } from '../utils/fundingSourceUtils.js';
-import { formatActionMoney } from '../utils/financeEngine.js';
+import { formatActionMoney } from '../utils/moneyDisplay.js';
 import {
   calculateAdjustedWeeklyExpenseRows,
   calculateExtraIncomeTotal,

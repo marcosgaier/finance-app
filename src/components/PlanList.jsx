@@ -1,12 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { formatDateForDisplay, formatShortDate, parseDisplayDate, suggestStatementDueDate } from '../utils/dateUtils.js';
-import {
-  PROMOTIONAL_PLAN_TYPE,
-  STATEMENT_BALANCE_TYPE,
-  formatMoney,
-  isStatementBalancePlan,
-  normalizePlanType,
-} from '../utils/financeEngine.js';
+import { PROMOTIONAL_PLAN_TYPE, STATEMENT_BALANCE_TYPE, isStatementBalancePlan, normalizePlanType } from '../utils/financeEngine.js';
+import { formatMoney } from '../utils/moneyDisplay.js';
 
 const urgencyStyles = {
   overdue: 'border-red-200 bg-red-50 text-red-800',

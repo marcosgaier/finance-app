@@ -1,6 +1,6 @@
 import React from 'react';
 import { formatShortDate } from '../utils/dateUtils.js';
-import { formatMoney } from '../utils/financeEngine.js';
+import { formatMoney } from '../utils/moneyDisplay.js';
 
 const urgencyStyles = {
   overdue: 'border-red-200 bg-red-50 text-red-800',

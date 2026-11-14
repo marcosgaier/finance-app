@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { calculateWeeklyDebtReserve, formatMoney, isPlanCompleted, simulatePaymentScenario } from '../utils/financeEngine.js';
+import { calculateWeeklyDebtReserve, isPlanCompleted, simulatePaymentScenario } from '../utils/financeEngine.js';
+import { formatMoney } from '../utils/moneyDisplay.js';
 
 const presetPayments = [200, 280, 350];
 

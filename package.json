@@ -3,9 +3,10 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "test": "node scripts/finance-engine-coverage-tests.mjs && node scripts/persistence-tests.mjs && node scripts/historical-payment-tests.mjs && node scripts/week-reopening-tests.mjs && node --test scripts/taura-preview-tests.mjs scripts/income-planning-tests.mjs scripts/expense-planning-tests.mjs scripts/planning-session-tests.mjs",
+    "test": "node scripts/finance-engine-coverage-tests.mjs && node scripts/persistence-tests.mjs && node scripts/historical-payment-tests.mjs && node scripts/week-reopening-tests.mjs && node --test scripts/card-payment-safety-tests.mjs scripts/taura-preview-tests.mjs scripts/income-planning-tests.mjs scripts/expense-planning-tests.mjs scripts/planning-session-tests.mjs",
     "preview": "vite preview",
     "serve": "node scripts/serve-dist.mjs",
+    "test:payments-ui": "node scripts/validate-card-payments-ui.mjs",
     "test:taura-ui": "node scripts/validate-taura-preview.mjs",
     "test:planning-ui": "node scripts/validate-planning-ui.mjs"
   },

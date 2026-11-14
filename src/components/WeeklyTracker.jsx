@@ -1,7 +1,8 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { getCardPaymentWarnings } from '../utils/cardPaymentUtils.js';
 import { formatDisplayDate, formatIsoDate, parseDisplayDate } from '../utils/dateUtils.js';
 import { getFundingSourceLabel, isWeeklyIncomeFunded, WEEKLY_INCOME_SOURCE } from '../utils/fundingSourceUtils.js';
-import { formatMoney } from '../utils/financeEngine.js';
+import { formatMoney } from '../utils/moneyDisplay.js';
 import { prepareHistoricalPayments, updateHistoricalPaymentAmount } from '../utils/historicalPaymentUtils.js';
 import { buildReopenedWeekCorrection, closeReopenedFinancialWeek, getWeekReopenError } from '../utils/weekReopeningUtils.js';
 import {
@@ -114,6 +115,8 @@ function createActiveWeek({ weekStartDate, income, weeklySummary }) {
 export function WeeklyTracker({
   financeData,
   weeklySummary,
+  onAddCardPayment,
+  onDeleteCardPayment,
   onCloseWeek,
   onDeleteWeek,
   onReopenWeek,
@@ -127,6 +130,8 @@ export function WeeklyTracker({
   const [transactionDraft, setTransactionDraft] = useState(createEmptyTransaction(getTodayIsoDate()));
   const [extraIncomeDraft, setExtraIncomeDraft] = useState(createEmptyExtraIncome(getTodayIsoDate()));
   const [paymentDraft, setPaymentDraft] = useState(createEmptyPayment(getTodayIsoDate(), financeData.cards));
+  const paymentSubmission = useRef(false);
+  const selectedPaymentReserve = (financeData.reserveBuckets || []).find((bucket) => bucket.id === paymentDraft.fundingSource);
   const [expandedRecordIds, setExpandedRecordIds] = useState({});
   const [editingRecordId, setEditingRecordId] = useState(null);
   const [editingRecordDraft, setEditingRecordDraft] = useState(null);
@@ -350,6 +355,7 @@ export function WeeklyTracker({
   }
 
   function updatePaymentDraft(field, value) {
+    paymentSubmission.current = false;
     setPaymentDraft((currentDraft) => ({
       ...currentDraft,
       [field]: value,
@@ -358,11 +364,13 @@ export function WeeklyTracker({
 
   function addCardPayment() {
     const amount = Number(paymentDraft.amount || 0);
-    if (!paymentDraft.cardId || amount <= 0) return;
+    if (paymentSubmission.current || !activeWeek || activeWeek.reopenedFromHistory ||
+        !paymentDraft.cardId || !Number.isFinite(amount) || amount <= 0) return;
+    paymentSubmission.current = true;
 
     const selectedCard = financeData.cards.find((card) => card.id === paymentDraft.cardId);
     const nextPayment = {
-      id: `payment-${Date.now()}`,
+      id: `payment-${crypto.randomUUID()}`,
       date: paymentDraft.date || getTodayIsoDate(),
       cardId: paymentDraft.cardId,
       cardName: selectedCard?.name || 'Tarjeta',
@@ -371,11 +379,12 @@ export function WeeklyTracker({
       note: paymentDraft.note || '',
     };
 
-    applyReserveDelta(null, nextPayment);
-    onUpdateActiveWeek((currentWeek) => ({
-      ...currentWeek,
-      payments: [...sanitizePayments(currentWeek.payments || [], currentWeek.weekStartDate || currentWeek.weekDate), nextPayment],
-    }));
+    const warnings = getCardPaymentWarnings(financeData, nextPayment, getTodayIsoDate());
+    if (warnings.length && !window.confirm(`${warnings.join('\n\n')}\n\n¿Querés registrar este pago de todos modos?`)) {
+      paymentSubmission.current = false;
+      return;
+    }
+    onAddCardPayment(nextPayment);
     setPaymentDraft((currentDraft) => ({
       ...currentDraft,
       date: getTodayIsoDate(),
@@ -385,16 +394,7 @@ export function WeeklyTracker({
   }
 
   function deleteCardPayment(paymentId) {
-    const paymentToDelete = payments.find((payment) => payment.id === paymentId);
-    if (!paymentToDelete) return;
-
-    applyReserveDelta(paymentToDelete, null);
-    onUpdateActiveWeek((currentWeek) => ({
-      ...currentWeek,
-      payments: sanitizePayments(currentWeek.payments || [], currentWeek.weekStartDate || currentWeek.weekDate).filter(
-        (payment) => payment.id !== paymentId,
-      ),
-    }));
+    onDeleteCardPayment(paymentId);
   }
 
   function fillCardPayments(amountKey) {
@@ -930,6 +930,13 @@ export function WeeklyTracker({
 
       <div className="mt-4 rounded-lg border border-stone-200 bg-white p-3">
         <p className="text-sm font-semibold uppercase tracking-wide text-stone-600">Agregar pago</p>
+        {selectedPaymentReserve && (
+          <p className="mt-2 text-sm text-amber-900" role="note">
+            Origen: <strong>{selectedPaymentReserve.name}</strong> · Saldo actual: {formatMoney(selectedPaymentReserve.balance)}.
+            {' '}Registrar este pago ya descuenta del sobre. No registres además un retiro manual.
+            {' '}Actualizá los saldos de los planes después de consultar Latitude.
+          </p>
+        )}
         <div className="mt-3 grid gap-3 md:grid-cols-[0.9fr_1fr_0.8fr_1fr_1.3fr_auto] md:items-end">
           <DateInput
             label="Fecha"
@@ -971,6 +978,7 @@ export function WeeklyTracker({
             className="rounded-md bg-stone-950 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-stone-800"
             type="button"
             onClick={addCardPayment}
+            disabled={!Number.isFinite(Number(paymentDraft.amount)) || Number(paymentDraft.amount) <= 0}
           >
             Agregar
           </button>

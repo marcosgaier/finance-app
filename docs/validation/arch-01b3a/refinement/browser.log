@@ -1,0 +1,65 @@
+Checking editor width 360
+Checking editor width 390
+Checking editor width 1280
+{
+  "status": "PASS",
+  "node": "v22.23.2",
+  "chromium": "157.0.8103.52",
+  "checks": [
+    {
+      "width": 360,
+      "status": "PASS",
+      "flows": [
+        "batch selection/month/week/keyboard/preview/cancel/confirm/conflicts/zero-effects",
+        "edit/ID/invalid/unchanged",
+        "dialog keyboard/Escape/focus/scroll",
+        "consistent summary/payments",
+        "multiple/duplicate/cancel",
+        "confirmed deletion",
+        "empty day/night/add",
+        "month/week navigation",
+        "reset confirm",
+        "exit/reopen/reload"
+      ],
+      "workEffects": 0,
+      "financeUnchanged": true
+    },
+    {
+      "width": 390,
+      "status": "PASS",
+      "flows": [
+        "batch selection/month/week/keyboard/preview/cancel/confirm/conflicts/zero-effects",
+        "edit/ID/invalid/unchanged",
+        "dialog keyboard/Escape/focus/scroll",
+        "consistent summary/payments",
+        "multiple/duplicate/cancel",
+        "confirmed deletion",
+        "empty day/night/add",
+        "month/week navigation",
+        "reset confirm",
+        "exit/reopen/reload"
+      ],
+      "workEffects": 0,
+      "financeUnchanged": true
+    },
+    {
+      "width": 1280,
+      "status": "PASS",
+      "flows": [
+        "batch selection/month/week/keyboard/preview/cancel/confirm/conflicts/zero-effects",
+        "edit/ID/invalid/unchanged",
+        "dialog keyboard/Escape/focus/scroll",
+        "consistent summary/payments",
+        "multiple/duplicate/cancel",
+        "confirmed deletion",
+        "empty day/night/add",
+        "month/week navigation",
+        "reset confirm",
+        "exit/reopen/reload"
+      ],
+      "workEffects": 0,
+      "financeUnchanged": true
+    }
+  ],
+  "limits": "Local build, isolated synthetic profiles. Native Android/PWA, OS zoom and real screen readers remain manual. No Taura production access."
+}

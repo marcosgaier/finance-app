@@ -84,8 +84,24 @@ try {
     assert.equal(await work.getByRole('button',{name:'Día 06:00–18:00',exact:true}).isDisabled(),true);
     await day('2026-09-20').click();await day('2026-09-24').focus();await page.keyboard.press('Space');await day('2026-09-28').click();
     assert.equal(await day('2026-09-24').getAttribute('aria-pressed'),'true');
+    // Calendar-first: DOM/visual order, accessible targets, and a keyboard shortcut to the footer.
+    const calendar=work.getByRole('list',{name:'Calendario mensual del ejemplo',exact:true});
+    const actions=work.locator('#roster-batch-actions');
+    assert.equal(await calendar.evaluate(el=>Boolean(el.compareDocumentPosition(document.getElementById('roster-batch-actions'))&Node.DOCUMENT_POSITION_FOLLOWING)),true);
+    const calendarBounds=await calendar.boundingBox(),actionBounds=await actions.boundingBox();
+    assert.ok(actionBounds.y>=calendarBounds.y+calendarBounds.height);
+    assert.ok(actionBounds.y-calendarBounds.y<470,'Month and footer stay within a compact span');
+    for(const button of await work.locator('[data-day], #roster-batch-actions button').all()){
+      const box=await button.boundingBox();assert.ok(box.width>=44&&box.height>=44,JSON.stringify(box));
+    }
+    await work.getByRole('link',{name:'Elegir turno · 3',exact:true}).focus();
+    await page.keyboard.press('Enter');
+    assert.equal(await actions.evaluate(el=>el===document.activeElement),true);
+    const footerBounds=await actions.boundingBox();assert.ok(footerBounds.y>=0&&footerBounds.y+footerBounds.height<=900);
+    await page.keyboard.press('Tab');assert.equal(await work.getByRole('button',{name:'Limpiar selección',exact:true}).evaluate(el=>el===document.activeElement),true);
     await work.getByRole('button',{name:'Semana',exact:true}).click();
     assert.match(await work.innerText(),/3 días seleccionados/);
+    await page.screenshot({path:fileURLToPath(new URL(`batch-week-${width}.png`,output)),fullPage:true});
     await work.getByRole('button',{name:'Mes',exact:true}).click();
     await page.screenshot({path:fileURLToPath(new URL(`batch-selection-${width}.png`,output)),fullPage:true});
     await work.getByRole('button',{name:'Noche 18:00–06:00 (+1 día)',exact:true}).click();await dialog.waitFor();

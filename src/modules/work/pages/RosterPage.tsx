@@ -6,6 +6,7 @@ import {calculateContractOvertime} from '../vendor/taura/domain/contractRules';
 import {getContractSummaryWeekForRosterWeek,getRosterWeekDates,getRosterWeekStart,moveRosterWeek} from '../vendor/taura/domain/rosterWeeks';
 import {DayDetails,kindLabels,statusLabels} from '../components/DayDetails';
 import styles from '../work-demo.module.css';
+import ui from '../roster.module.css';
 import {BatchPreview} from '../components/BatchPreview';
 import {planBatch,quickLabels,type QuickKind,type BatchPlan} from '../editor/batchPlan';
 import {DemoShiftEditor} from '../components/DemoShiftEditor';
@@ -34,29 +35,24 @@ export function RosterPage({shifts,settings,overtimePreferences,referenceDate,on
   function move(amount:number){setSelected(null);setCursor(view==='month'?new Date(cursor.getFullYear(),cursor.getMonth()+amount,1):moveRosterWeek(cursor,amount));}
   function changeView(next:typeof view){setSelected(null);setView(next);}
   function closeDetail(){setSelected(null);origin.current?.focus();}
-  return <>
+  return <div className={ui.roster}>
     <h2 id="work-roster-title" tabIndex={-1}>Roster del ejemplo</h2>
-    <div className={styles.hero}><h3>{view==='month'?formatDate(toIsoDate(cursor),{month:'long',year:'numeric'}):`${formatDate(start)} – ${formatDate(end,{day:'numeric',month:'long',year:'numeric'})}`}</h3><span>Edición ficticia en memoria · domingo a sábado</span></div>
-    <div className={styles.controls} aria-label="Vista del calendario">
+    <div className={ui.heading}><h3>{view==='month'?formatDate(toIsoDate(cursor),{month:'long',year:'numeric'}):`${formatDate(start)} – ${formatDate(end,{day:'numeric',month:'long',year:'numeric'})}`}</h3><span>Edición ficticia en memoria · domingo a sábado</span></div>
+    <div className={ui.toolbar}>
+    <div className={ui.segmented} aria-label="Vista del calendario">
       <button type="button" aria-pressed={view==='month'} onClick={()=>changeView('month')}>Mes</button>
       <button type="button" aria-pressed={view==='week'} onClick={()=>changeView('week')}>Semana</button>
     </div>
-    <div className={styles.controls} aria-label="Período del calendario">
-      <button type="button" aria-label="Período anterior" onClick={()=>move(-1)}>← Anterior</button>
-      <button type="button" onClick={()=>{setSelected(null);setCursor(new Date(referenceDate));}}>Fecha del ejemplo</button>
-      <button type="button" aria-label="Período siguiente" onClick={()=>move(1)}>Siguiente →</button>
+    <div className={ui.dateNav} aria-label="Período del calendario">
+      <button type="button" aria-label="Período anterior" onClick={()=>move(-1)}>‹</button>
+      <button type="button" onClick={()=>{setSelected(null);setCursor(new Date(referenceDate));}} aria-label="Fecha del ejemplo">Ejemplo</button>
+      <button type="button" aria-label="Período siguiente" onClick={()=>move(1)}>›</button>
     </div>
-    <p className={styles.calendarLegend}>☀ Día · ☾ Noche · – Libre · P Planificado · T Trabajado · ! Otro estado (ver detalle)</p>
-    {onBatch?<section className={styles.batchTools} aria-label="Selección y accesos rápidos">
-      <button type="button" aria-pressed={multi} onClick={()=>{setMulti(!multi);setSelected(null);}}>Seleccionar varios días</button>
-      {multi?<><p role="status">{dates.length} días seleccionados. Se conservan al navegar.</p>
-        <p className={styles.selectedDates}>{dates.slice().sort().join(' · ')||'Tocá días o usá Tab y Espacio para seleccionarlos.'}</p>
-        <div className={styles.controls}><button type="button" disabled={!dates.length} onClick={()=>setDates([])}>Limpiar selección</button>
-        {(Object.keys(quickLabels) as QuickKind[]).map(kind=><button key={kind} type="button" disabled={!dates.length} onClick={()=>{
-          try{setPreview(planBatch(shifts,dates,kind,settings,()=>`demo-${crypto.randomUUID()}`,generation));setError('');}catch(reason){setError(reason instanceof Error?reason.message:'Plan inválido.');}
-        }}>{quickLabels[kind]}</button>)}</div></>:null}
-      <p role="status">{notice}</p>
-    </section>:null}
+    </div>
+    {onBatch?<div className={ui.selectionMode}>
+      <button type="button" aria-pressed={multi} aria-controls="roster-batch-actions" onClick={()=>{setMulti(!multi);setSelected(null);}}>Seleccionar varios días</button>
+      {multi?<a href="#roster-batch-actions" onClick={event=>{event.preventDefault();document.getElementById('roster-batch-actions')?.focus();}}>Elegir turno · {dates.length}</a>:null}
+    </div>:null}
     {preview&&onBatch?<BatchPreview plan={preview} onClose={()=>setPreview(null)} onConfirm={()=>{
       onBatch(preview);setNotice(`Lote aplicado: ${preview.rows.filter(r=>r.action==='create').length} creados, ${preview.rows.filter(r=>r.action==='change').length} cambiados, ${preview.rows.filter(r=>r.action==='skip').length} omitidos.`);setPreview(null);
     }}/>:null}
@@ -73,6 +69,17 @@ export function RosterPage({shifts,settings,overtimePreferences,referenceDate,on
         </li>;
       })}
     </ul>
+    <p className={styles.calendarLegend}>☀ Día · ☾ Noche · – Libre · P Planificado · T Trabajado · ! Ver detalle</p>
+    {onBatch?<section id="roster-batch-actions" tabIndex={-1} className={ui.batchBar} aria-label="Selección y accesos rápidos">
+      {multi?<><div className={ui.selectionStatus}><b role="status">{dates.length} días seleccionados</b><button type="button" disabled={!dates.length} aria-label="Limpiar selección" onClick={()=>setDates([])}>Limpiar</button></div>
+        <div className={ui.templates}>{(Object.keys(quickLabels) as QuickKind[]).map(kind=><button key={kind} type="button" aria-label={quickLabels[kind]} disabled={!dates.length} onClick={()=>{
+          try{setPreview(planBatch(shifts,dates,kind,settings,()=>`demo-${crypto.randomUUID()}`,generation));setError('');}catch(reason){setError(reason instanceof Error?reason.message:'Plan inválido.');}
+        }}><span>{kind==='day'?'☀ Día':kind==='night'?'☾ Noche':'– Libre'}</span><small>{kind==='day'?'06–18':kind==='night'?'18–06 (+1 día)':'0 h'}</small></button>)}</div>
+        <details className={ui.dates}><summary>Ver fechas seleccionadas</summary><p>{dates.slice().sort().join(' · ')||'Tocá días o usá Tab y Espacio para seleccionarlos.'}</p></details>
+        <p className={ui.hint}>La selección se conserva al navegar. Elegí un turno para revisar el preview.</p>
+      </>:<p>Activá la selección múltiple para cargar varios días.</p>}
+      {notice?<p role="status">{notice}</p>:null}
+    </section>:null}
     {selected?<DayDetails date={selected} shifts={shifts.filter(s=>s.shift_date===selected)} onClose={closeDetail}
       onAdd={onShifts?()=>setEditor({draft:newDraft(selected,`demo-${crypto.randomUUID()}`)}):undefined}
       onEdit={onShifts?s=>setEditor({draft:structuredClone(s),originalId:s.id}):undefined}
@@ -90,5 +97,5 @@ export function RosterPage({shifts,settings,overtimePreferences,referenceDate,on
       </div>
       <p>No se guarda ni se exporta.</p>
     </section>
-  </>;
+  </div>;
 }

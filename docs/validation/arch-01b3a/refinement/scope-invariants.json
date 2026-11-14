@@ -1,0 +1,18 @@
+{
+  "status": "PASS",
+  "base": "9598cd40e4aee9d0f6baf6e13f598e15f0b3f057",
+  "unchangedSourceFiles": 61,
+  "changedTrackedFiles": [
+    "scripts/validate-work-editor-ui.mjs",
+    "src/modules/work/components/BatchPreview.tsx",
+    "src/modules/work/pages/RosterPage.tsx"
+  ],
+  "newSourceFile": "src/modules/work/roster.module.css",
+  "preserved": "Finance, WorkDemo/session/generation, batchPlan/snapshot/atomic application, shiftDraft, fixtures, payments, settings, pinned Taura engine",
+  "tauraReference": "d58ad29ea5a9b25d9136e1da959bd0414f46fca1",
+  "tauraReferencePaths": [
+    "src/pages/RosterPage.tsx",
+    "src/workflows.css"
+  ],
+  "tauraReferenceDiff": ""
+}

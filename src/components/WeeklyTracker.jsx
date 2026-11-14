@@ -671,7 +671,7 @@ export function WeeklyTracker({
       <div className="grid gap-3">
         <CollapsiblePanel
           title="Control de la semana financiera"
-          summary={`${formatDisplayDate(normalizedActiveWeek.weekStartDate)} · ingresos ingresados ${formatMoney(totalIncome)}`}
+          summary={`${formatDisplayDate(normalizedActiveWeek.weekStartDate)} · saldo inicial + ingresos ingresados ${formatMoney(totalIncome)}`}
           defaultOpen={false}
         >
           <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
@@ -722,7 +722,7 @@ export function WeeklyTracker({
             ) : null}
             <SummaryTile label="Ingreso principal" value={normalizedActiveWeek.realIncome} />
             <SummaryTile label="Otros ingresos" value={extraIncomeTotal} />
-            <SummaryTile label="Total de ingresos ingresados" value={totalIncome} tone="positive" />
+            <SummaryTile label="Saldo inicial + ingresos ingresados" value={totalIncome} tone="positive" />
             <SummaryTile label="Mínimo semanal seguro" value={minimumSafeWeeklyPayment} tone="warning" />
             <SummaryTile
               helper="Si pagás el mínimo seguro y usás el presupuesto completo."
@@ -1277,7 +1277,7 @@ function WeeklyRecordItem({
       <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <p>
-            <strong className="text-stone-950">{formatDisplayDate(previewRecord.weekDate)}</strong> · Ingreso principal {formatMoney(previewRecord.realIncome)} · Total de ingresos ingresados {formatMoney(previewRecord.totalIncome)} · Pagado a deudas {formatMoney(previewRecord.totalPaid)}
+            <strong className="text-stone-950">{formatDisplayDate(previewRecord.weekDate)}</strong> · Ingreso principal {formatMoney(previewRecord.realIncome)} · Saldo inicial + ingresos ingresados {formatMoney(previewRecord.totalIncome)} · Pagado a deudas {formatMoney(previewRecord.totalPaid)}
           </p>
           <p className="mt-1 text-stone-500">
             {previewRecord.openingBalance > 0 ? `Saldo inicial ${formatMoney(previewRecord.openingBalance)} · ` : ''}Otros ingresos {formatMoney(previewRecord.extraIncomeTotal)} · Supermercado {formatMoney(previewRecord.totals.groceries)} · Combustible {formatMoney(previewRecord.totals.fuel)} · Otros {formatMoney(previewRecord.totals.other)} · Reservas {formatMoney(previewRecord.reserveTransferTotal)} · {previewRecord.variableTransactions.length} transacciones
@@ -1381,7 +1381,7 @@ function WeeklyRecordItem({
               <SmallResult label="Saldo inicial" value={formatMoney(previewRecord.openingBalance)} tone="positive" />
             ) : null}
             <SmallResult label="Otros ingresos" value={formatMoney(previewRecord.extraIncomeTotal)} tone={previewRecord.extraIncomeTotal > 0 ? 'positive' : 'default'} />
-            <SmallResult label="Total de ingresos ingresados" value={formatMoney(previewRecord.totalIncome)} tone="positive" />
+            <SmallResult label="Saldo inicial + ingresos ingresados" value={formatMoney(previewRecord.totalIncome)} tone="positive" />
           </div>
           {previewRecord.extraIncome.length > 0 ? (
             <div className="grid gap-2">
@@ -1667,7 +1667,7 @@ function MoneyFlowPanel({ summary }) {
   return (
     <div className="mt-3 grid gap-3">
       <div className="grid gap-3 sm:grid-cols-3">
-        <SummaryTile label="Ingresó" value={summary.totalIncome} tone="positive" />
+        <SummaryTile label="Saldo inicial + ingresos ingresados" value={summary.totalIncome} tone="positive" />
         <SummaryTile label="Salió de semana actual" value={summary.weeklyIncomeOutflow} tone="warning" />
         <SummaryTile
           label={resultLabel}
@@ -1683,7 +1683,7 @@ function MoneyFlowPanel({ summary }) {
           ) : null}
           <MoneyFlowRow label="Ingreso principal" value={summary.primaryIncome} tone="positive" />
           <MoneyFlowRow label="Otros ingresos" value={summary.extraIncomeTotal} tone={summary.extraIncomeTotal > 0 ? 'positive' : 'default'} />
-          <MoneyFlowRow label="Total de ingresos ingresados" value={summary.totalIncome} strong tone="positive" />
+          <MoneyFlowRow label="Saldo inicial + ingresos ingresados" value={summary.totalIncome} strong tone="positive" />
         </CollapsibleMoneySection>
 
         <CollapsibleMoneySection title="Dinero comprometido" total={summary.fixedAndReservedTotal} defaultOpen>

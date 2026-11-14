@@ -47,8 +47,9 @@ async function run(name,width,fn,{data=paymentFixture(),now='2026-11-10T12:00:00
 const stored=p=>p.evaluate(()=>JSON.parse(localStorage.getItem('weekly-finance-planner')));
 const writes=p=>p.evaluate(()=>window.__writes.length);
 try {
- for(const width of [360,1280]) for(const kind of ['empty','partial','reserve','expected']) {
+ for(const width of [360,1280]) for(const kind of ['empty','partial','reserve','expected','opening']) {
   const data=paymentFixture(); data.variableBudgets={groceries:100,fuel:40};
+  if(kind==='opening') data.activeWeek.openingBalance=125;
   if(kind==='expected') data.activeWeek.realIncome=data.activeWeek.income=0;
   if(kind==='partial'||kind==='reserve') data.activeWeek.variableTransactions=[{id:'purchase',date:'2026-11-10',description:'Compra ficticia',category:'groceries',amount:25,fundingSource:kind==='reserve'?'custom-gem-reserve':'weekly-income'}];
   data.weeklyRecords=[{...structuredClone(data.activeWeek),id:'closed-fixture',closedAt:'2026-11-09T12:00:00Z',weekDate:'2026-11-03',weekStartDate:'2026-11-03',budgetSnapshot:{weeklyIncome:400,weeklyExpenses:[],monthlyExpenses:[],variableBudgets:{groceries:100,fuel:40}}}];
@@ -57,6 +58,11 @@ try {
    assert.match(await p.locator('body').innerText(),/Plan estimado con presupuesto/i);
    assert.match(await p.locator('body').innerText(),/no confirma un depósito bancario/);
    assert.match(await p.locator('body').innerText(),/No es el saldo del banco/);
+   if(kind==='opening'){
+    const funds=p.getByText('Fondos considerados en el plan',{exact:true}).locator('..');
+    assert.match(await funds.innerText(),/525/);
+    assert.doesNotMatch(await p.locator('body').innerText(),/Ingresos usados en el plan/);
+   }
    await p.screenshot({path:evidence+'/plan-'+kind+'-'+width+'.png',fullPage:true});
    await p.getByRole('button',{name:'Historial',exact:true}).click();
    const purchases=p.getByRole('button',{name:/Compras registradas \(opcional\)/});
@@ -66,6 +72,17 @@ try {
    assert.equal(await p.getByText('Comercio / descripción',{exact:true}).isVisible(),true);
    await p.getByRole('button',{name:/Resultado calculado con movimientos registrados/}).click();
    assert.doesNotMatch(await p.locator('body').innerText(),/Resultado real de la semana|Margen real|Gasto variable real|Gasté de menos|Gasté de más/);
+   if(kind==='opening'){
+    const control=p.getByRole('button',{name:/Control de la semana financiera/});
+    assert.match(await control.innerText(),/saldo inicial \+ ingresos ingresados 525/i);
+    await control.click();
+    const labels=p.getByText('Saldo inicial + ingresos ingresados',{exact:true});
+    assert.ok(await labels.count()>=2);
+    for(const label of await labels.all()) assert.match(await label.locator('..').innerText(),/525/);
+    const history=p.getByText('03/11/2026',{exact:true}).locator('..');
+    assert.match(await history.innerText(),/Saldo inicial \+ ingresos ingresados 525/);
+    assert.doesNotMatch(await p.locator('body').innerText(),/Total de ingresos ingresados|Ingresó/);
+   }
    assert.deepEqual(await stored(p),before);assert.equal(await writes(p),0);
    await p.screenshot({path:evidence+'/'+kind+'-'+width+'.png',fullPage:true});
    // Closing needs no purchase entry; preserve history and reserve balances.

@@ -1,0 +1,52 @@
+[
+  {
+    "name": "empty",
+    "width": 360,
+    "status": "PASS"
+  },
+  {
+    "name": "partial",
+    "width": 360,
+    "status": "PASS"
+  },
+  {
+    "name": "reserve",
+    "width": 360,
+    "status": "PASS"
+  },
+  {
+    "name": "expected",
+    "width": 360,
+    "status": "PASS"
+  },
+  {
+    "name": "opening",
+    "width": 360,
+    "status": "PASS"
+  },
+  {
+    "name": "empty",
+    "width": 1280,
+    "status": "PASS"
+  },
+  {
+    "name": "partial",
+    "width": 1280,
+    "status": "PASS"
+  },
+  {
+    "name": "reserve",
+    "width": 1280,
+    "status": "PASS"
+  },
+  {
+    "name": "expected",
+    "width": 1280,
+    "status": "PASS"
+  },
+  {
+    "name": "opening",
+    "width": 1280,
+    "status": "PASS"
+  }
+]

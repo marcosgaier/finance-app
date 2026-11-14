@@ -70,7 +70,7 @@ export function WeeklyActionPlan({ financeData, weeklySummary }) {
       <p className="mt-3 text-sm text-stone-600">Usa ingresos esperados o ingresados manualmente; no confirma un depósito bancario. Los importes son una proyección según presupuesto.</p>
       <div className="mt-4 grid gap-3 lg:grid-cols-4">
         <ActionStep
-          label="Ingresos usados en el plan"
+          label="Fondos considerados en el plan"
           value={formatActionMoney(totalIncome)}
           helper={
             openingBalance > 0

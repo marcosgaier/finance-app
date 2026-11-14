@@ -173,6 +173,12 @@ try {
       assert.equal(await page.locator('#work-payments-title').evaluate(el=>el===document.activeElement),true);
       const paymentsRegion=work.getByRole('region',{name:'Pagos del ejemplo',exact:true});
       assert.equal(await paymentsRegion.locator('[data-payment]').count(),6);
+      assert.deepEqual(await paymentsRegion.locator('[data-payment]').evaluateAll(nodes=>nodes.map(el=>el.dataset.payDate)),['2026-09-30','2026-10-07','2026-10-14','2026-10-21','2026-09-23','2026-09-16']);
+      assert.equal(await paymentsRegion.getByText('Próximo pago estimado',{exact:true}).count(),1);
+      assert.equal(await paymentsRegion.getByText('Fecha estimada de cobro',{exact:true}).count(),6);
+      assert.equal(await paymentsRegion.getByText('Semana / período trabajado del ejemplo',{exact:true}).count(),6);
+      assert.equal(await paymentsRegion.getByRole('region',{name:'Próximos pagos',exact:true}).locator('[data-payment]').count(),4);
+      assert.equal(await paymentsRegion.getByRole('region',{name:'Pagos anteriores',exact:true}).locator('[data-payment]').count(),2);
       const paidWeek=paymentsRegion.locator('[data-payment="2026-09-20"]');
       assert.equal(await paidWeek.getAttribute('data-pay-date'),'2026-09-30');
       assert.match(await paidWeek.innerText(),/miércoles/);

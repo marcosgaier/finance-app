@@ -76,6 +76,10 @@ try {
   const bankHtml=renderPayments(overtimePreferences),payHtml=renderPayments([]);
   for(const html of [bankHtml,payHtml]) {
     assert.equal((html.match(/data-payment=/g)||[]).length,6,'Four upcoming and two recent cards');
+    assert.deepEqual([...html.matchAll(/data-pay-date="([^"]+)"/g)].map(m=>m[1]),['2026-09-30','2026-10-07','2026-10-14','2026-10-21','2026-09-23','2026-09-16']);
+    assert.equal((html.match(/Próximo pago estimado/g)||[]).length,1);
+    assert.equal((html.match(/Fecha estimada de cobro/g)||[]).length,6);
+    assert.equal((html.match(/Semana \/ período trabajado del ejemplo/g)||[]).length,6);
     assert.match(html,/data-pay-date="2026-09-30"/,'Calculated Wednesday, not hardcoded Tuesday');
     assert.match(html,/PAYE estimado \(incluye ACC\)/);
     assert.match(html,/Semana sin turnos en este ejemplo/);

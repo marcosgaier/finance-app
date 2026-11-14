@@ -32,23 +32,26 @@ export function PaymentsPage({shifts,settings,overtimePreferences,referenceDate}
     <p>No se guarda ni se exporta. Estas proyecciones no son depósitos confirmados ni ingresos de Finanzas.</p>
     <p>Semana del ejemplo: domingo a sábado. Las fechas de pago se calculan con la configuración ficticia.</p>
     <section aria-labelledby="upcoming-example-payments">
-      <h3 id="upcoming-example-payments">Próximas proyecciones del ejemplo</h3>
-      {upcoming.length?<div className={styles.paymentsList}>{upcoming.map(period=><PaymentCard key={period.id} period={period} kiwiSaverRate={settings.kiwisaver_rate}/>)}</div>:<p>Sin próximas proyecciones en este ejemplo.</p>}
+      <h3 id="upcoming-example-payments">Próximos pagos</h3>
+      <p className={styles.muted}>Desde la fecha del ejemplo · del más cercano al más lejano.</p>
+      {upcoming.length?<div className={styles.paymentsList}>{upcoming.map((period,index)=><PaymentCard key={period.id} featured={index===0} period={period} kiwiSaverRate={settings.kiwisaver_rate}/>)}</div>:<p>Sin próximas proyecciones en este ejemplo.</p>}
     </section>
-    <section aria-labelledby="recent-example-payments">
-      <h3 id="recent-example-payments">Proyecciones recientes del ejemplo</h3>
+    <section className={styles.previousPayments} aria-labelledby="recent-example-payments">
+      <h3 id="recent-example-payments">Pagos anteriores</h3>
+      <p className={styles.muted}>Antes de la fecha del ejemplo · del más reciente al más antiguo. Son proyecciones ficticias, sin confirmación de cobro.</p>
       {recent.length?<div className={styles.paymentsList}>{recent.map(period=><PaymentCard key={period.id} period={period} kiwiSaverRate={settings.kiwisaver_rate}/>)}</div>:<p>Sin proyecciones recientes en este ejemplo.</p>}
     </section>
     <p>Estimación del motor fijado: código M, año fiscal 2026–27. PAYE incluye ACC; no se descuenta de nuevo. Tarifas y estados ficticios. Esta demo no valida cálculos específicos de feriados.</p>
   </>;
 }
 
-function PaymentCard({period,kiwiSaverRate}:{period:PayPeriodProjection;kiwiSaverRate:number}) {
-  return <article className={`${styles.card} ${styles.paymentCard}`} aria-labelledby={`example-payment-${period.id}`} data-payment={period.id} data-pay-date={period.payDate}>
-    <p className={styles.eyebrow}>PAGO ESTIMADO DEL EJEMPLO</p>
+function PaymentCard({period,kiwiSaverRate,featured=false}:{period:PayPeriodProjection;kiwiSaverRate:number;featured?:boolean}) {
+  return <article className={`${styles.card} ${styles.paymentCard} ${featured?styles.featuredPayment:''}`} aria-labelledby={`example-payment-${period.id}`} data-payment={period.id} data-pay-date={period.payDate}>
+    <p className={styles.paymentEyebrow}>{featured?'Próximo pago estimado':'Pago estimado del ejemplo'}</p>
+    <p className={styles.paymentDateLabel}>Fecha estimada de cobro</p>
     <h4 id={`example-payment-${period.id}`}>{formatDate(period.payDate,{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</h4>
     <p className={styles.paymentStatus}>{statusLabels[period.status]}</p>
-    <p>Período: {formatDate(period.startsOn,{dateStyle:'long'})} – {formatDate(period.endsOn,{dateStyle:'long'})}</p>
+    <p className={styles.workedPeriod}><span>Semana / período trabajado del ejemplo</span>{formatDate(period.startsOn,{dateStyle:'long'})} – {formatDate(period.endsOn,{dateStyle:'long'})}</p>
     {period.shiftCount===0?<p>Semana sin turnos en este ejemplo; no indica ausencia de ingresos reales.</p>:null}
     <dl className={styles.paymentHours}>
       <div><dt>Diurnas</dt><dd>{period.dayHours} h</dd></div>

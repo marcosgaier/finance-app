@@ -46,6 +46,13 @@
 .workDemo h3[tabindex] {scroll-margin-top:110px}
 .paymentsList {display:grid;gap:14px}
 .paymentCard {min-width:0}
+.featuredPayment {border:2px solid #3c725e;box-shadow:0 8px 24px #23413818}
+.paymentEyebrow {font-size:13px;font-weight:750;color:#173e35}
+.featuredPayment .paymentEyebrow {display:inline-block;background:#173e35;color:white;border-radius:20px;padding:7px 12px}
+.paymentDateLabel {font-size:12px;color:#435e55;font-weight:700;margin-bottom:0}
+.workedPeriod {border-top:1px solid #dfe8e4;padding-top:14px;color:#435e55}
+.workedPeriod span {display:block;font-size:12px;font-weight:700;margin-bottom:4px}
+.previousPayments {margin-top:32px;padding-top:20px;border-top:2px solid #bacdc3}
 .paymentCard h4 {font-size:22px;line-height:1.35;margin:8px 0}
 .paymentCard h5 {font-size:16px;margin:0}
 .paymentStatus {display:inline-block;border:1px solid #bacdc3;border-radius:12px;padding:6px 10px;background:#e7efec}

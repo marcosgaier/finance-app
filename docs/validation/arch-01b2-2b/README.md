@@ -1,5 +1,11 @@
 # ARCH-01B2.2b — Pagos sintéticos de solo lectura
 
+## Actualización visual del PR #14
+
+Aplicado el comentario `6872824228` por solicitud directa del director, sobre head `9cf7c0a273b8273e1c66dd5e553a778047adfa24`, en la misma rama. Se destaca una única tarjeta «Próximo pago estimado» mediante etiqueta, borde y sombra; «Próximos pagos» y «Pagos anteriores» quedan separados por encabezados, explicación del orden y divisor. Se mantienen los anteriores visibles para conservar lectura y acceso directo sin añadir controles plegables. Cada tarjeta diferencia «Fecha estimada de cobro» de «Semana / período trabajado del ejemplo».
+
+Sin cambios en selección, orden ni cálculo: `30/09, 07/10, 14/10, 21/10` y después `23/09, 16/09`, todas de 2026. Nuevas aserciones verifican las seis fechas en orden exacto, cuatro próximas/dos anteriores, una única etiqueta destacada y las seis parejas de rótulos; la UI comprueba además regiones semánticas a 360/390/1280. Se regeneraron logs/capturas y repitieron npm test, paridad independiente, typecheck, build, UI/foco/scroll/efectos y regresiones pagos/planificación. Importes y bank permanecen idénticos. Revisión visual móvil y escritorio de las capturas nuevas; mismos límites manuales detallados debajo. No se modifican Roster, WorkDemo, fixtures, motores ni CSS global. Sin merge; requiere nueva validación visual del director.
+
 14/11/2026, Pacific/Auckland. Implementación de Taura #28, conforme a la orden de continuación 6872480974 y la petición directa del director. Rama y PR separados, SIN MERGE. PAY-01 #29, feriados, edición, datos reales y refinamiento visual del calendario quedan fuera del alcance.
 
 ## Base, fuente y alcance

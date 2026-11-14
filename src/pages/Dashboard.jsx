@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { TauraIncomePreview } from '../components/TauraIncomePreview.jsx';
 import { AppTabs } from '../components/AppTabs.jsx';
+import { ModuleAccessLinks } from '../components/ModuleAccessLinks.jsx';
 import { BudgetEditor } from '../components/BudgetEditor.jsx';
 import { CardSummary } from '../components/CardSummary.jsx';
 import { GemMinimumSummary } from '../components/GemMinimumSummary.jsx';
@@ -338,6 +339,8 @@ export function Dashboard({ financeData, setFinanceData }) {
             </p>
           </div>
         </header>
+
+        <ModuleAccessLinks />
 
         <AppTabs tabs={dashboardTabs} activeTab={activeTab} onChange={setActiveTab} />
 

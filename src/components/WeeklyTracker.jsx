@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { sanitizePayments } from '../utils/activePaymentUtils.js';
 import { getCardPaymentWarnings } from '../utils/cardPaymentUtils.js';
 import { formatDisplayDate, formatIsoDate, parseDisplayDate } from '../utils/dateUtils.js';
 import { getFundingSourceLabel, isWeeklyIncomeFunded, WEEKLY_INCOME_SOURCE } from '../utils/fundingSourceUtils.js';
@@ -1884,20 +1885,6 @@ function sanitizeTransactions(transactions) {
       fundingSource: transaction.fundingSource || WEEKLY_INCOME_SOURCE,
     }))
     .filter((transaction) => transaction.amount > 0 || transaction.description.length > 0);
-}
-
-function sanitizePayments(payments, fallbackDate = getTodayIsoDate()) {
-  return (payments || [])
-    .map((payment, index) => ({
-      id: payment.id || `legacy-payment-${payment.cardId || 'card'}-${fallbackDate || getTodayIsoDate()}-${index}`,
-      date: payment.date || fallbackDate || getTodayIsoDate(),
-      cardId: payment.cardId,
-      cardName: payment.cardName || 'Tarjeta',
-      amount: Number(payment.amount || 0),
-      fundingSource: payment.fundingSource || WEEKLY_INCOME_SOURCE,
-      note: payment.note || '',
-    }))
-    .filter((payment) => payment.cardId && payment.amount > 0);
 }
 
 function sanitizeReserveMovements(reserveMovements) {

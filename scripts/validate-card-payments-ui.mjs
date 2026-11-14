@@ -18,7 +18,7 @@ const server=createServer(async(req,res)=>{
 });
 await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 const baseURL='http://127.0.0.1:'+server.address().port;
-const evidence='docs/validation/aud-01b';
+const evidence=process.env.VALIDATION_OUTPUT_DIR || 'docs/validation/aud-01b';
 await mkdir(evidence,{recursive:true});
 const browser=await chromium.launch({headless:true,channel:process.env.CHROMIUM_PATH ? undefined:'chrome',...(process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:{})});
 const results=[];
@@ -30,7 +30,11 @@ async function run(name,width,fn,{data=paymentFixture(),now='2026-11-10T12:00:00
  try{
   await page.clock.setFixedTime(new Date(now));
   await page.addInitScript(({data})=>{
-   localStorage.setItem('weekly-finance-planner',JSON.stringify(data));window.__writes=[];
+   if (!sessionStorage.getItem('fixture-seeded')) {
+    localStorage.setItem('weekly-finance-planner',JSON.stringify(data));
+    sessionStorage.setItem('fixture-seeded','1');
+   }
+   window.__writes=[];
    const original=Storage.prototype.setItem;
    Storage.prototype.setItem=function(key,value){if(key==='weekly-finance-planner')window.__writes.push(value);return original.call(this,key,value);};
   },{data});
@@ -56,6 +60,38 @@ async function confirm(p,button,accept,pattern){
 }
 try{
  for(const width of [360,1280]){
+  for(const kind of ['missing','duplicate']){
+   const data=paymentFixture();
+   data.activeWeek.payments=[payment({id:kind==='missing'?undefined:'repeated',amount:80.17}),payment({id:kind==='missing'?undefined:'repeated',amount:20})];
+   await run('legacy '+kind+' IDs: add preserves identities, delete refunds one and survives reload',width,async p=>{
+    const box=await form(p);
+    const rows=p.getByText('Pagos registrados',{exact:true}).locator('..').locator('..');
+    assert.equal(await rows.getByRole('button',{name:'Eliminar',exact:true}).count(),2);
+    assert.equal(await writes(p),0);
+    await fill(box,10);await box.getByRole('button',{name:'Agregar',exact:true}).click();await saveWait(p,1);
+    const added=await stored(p);assert.equal(added.activeWeek.payments.length,3);
+    assert.equal(new Set(added.activeWeek.payments.map(x=>x.id)).size,3);
+    await rows.getByRole('button',{name:'Eliminar',exact:true}).first().evaluate(el=>{el.click();el.click();});
+    await saveWait(p,2);const removed=await stored(p);
+    assert.equal(removed.activeWeek.payments.length,2);
+    assert.equal(Math.round(removed.reserveBuckets[0].balance*100),31017);
+    assert.deepEqual(removed.weeklyRecords,data.weeklyRecords);
+    await p.reload();await form(p);
+    assert.deepEqual(await stored(p),removed);
+    const again=p.getByText('Pagos registrados',{exact:true}).locator('..').locator('..');
+    await again.getByRole('button',{name:'Eliminar',exact:true}).first().click();await saveWait(p,1);
+    const final=await stored(p);assert.equal(final.activeWeek.payments.length,1);
+    assert.equal(Math.round(final.reserveBuckets[0].balance*100),33017);
+   },{data});
+   await run('legacy '+kind+' IDs: direct delete refunds only one',width,async p=>{
+    await form(p);
+    const rows=p.getByText('Pagos registrados',{exact:true}).locator('..').locator('..');
+    await rows.getByRole('button',{name:'Eliminar',exact:true}).first().evaluate(el=>{el.click();el.click();});
+    await saveWait(p,1);const d=await stored(p);
+    assert.equal(d.activeWeek.payments.length,1);assert.equal(d.activeWeek.payments[0].amount,20);
+    assert.equal(Math.round(d.reserveBuckets[0].balance*100),32017);
+   },{data});
+  }
   await run('single save, double click, reserve note, cycle, deletion refund',width,async p=>{
    const box=await form(p);await fill(box,80);
    assert.match(await box.innerText(),/Fondo GEM ficticio/);assert.match(await box.innerText(),/240/);assert.match(await box.innerText(),/no registres además un retiro manual/i);

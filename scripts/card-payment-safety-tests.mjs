@@ -3,6 +3,44 @@ import assert from 'node:assert/strict';
 import {spawnSync} from 'node:child_process';
 import {paymentFixture,payment} from './fixtures/card-payment-data.mjs';
 import {getCardPaymentWarnings,recordCardPayment,removeActiveCardPayment} from '../src/utils/cardPaymentUtils.js';
+import {sanitizePayments} from '../src/utils/activePaymentUtils.js';
+
+for (const kind of ['missing', 'duplicate', 'collision']) {
+ test(`legacy ${kind}: shared identities, one deletion/refund, retries and addition`,()=>{
+  const d=paymentFixture();
+  const base='legacy-payment-gem-2026-11-10-0';
+  d.activeWeek.payments=[payment({id:kind==='duplicate'?'repeated':undefined,amount:'80.17',date:undefined}),payment({id:kind==='duplicate'?'repeated':kind==='collision'?base:undefined,amount:20,fundingSource:'weekly-income'})];
+  d.weeklyRecords=[{id:'history',payments:structuredClone(d.activeWeek.payments)}];
+  const before=structuredClone(d);
+  const shown=sanitizePayments(d.activeWeek.payments,d.activeWeek.weekStartDate);
+  assert.equal(new Set(shown.map(p=>p.id)).size,2);
+  assert.deepEqual(sanitizePayments(shown,d.activeWeek.weekStartDate),shown);
+  const added=recordCardPayment(freeze(d),payment({id:'new',amount:10}));
+  assert.deepEqual(added.activeWeek.payments.slice(0,2),shown);
+  assert.equal(added.reserveBuckets[0].balance,230);
+  assert.equal(recordCardPayment(d,payment({id:shown[0].id})),d);
+  const removed=removeActiveCardPayment(d,shown[0].id);
+  assert.deepEqual(removed.activeWeek.payments,[shown[1]]);
+  assert.equal(Math.round(removed.reserveBuckets[0].balance*100),32017);
+  assert.equal(removeActiveCardPayment(removed,shown[0].id),removed);
+  assert.equal(removeActiveCardPayment(added,shown[0].id).activeWeek.payments.length,2);
+  const last=removeActiveCardPayment(removed,shown[1].id);
+  assert.equal(last.activeWeek.payments.length,0);
+  assert.equal(last.reserveBuckets,removed.reserveBuckets);
+  assert.deepEqual(removed.weeklyRecords,before.weeklyRecords);
+  assert.deepEqual(d,before);
+  const closedRecord={...d.activeWeek,id:'closed-legacy',closedAt:'2026-11-16T12:00:00Z',budgetSnapshot:{weeklyIncome:400}};
+  let closed=closeFinancialWeek(d,closedRecord);
+  for(let n=0;n<2;n++){
+   const opened=reopenFinancialWeek(closed,'closed-legacy');
+   assert.equal(removeActiveCardPayment(opened,shown[0].id),opened);
+   assert.equal(recordCardPayment(opened,payment({id:'blocked'})),opened);
+   closed=closeFinancialWeek(opened,closeReopenedFinancialWeek(opened.activeWeek));
+  }
+  assert.deepEqual(closed.weeklyRecords,[...d.weeklyRecords,closedRecord]);
+  assert.deepEqual(closed.reserveBuckets,d.reserveBuckets);
+ });
+}
 import {buildReserveMovementHistory} from '../src/utils/reserveHistoryUtils.js';
 import {formatMoney,formatActionMoney,displayMoneyValue} from '../src/utils/moneyDisplay.js';
 import {calculateWeeklyDebtReserve} from '../src/utils/financeEngine.js';

@@ -1,3 +1,4 @@
+import { sanitizePayments } from './activePaymentUtils.js';
 import { isReserveFunded } from './fundingSourceUtils.js';
 
 // Warnings only: never infer which plan Latitude will credit or change old records.
@@ -24,6 +25,8 @@ export function recordCardPayment(data, payment) {
       !Number.isFinite(payment.amount) || payment.amount <= 0 || !payment.date ||
       !data.cards.some((card) => card.id === payment.cardId) ||
       (data.activeWeek.payments || []).some((existing) => existing.id === payment.id)) return data;
+  const payments = sanitizePayments(data.activeWeek.payments, data.activeWeek.weekStartDate || data.activeWeek.weekDate);
+  if (!payment.id || payments.some((existing) => existing.id === payment.id)) return data;
   const fromReserve = isReserveFunded(payment);
   if (fromReserve && !data.reserveBuckets.some((bucket) => bucket.id === payment.fundingSource)) return data;
   return {
@@ -33,7 +36,7 @@ export function recordCardPayment(data, payment) {
     activeWeek: {
       ...data.activeWeek,
       pristineFinancialWeek: false,
-      payments: [...(data.activeWeek.payments || []), payment],
+      payments: [...payments, payment],
       updatedAt: new Date().toISOString(),
     },
   };
@@ -41,7 +44,8 @@ export function recordCardPayment(data, payment) {
 
 export function removeActiveCardPayment(data, paymentId) {
   if (!data.activeWeek || data.activeWeek.reopenedFromHistory) return data;
-  const payment = (data.activeWeek.payments || []).find((item) => item.id === paymentId);
+  const payments = sanitizePayments(data.activeWeek.payments, data.activeWeek.weekStartDate || data.activeWeek.weekDate);
+  const payment = payments.find((item) => item.id === paymentId);
   if (!payment) return data;
   return {
     ...data,
@@ -50,7 +54,7 @@ export function removeActiveCardPayment(data, paymentId) {
     activeWeek: {
       ...data.activeWeek,
       pristineFinancialWeek: false,
-      payments: data.activeWeek.payments.filter((item) => item.id !== paymentId),
+      payments: payments.filter((item) => item.id !== paymentId),
       updatedAt: new Date().toISOString(),
     },
   };

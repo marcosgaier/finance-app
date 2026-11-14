@@ -46,6 +46,11 @@
       "path": "domain/tax/taxTypes.ts",
       "gitBlob": "ec266a436f02848cfe1474b065befe918e4b542f",
       "sha256": "34e89236200a7c9f9a2f89467f3bf8bddac5bff55a337e8f5c1f27f1d24b4b29"
+    },
+    {
+      "path": "domain/rosterWeeks.ts",
+      "gitBlob": "decb55c020622d16602129d0d2bf4c76ffd9d305",
+      "sha256": "ab1c7e75f5b35e433d644101a4ce15ce0bc95c70362e9d71a61800df4ac7b931"
     }
   ],
   "presentation": {
@@ -56,6 +61,17 @@
       "fixed referenceDate prop",
       "fictitious copy and Sunday–Saturday label",
       "CSS Modules; no icons dependency"
+    ]
+  },
+  "rosterPresentation": {
+    "ref": "22665a594a0dc8230aa7ed6a28736297a1ed32f2",
+    "path": "pages/RosterPage.tsx",
+    "gitBlob": "e41e44840baee95f9b08dec3d126959d46c4aa47",
+    "adaptations": [
+      "42 day month / 7 day week with fixed referenceDate",
+      "informational inline details; no operational callbacks or selection",
+      "complete fixture rated before weekly filtering",
+      "local CSS Modules and native accessible navigation"
     ]
   }
 }

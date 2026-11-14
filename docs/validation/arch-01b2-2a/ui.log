@@ -1,0 +1,23 @@
+
+> test:work-ui
+> node scripts/validate-work-demo-ui.mjs
+
+INTERCEPT ok https://taura-roster-pay-676l.vercel.app/
+INTERCEPT 404 https://taura-roster-pay-676l.vercel.app/
+INTERCEPT offline https://taura-roster-pay-676l.vercel.app/
+INTERCEPT ok https://taura-roster-pay-676l.vercel.app/
+INTERCEPT ok https://taura-roster-pay-676l.vercel.app/
+INTERCEPT 404 https://taura-roster-pay-676l.vercel.app/
+INTERCEPT offline https://taura-roster-pay-676l.vercel.app/
+INTERCEPT ok https://taura-roster-pay-676l.vercel.app/
+INTERCEPT ok https://taura-roster-pay-676l.vercel.app/
+INTERCEPT 404 https://taura-roster-pay-676l.vercel.app/
+INTERCEPT offline https://taura-roster-pay-676l.vercel.app/
+INTERCEPT ok https://taura-roster-pay-676l.vercel.app/
+360px: month 42 days, week 7 days, previous/next/fixed date, overnight/empty inline details, keyboard and returned focus, sticky banner, preserved calendar/scroll and unchanged summary; demo round trips from every tab, DOM identity/hidden/focus/scroll/CSS, zero demo effects, eight tabs, touch/layout, synthetic planning session and budget, native popup/Enter, noopener/no referrer, 404/offline, unchanged Finance storage/history
+390px: month 42 days, week 7 days, previous/next/fixed date, overnight/empty inline details, keyboard and returned focus, sticky banner, preserved calendar/scroll and unchanged summary; demo round trips from every tab, DOM identity/hidden/focus/scroll/CSS, zero demo effects, eight tabs, touch/layout, synthetic planning session and budget, native popup/Enter, noopener/no referrer, 404/offline, unchanged Finance storage/history
+1280px: month 42 days, week 7 days, previous/next/fixed date, overnight/empty inline details, keyboard and returned focus, sticky banner, preserved calendar/scroll and unchanged summary; demo round trips from every tab, DOM identity/hidden/focus/scroll/CSS, zero demo effects, eight tabs, touch/layout, synthetic planning session and budget, native popup/Enter, noopener/no referrer, 404/offline, unchanged Finance storage/history
+incompatible: original recovery gate retained, no B1 access or storage writes
+read-error: original recovery gate retained, no B1 access or storage writes
+demo render failure contained; Finance state, return and recovery intact
+unsaved: original recovery gate and recovery download retained

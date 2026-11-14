@@ -6,7 +6,7 @@ import { resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { sampleFinanceData } from '../src/data/sampleData.js';
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE ? pathToFileURL(resolve(process.env.PLAYWRIGHT_MODULE)).href : 'playwright');
-const output = new URL('../docs/validation/arch-01b2-1/', import.meta.url);
+const output = new URL('../docs/validation/arch-01b2-2a/', import.meta.url);
 await mkdir(output, { recursive: true });
 const server = createServer(async (req, res) => {
   try {
@@ -89,23 +89,83 @@ try {
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
     await page.screenshot({ path: fileURLToPath(new URL(`access-${width}.png`, output)), fullPage: true });
     const before = await snapshot(page);
+    let calendarChecked=false;
     async function roundTrip() {
       const state = await snapshot(page);
       const financeNode = await page.locator('#finance-region').elementHandle();
       const plannerNode = await page.locator('[data-testid="planning-preview"]').count() ? await page.locator('[data-testid="planning-preview"]').elementHandle() : null;
       const cssBefore = await page.locator('#finance-region header').evaluate(el => ({color:getComputedStyle(el).color, font:getComputedStyle(el).font, width:el.getBoundingClientRect().width}));
+      await page.locator('#open-work-demo').scrollIntoViewIfNeeded();
+      const financeScroll=await page.evaluate(()=>window.scrollY);
       await page.getByRole('button', {name:'Ver demostración de Trabajo',exact:true}).click();
       await page.getByRole('heading',{name:'Trabajo · Taura',exact:true}).waitFor();
       assert.equal(await page.locator('#finance-region').evaluate(el=>getComputedStyle(el).display),'none');
       assert.equal(await page.locator('#work-demo-title').evaluate(el=>el===document.activeElement),true);
       assert.match(await page.locator('#work-demo').innerText(),/DEMOSTRACIÓN — datos ficticios; no es tu roster/);
       assert.match(await page.locator('#work-demo').innerText(),/2026-09-24/);
-      assert.equal(await page.locator('#work-demo button').count(),1);
+      const work=page.locator('#work-demo');
+      assert.equal(await work.getByRole('button',{name:'Pagos',exact:true}).count(),0);
+      assert.equal(await work.locator('input,select,textarea,a[download]').count(),0);
+      assert.equal(await work.getByRole('button',{name:/Agregar|Editar|Borrar|Cancelar|Copiar|Pegar|Seleccionar/}).count(),0);
+      assert.equal(await work.getByRole('heading',{name:'Resumen del ejemplo',exact:true}).isVisible(),true);
+      if(!calendarChecked) {
+      const summary=await work.getByRole('region',{name:'Resumen del ejemplo'}).innerText();
+      await work.getByRole('button',{name:'Roster',exact:true}).click();
+      assert.equal(await page.locator('#work-roster-title').evaluate(el=>el===document.activeElement),true);
+      assert.equal(await work.locator('[data-day]').count(),42);
+      assert.match(await work.innerText(),/60 h/);
+      const calendarDay=work.locator('[data-day="2026-09-23"]');
+      await calendarDay.focus();await page.keyboard.press('Enter');
+      assert.equal(await page.locator('#day-detail-title').evaluate(el=>el===document.activeElement),true);
+      assert.match(await work.innerText(),/Nocturno/);
+      assert.match(await work.innerText(),/2026-09-24 07:00:00/);
+      await page.screenshot({path:fileURLToPath(new URL('detail-'+width+'.png',output)),fullPage:true});
+      await work.getByRole('button',{name:'Cerrar detalle',exact:true}).click();
+      assert.equal(await calendarDay.evaluate(el=>el===document.activeElement),true);
+      await work.getByRole('button',{name:'Semana',exact:true}).click();
+      assert.equal(await work.locator('[data-day]').count(),7);
+      await work.getByRole('button',{name:'Período siguiente',exact:true}).click();
+      assert.match(await work.innerText(),/0 h/);
+      await work.locator('[data-day]').first().click();
+      assert.match(await work.getByRole('region',{name:/Detalle del ejemplo/}).innerText(),/Sin turnos en este ejemplo/);
+      await work.getByRole('button',{name:'Cerrar detalle',exact:true}).click();
+      await page.evaluate(()=>window.scrollTo(0,350));
+      const rosterScroll=await page.evaluate(()=>window.scrollY);
+      // Programmatic click preserves the scroll being tested (Playwright would scroll to the button).
+      await work.getByRole('button',{name:'Atrás al resumen',exact:true}).evaluate(el=>el.click());
+      assert.equal(await page.locator('#work-summary-title').evaluate(el=>el===document.activeElement),true);
+      assert.equal(await work.getByRole('region',{name:'Resumen del ejemplo'}).innerText(),summary);
+      await work.getByRole('button',{name:'Roster',exact:true}).evaluate(el=>el.click());
+      assert.equal(await page.evaluate(()=>window.scrollY),rosterScroll);
+      assert.equal(await work.locator('[data-day]').count(),7);
+      assert.equal(await work.locator('[data-day="2026-09-27"]').count(),1);
+      await work.getByRole('button',{name:'Fecha del ejemplo',exact:true}).click();
+      await work.getByRole('button',{name:'Mes',exact:true}).click();
+      await work.getByRole('button',{name:'Período siguiente',exact:true}).click();
+      assert.equal(await work.locator('[data-day="2026-11-07"]').count(),1);
+      await work.getByRole('button',{name:'Período anterior',exact:true}).click();
+      await work.getByRole('button',{name:'Fecha del ejemplo',exact:true}).click();
+      assert.equal(await work.locator('[data-day="2026-08-30"]').count(),1);
+      const dayBox=await work.locator('[data-day]').first().boundingBox();
+      assert.ok(dayBox.height>=44&&dayBox.width>=44);
+      await calendarDay.focus();
+      await page.keyboard.press('Tab');await page.keyboard.press('Shift+Tab');
+      assert.equal(await calendarDay.evaluate(el=>getComputedStyle(el).outlineStyle),'solid');
+      await page.evaluate(()=>window.scrollTo(0,350));
+      const banner=await work.getByText('DEMOSTRACIÓN — datos ficticios; no es tu roster',{exact:true}).boundingBox();
+      assert.ok(Math.abs(banner.y)<2,'Demo banner remains visible while scrolling');
       assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
       assert.equal(await page.getByText('Demostración no disponible.',{exact:false}).count(),0);
+      await page.evaluate(()=>window.scrollTo(0,0));
       await page.screenshot({path:fileURLToPath(new URL('work-'+width+'.png',output)),fullPage:true});
+      await work.getByRole('button',{name:'Semana',exact:true}).click();
+      await page.evaluate(()=>window.scrollTo(0,0));
+      await page.screenshot({path:fileURLToPath(new URL('week-'+width+'.png',output)),fullPage:true});
+      calendarChecked=true;
+      }
       await page.getByRole('button',{name:'Volver a Finanzas',exact:true}).click();
       assert.equal(await page.locator('#open-work-demo').evaluate(el=>el===document.activeElement),true);
+      assert.equal(await page.evaluate(()=>window.scrollY),financeScroll);
       assert.equal(await financeNode.evaluate(el=>el===document.querySelector('#finance-region')),true);
       if(plannerNode) assert.equal(await plannerNode.evaluate(el=>el===document.querySelector('[data-testid="planning-preview"]')),true);
       assert.deepEqual(await page.locator('#finance-region header').evaluate(el=>({color:getComputedStyle(el).color,font:getComputedStyle(el).font,width:el.getBoundingClientRect().width})),cssBefore);
@@ -166,7 +226,7 @@ try {
     await popup.close();
     assert.equal(await budget.inputValue(), '42');
     assert.deepEqual(await snapshot(page), edited);
-    checks.push(`${width}px: demo round trips from every tab, DOM identity/hidden/focus/CSS, zero demo effects, eight tabs, keyboard/focus/touch/layout, synthetic planning session and budget, native popup/Enter, noopener/no referrer, 404/offline, unchanged Finance storage/history`);
+    checks.push(`${width}px: month 42 days, week 7 days, previous/next/fixed date, overnight/empty inline details, keyboard and returned focus, sticky banner, preserved calendar/scroll and unchanged summary; demo round trips from every tab, DOM identity/hidden/focus/scroll/CSS, zero demo effects, eight tabs, touch/layout, synthetic planning session and budget, native popup/Enter, noopener/no referrer, 404/offline, unchanged Finance storage/history`);
     await context.close();
   }
   for (const [label, raw, readError] of [['incompatible', '{"schemaVersion":999}', false], ['read-error', '{}', true]]) {

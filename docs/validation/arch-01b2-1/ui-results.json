@@ -1,0 +1,17 @@
+{
+  "status": "PASS",
+  "checks": [
+    "360px: demo round trips from every tab, DOM identity/hidden/focus/CSS, zero demo effects, eight tabs, keyboard/focus/touch/layout, synthetic planning session and budget, native popup/Enter, noopener/no referrer, 404/offline, unchanged Finance storage/history",
+    "390px: demo round trips from every tab, DOM identity/hidden/focus/CSS, zero demo effects, eight tabs, keyboard/focus/touch/layout, synthetic planning session and budget, native popup/Enter, noopener/no referrer, 404/offline, unchanged Finance storage/history",
+    "1280px: demo round trips from every tab, DOM identity/hidden/focus/CSS, zero demo effects, eight tabs, keyboard/focus/touch/layout, synthetic planning session and budget, native popup/Enter, noopener/no referrer, 404/offline, unchanged Finance storage/history",
+    "incompatible: original recovery gate retained, no B1 access or storage writes",
+    "read-error: original recovery gate retained, no B1 access or storage writes",
+    "demo render failure contained; Finance state, return and recovery intact",
+    "unsaved: original recovery gate and recovery download retained"
+  ],
+  "syntheticOnly": true,
+  "externalNetwork": "intercepted; no live Taura requests",
+  "limitations": [
+    "No physical Android/PWA or screen reader testing"
+  ]
+}

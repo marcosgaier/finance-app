@@ -1,0 +1,444 @@
+
+> test
+> node scripts/finance-engine-coverage-tests.mjs && node scripts/persistence-tests.mjs && node scripts/historical-payment-tests.mjs && node scripts/week-reopening-tests.mjs && node --test scripts/card-payment-safety-tests.mjs scripts/taura-preview-tests.mjs scripts/income-planning-tests.mjs scripts/expense-planning-tests.mjs scripts/planning-session-tests.mjs scripts/arch-01a-contract-tests.mjs && npm run test:work
+
+financeEngine coverage tests passed
+Persistence and compatibility tests passed
+Historical payment editing tests passed
+Week reopening and reclosure tests passed
+TAP version 13
+# Subtest: real exporter fixture: exact cents, independent SHA-256 and allowed contract metadata
+ok 1 - real exporter fixture: exact cents, independent SHA-256 and allowed contract metadata
+  ---
+  duration_ms: 69.6669
+  type: 'test'
+  ...
+# Subtest: several periods same payDate: unique cents sum, partial selection and no inferred cash
+ok 2 - several periods same payDate: unique cents sum, partial selection and no inferred cash
+  ---
+  duration_ms: 13.4592
+  type: 'test'
+  ...
+# Subtest: payDate mapping Monday/Tuesday, month/year and NZ DST civil boundaries
+ok 3 - payDate mapping Monday/Tuesday, month/year and NZ DST civil boundaries
+  ---
+  duration_ms: 37.667
+  type: 'test'
+  ...
+# Subtest: changed payDate requires new revision, keeps period identity, replaces instead of accumulating
+ok 4 - changed payDate requires new revision, keeps period identity, replaces instead of accumulating
+  ---
+  duration_ms: 7.9269
+  type: 'test'
+  ...
+# Subtest: same period revised amount conflicts; generatedAt is not a payment identity or sequence
+ok 5 - same period revised amount conflicts; generatedAt is not a payment identity or sequence
+  ---
+  duration_ms: 15.9481
+  type: 'test'
+  ...
+# Subtest: adversarial future contract drift: exact fields/version/status fail legibly even with valid hash
+ok 6 - adversarial future contract drift: exact fields/version/status fail legibly even with valid hash
+  ---
+  duration_ms: 12.393
+  type: 'test'
+  ...
+# Subtest: corrupt hashes, cents, missing zero, invalid dates and net arithmetic rejected
+ok 7 - corrupt hashes, cents, missing zero, invalid dates and net arithmetic rejected
+  ---
+  duration_ms: 10.614
+  type: 'test'
+  ...
+# Subtest: backups, malformed JSON, item/UTF-8 size limits rejected without side effects
+ok 8 - backups, malformed JSON, item/UTF-8 size limits rejected without side effects
+  ---
+  duration_ms: 7.9185
+  type: 'test'
+  ...
+# Subtest: closed/reopened week metadata is read only and excluded; errors also leave all inputs intact
+ok 9 - closed/reopened week metadata is read only and excluded; errors also leave all inputs intact
+  ---
+  duration_ms: 7.0376
+  type: 'test'
+  ...
+# Subtest: legacy missing: shared identities, one deletion/refund, retries and addition
+ok 10 - legacy missing: shared identities, one deletion/refund, retries and addition
+  ---
+  duration_ms: 10.6528
+  type: 'test'
+  ...
+# Subtest: legacy duplicate: shared identities, one deletion/refund, retries and addition
+ok 11 - legacy duplicate: shared identities, one deletion/refund, retries and addition
+  ---
+  duration_ms: 1.1429
+  type: 'test'
+  ...
+# Subtest: legacy collision: shared identities, one deletion/refund, retries and addition
+ok 12 - legacy collision: shared identities, one deletion/refund, retries and addition
+  ---
+  duration_ms: 3.4537
+  type: 'test'
+  ...
+# Subtest: 80 from arbitrary reserve ID: one debit/event, no plan or weekly-income double charge
+ok 13 - 80 from arbitrary reserve ID: one debit/event, no plan or weekly-income double charge
+  ---
+  duration_ms: 88.7543
+  type: 'test'
+  ...
+# Subtest: insufficient funds and future date produce warnings without mutations; explicit continuation supported
+ok 14 - insufficient funds and future date produce warnings without mutations; explicit continuation supported
+  ---
+  duration_ms: 1.4729
+  type: 'test'
+  ...
+# Subtest: duplicates compare card+effective date+cents across active and historical, independent of funding
+ok 15 - duplicates compare card+effective date+cents across active and historical, independent of funding
+  ---
+  duration_ms: 6.237
+  type: 'test'
+  ...
+# Subtest: weekly-income and other funding remain legitimate; no unrelated reserve debit
+ok 16 - weekly-income and other funding remain legitimate; no unrelated reserve debit
+  ---
+  duration_ms: 0.8558
+  type: 'test'
+  ...
+# Subtest: active deletion/replacement with cents refunds once, repeated deletion is harmless
+ok 17 - active deletion/replacement with cents refunds once, repeated deletion is harmless
+  ---
+  duration_ms: 0.5478
+  type: 'test'
+  ...
+# Subtest: history: real payment dates; stable unique keys including missing/duplicate legacy IDs; no mutation
+ok 18 - history: real payment dates; stable unique keys including missing/duplicate legacy IDs; no mutation
+  ---
+  duration_ms: 3.1127
+  type: 'test'
+  ...
+# Subtest: closing/reopening/reclosing preserves snapshots, payments, dates and balances; historical correction blocked
+ok 19 - closing/reopening/reclosing preserves snapshots, payments, dates and balances; historical correction blocked
+  ---
+  duration_ms: 11.3238
+  type: 'test'
+  ...
+# Subtest: cycle 19/20 unchanged after safe recording; Latitude update only changes plan-derived calculations
+ok 20 - cycle 19/20 unchanged after safe recording; Latitude update only changes plan-derived calculations
+  ---
+  duration_ms: 7.3482
+  type: 'test'
+  ...
+# Subtest: display suppresses only sub-half-cent negative zero; raw amounts and financial engine unchanged
+ok 21 - display suppresses only sub-half-cent negative zero; raw amounts and financial engine unchanged
+  ---
+  duration_ms: 2.4708
+  type: 'test'
+  ...
+# Subtest: device-local date helper preserves NZ midnight and DST civil dates
+ok 22 - device-local date helper preserves NZ midnight and DST civil dates
+  ---
+  duration_ms: 227.3815
+  type: 'test'
+  ...
+# Subtest: reviewed base: single 7/30 rounding, explicit zero, partial estimates and theoretical sum
+ok 23 - reviewed base: single 7/30 rounding, explicit zero, partial estimates and theoretical sum
+  ---
+  duration_ms: 71.5033
+  type: 'test'
+  ...
+# Subtest: missing, invalid and zero differ; no implicit debt/saving/obligation review
+ok 24 - missing, invalid and zero differ; no implicit debt/saving/obligation review
+  ---
+  duration_ms: 10.5811
+  type: 'test'
+  ...
+# Subtest: manual replacements/additions, debt, saving, negative margin and no double funding
+ok 25 - manual replacements/additions, debt, saving, negative margin and no double funding
+  ---
+  duration_ms: 6.9666
+  type: 'test'
+  ...
+# Subtest: unknown income blocks suffix; explicit zero stays hypothetical and warns
+ok 26 - unknown income blocks suffix; explicit zero stays hypothetical and warns
+  ---
+  duration_ms: 3.4502
+  type: 'test'
+  ...
+# Subtest: closed, active and reopened weeks never contribute estimates or accumulations
+ok 27 - closed, active and reopened weeks never contribute estimates or accumulations
+  ---
+  duration_ms: 39.4889
+  type: 'test'
+  ...
+# Subtest: due dates are annotations, missing date/amount/review remains unknown
+ok 28 - due dates are annotations, missing date/amount/review remains unknown
+  ---
+  duration_ms: 20.0486
+  type: 'test'
+  ...
+# Subtest: safe arithmetic: monthly intermediate, debt and accumulated margins
+ok 29 - safe arithmetic: monthly intermediate, debt and accumulated margins
+  ---
+  duration_ms: 28.396
+  type: 'test'
+  ...
+# Subtest: several validated pay periods in one week are consumed once
+ok 30 - several validated pay periods in one week are consumed once
+  ---
+  duration_ms: 9.4109
+  type: 'test'
+  ...
+# Subtest: frozen inputs detached; forbidden operational fields and side effects never accessed
+ok 31 - frozen inputs detached; forbidden operational fields and side effects never accessed
+  ---
+  duration_ms: 27.424
+  type: 'test'
+  ...
+# Subtest: C1 rejects excess, summed excess, duplicate destinations, monthly and missing funding
+ok 32 - C1 rejects excess, summed excess, duplicate destinations, monthly and missing funding
+  ---
+  duration_ms: 9.9208
+  type: 'test'
+  ...
+# Subtest: C1 all reviewed obligations are detached annotations, before and after pay date
+ok 33 - C1 all reviewed obligations are detached annotations, before and after pay date
+  ---
+  duration_ms: 5.229
+  type: 'test'
+  ...
+# Subtest: NZ clock is explicit; strictly next Tuesday at civil midnight, Monday and Tuesday
+ok 34 - NZ clock is explicit; strictly next Tuesday at civil midnight, Monday and Tuesday
+  ---
+  duration_ms: 68.0099
+  type: 'test'
+  ...
+# Subtest: complete Tuesday–Monday grid, default four and every supported horizon
+ok 35 - complete Tuesday–Monday grid, default four and every supported horizon
+  ---
+  duration_ms: 26.4042
+  type: 'test'
+  ...
+# Subtest: invalid Tuesday/horizon inputs fail instead of normalizing
+ok 36 - invalid Tuesday/horizon inputs fail instead of normalizing
+  ---
+  duration_ms: 6.3268
+  type: 'test'
+  ...
+# Subtest: same payDate and different periods sum once in cents, retaining metadata
+ok 37 - same payDate and different periods sum once in cents, retaining metadata
+  ---
+  duration_ms: 14.1114
+  type: 'test'
+  ...
+# Subtest: Monday belongs to prior week; Tuesday starts new week; outside items listed not summed
+ok 38 - Monday belongs to prior week; Tuesday starts new week; outside items listed not summed
+  ---
+  duration_ms: 19.9679
+  type: 'test'
+  ...
+# Subtest: zero is mathematical zero with roster warning; absence stays unknown/null
+ok 39 - zero is mathematical zero with roster warning; absence stays unknown/null
+  ---
+  duration_ms: 3.0235
+  type: 'test'
+  ...
+# Subtest: zero warning survives alongside positive items; selection never becomes exhaustive
+ok 40 - zero warning survives alongside positive items; selection never becomes exhaustive
+  ---
+  duration_ms: 21.6738
+  type: 'test'
+  ...
+# Subtest: no items within horizon means unknown weeks and only a zero known subtotal
+ok 41 - no items within horizon means unknown weeks and only a zero known subtotal
+  ---
+  duration_ms: 2.9502
+  type: 'test'
+  ...
+# Subtest: duplicates/conflicts stay owned by v1; changed payDate replaces previous calculation
+ok 42 - duplicates/conflicts stay owned by v1; changed payDate replaces previous calculation
+  ---
+  duration_ms: 9.0481
+  type: 'test'
+  ...
+# Subtest: active, closed, legacy and reopened are read-only and excluded; realIncome never consulted
+ok 43 - active, closed, legacy and reopened are read-only and excluded; realIncome never consulted
+  ---
+  duration_ms: 6.5969
+  type: 'test'
+  ...
+# Subtest: month/year/leap and both NZ DST boundaries use civil days
+ok 44 - month/year/leap and both NZ DST boundaries use civil days
+  ---
+  duration_ms: 9.7891
+  type: 'test'
+  ...
+# Subtest: output independent of host TZ for clocks and grids
+ok 45 - output independent of host TZ for clocks and grids
+  ---
+  duration_ms: 618.1508
+  type: 'test'
+  ...
+# Subtest: safe cent arithmetic rejects overflow in week and across weeks, even excluded weeks
+ok 46 - safe cent arithmetic rejects overflow in week and across weeks, even excluded weeks
+  ---
+  duration_ms: 10.6489
+  type: 'test'
+  ...
+# Subtest: 104 distinct validated periods preserve exact cents and reject aggregate overflow
+ok 47 - 104 distinct validated periods preserve exact cents and reject aggregate overflow
+  ---
+  duration_ms: 89.9956
+  type: 'test'
+  ...
+# Subtest: deep frozen inputs unchanged; nested output metadata is detached
+ok 48 - deep frozen inputs unchanged; nested output metadata is detached
+  ---
+  duration_ms: 1.8539
+  type: 'test'
+  ...
+# Subtest: no persistent effects or clock reads on import, success and failure
+ok 49 - no persistent effects or clock reads on import, success and failure
+  ---
+  duration_ms: 9.5531
+  type: 'test'
+  ...
+# Subtest: validated producer → 4/8 weeks → allowed snapshot → pending → explicit review
+ok 50 - validated producer → 4/8 weeks → allowed snapshot → pending → explicit review
+  ---
+  duration_ms: 44.3714
+  type: 'test'
+  ...
+# Subtest: explicit arrays and valid assumptions required; failed review does not commit
+ok 51 - explicit arrays and valid assumptions required; failed review does not commit
+  ---
+  duration_ms: 6.6413
+  type: 'test'
+  ...
+# Subtest: integration keeps explicit zero, absent income, negative margin and registered exclusions
+ok 52 - integration keeps explicit zero, absent income, negative margin and registered exclusions
+  ---
+  duration_ms: 9.1728
+  type: 'test'
+  ...
+# Subtest: invalid mutable IDs cannot leak operational references into a snapshot
+ok 53 - invalid mutable IDs cannot leak operational references into a snapshot
+  ---
+  duration_ms: 3.0098
+  type: 'test'
+  ...
+# Subtest: replacement, invalid import, discard, refresh and obsolete async completions
+ok 54 - replacement, invalid import, discard, refresh and obsolete async completions
+  ---
+  duration_ms: 7.0408
+  type: 'test'
+  ...
+# Subtest: navigation is no session action; budget staleness is sticky and rebuild resets review
+ok 55 - navigation is no session action; budget staleness is sticky and rebuild resets review
+  ---
+  duration_ms: 7.7785
+  type: 'test'
+  ...
+# Subtest: deeply frozen inputs, detached outputs; no operational reads or storage/network access
+ok 56 - deeply frozen inputs, detached outputs; no operational reads or storage/network access
+  ---
+  duration_ms: 16.0157
+  type: 'test'
+  ...
+# Subtest: UI reconfiguration 4..8 discards assumptions, keeps civil start and invalidates closed/reopened calculations
+ok 57 - UI reconfiguration 4..8 discards assumptions, keeps civil start and invalidates closed/reopened calculations
+  ---
+  duration_ms: 26.6153
+  type: 'test'
+  ...
+# Subtest: render synchronization preserves reviews; a new horizon cannot clear stale-budget blocking
+ok 58 - render synchronization preserves reviews; a new horizon cannot clear stale-budget blocking
+  ---
+  duration_ms: 6.5677
+  type: 'test'
+  ...
+# Subtest: exact Taura PR \#9 producer fixture, positive and explicit zero, no input mutation
+ok 59 - exact Taura PR \#9 producer fixture, positive and explicit zero, no input mutation
+  ---
+  duration_ms: 68.9239
+  type: 'test'
+  ...
+# Subtest: malformed JSON and both apps’ backups are rejected
+ok 60 - malformed JSON and both apps’ backups are rejected
+  ---
+  duration_ms: 2.3875
+  type: 'test'
+  ...
+# Subtest: envelope values and exact allowlist
+ok 61 - envelope values and exact allowlist
+  ---
+  duration_ms: 8.0519
+  type: 'test'
+  ...
+# Subtest: byte and item limits, absent versus explicit zero
+ok 62 - byte and item limits, absent versus explicit zero
+  ---
+  duration_ms: 14.6424
+  type: 'test'
+  ...
+# Subtest: full item, nested rules, warnings and deduction allowlists
+ok 63 - full item, nested rules, warnings and deduction allowlists
+  ---
+  duration_ms: 29.96
+  type: 'test'
+  ...
+# Subtest: invalid/unsafe/fractional/negative amounts, ACC and net arithmetic
+ok 64 - invalid/unsafe/fractional/negative amounts, ACC and net arithmetic
+  ---
+  duration_ms: 5.4739
+  type: 'test'
+  ...
+# Subtest: calendar, worked week, identity, payment, status and fiscal coverage
+ok 65 - calendar, worked week, identity, payment, status and fiscal coverage
+  ---
+  duration_ms: 14.8803
+  type: 'test'
+  ...
+# Subtest: revision integrity, deterministic exporter canonical order, not a signature
+ok 66 - revision integrity, deterministic exporter canonical order, not a signature
+  ---
+  duration_ms: 11.6805
+  type: 'test'
+  ...
+# Subtest: identical duplicates collapse; changed content or payDate revision conflicts reject the batch
+ok 67 - identical duplicates collapse; changed content or payDate revision conflicts reject the batch
+  ---
+  duration_ms: 6.422
+  type: 'test'
+  ...
+# Subtest: successive exports replace whole sessions without ordering opaque revisions
+ok 68 - successive exports replace whole sessions without ordering opaque revisions
+  ---
+  duration_ms: 6.909
+  type: 'test'
+  ...
+# Subtest: Monday/Tuesday, month/year boundaries and DST are civil-date based
+ok 69 - Monday/Tuesday, month/year boundaries and DST are civil-date based
+  ---
+  duration_ms: 2.9108
+  type: 'test'
+  ...
+# Subtest: closed, legacy, active and reopened weeks read only; no storage writes on success/failure
+ok 70 - closed, legacy, active and reopened weeks read only; no storage writes on success/failure
+  ---
+  duration_ms: 4.4293
+  type: 'test'
+  ...
+1..70
+# tests 70
+# suites 0
+# pass 70
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1312.9697
+
+> test:work
+> node scripts/work-demo-tests.mjs
+
+Module import graph: WorkDemo.tsx, demo\fixtures.ts, pages\DashboardPage.tsx, vendor\taura\domain\contractRules.ts, vendor\taura\domain\payPeriods.ts, vendor\taura\domain\tax\calculateWeeklyPAYE.ts, vendor\taura\domain\tax\nzTax2026_27.ts, vendor\taura\domain\tax\taxTypes.ts, vendor\taura\domain\weekendAllowance.ts, vendor\taura\lib\dates.ts, vendor\taura\lib\payroll.ts, vendor\taura\types.ts
+PASS: exact upstream blobs, closed import graph, no effects, synthetic overtime pay/bank, night/weekend, dates, payroll/tax and optional upstream parity

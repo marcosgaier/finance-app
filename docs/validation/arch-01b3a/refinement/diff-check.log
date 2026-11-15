@@ -1,0 +1,3 @@
+warning: in the working copy of 'scripts/validate-work-editor-ui.mjs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/modules/work/components/BatchPreview.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/modules/work/pages/RosterPage.tsx', LF will be replaced by CRLF the next time Git touches it

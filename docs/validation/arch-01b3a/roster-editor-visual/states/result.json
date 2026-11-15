@@ -1,0 +1,33 @@
+{
+  "status": "PASS",
+  "checks": [
+    {
+      "width": 360,
+      "status": "PASS",
+      "textContrast": ">=4.5:1",
+      "allKindsAndStatuses": true,
+      "multipleOverflow": "+2",
+      "targets": ">=44x44",
+      "keyboardSelectionAndFocus": true
+    },
+    {
+      "width": 390,
+      "status": "PASS",
+      "textContrast": ">=4.5:1",
+      "allKindsAndStatuses": true,
+      "multipleOverflow": "+2",
+      "targets": ">=44x44",
+      "keyboardSelectionAndFocus": true
+    },
+    {
+      "width": 1280,
+      "status": "PASS",
+      "textContrast": ">=4.5:1",
+      "allKindsAndStatuses": true,
+      "multipleOverflow": "+2",
+      "targets": ">=44x44",
+      "keyboardSelectionAndFocus": true
+    }
+  ],
+  "limits": "Isolated bundled Roster component with synthetic props; not protected-record mutation or hosted preview."
+}

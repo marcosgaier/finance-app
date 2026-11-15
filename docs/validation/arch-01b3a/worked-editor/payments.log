@@ -1,0 +1,21 @@
+PASS 360 legacy missing IDs: add preserves identities, delete refunds one and survives reload
+PASS 360 legacy missing IDs: direct delete refunds only one
+PASS 360 legacy duplicate IDs: add preserves identities, delete refunds one and survives reload
+PASS 360 legacy duplicate IDs: direct delete refunds only one
+PASS 360 single save, double click, reserve note, cycle, deletion refund
+PASS 360 insufficient cancel untouched then explicit accept saves once
+PASS 360 future cancel untouched then explicit accept saves once
+PASS 360 duplicate cancel untouched then explicit accept saves once
+PASS 360 two legitimate equal payments require acknowledgement and retain identity
+PASS 360 manual withdrawal note, local NZ midnight date and double click
+PASS 1280 legacy missing IDs: add preserves identities, delete refunds one and survives reload
+PASS 1280 legacy missing IDs: direct delete refunds only one
+PASS 1280 legacy duplicate IDs: add preserves identities, delete refunds one and survives reload
+PASS 1280 legacy duplicate IDs: direct delete refunds only one
+PASS 1280 single save, double click, reserve note, cycle, deletion refund
+PASS 1280 insufficient cancel untouched then explicit accept saves once
+PASS 1280 future cancel untouched then explicit accept saves once
+PASS 1280 duplicate cancel untouched then explicit accept saves once
+PASS 1280 two legitimate equal payments require acknowledgement and retain identity
+PASS 1280 manual withdrawal note, local NZ midnight date and double click
+UI TOTAL 20 PASS

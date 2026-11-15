@@ -31,9 +31,8 @@ export const shifts: Shift[] = Array.from({length: 7}, (_,i): Shift => {
     actual_start:null, actual_end:null, actual_paid_hours:i<3?12:null,
     actual_unpaid_break:null, actual_rate:null};
 }).filter(s => s.shift_date <= '2026-09-30');
-export const overtimePreferences: OvertimePreference[] = [
-  {id:'demo-bank',weekStart:'2026-09-20',overtimeTreatment:'bank',updatedAt:'2026-09-20T00:00:00Z'},
-];
+// No synthetic choice: inherit Taura's default pay treatment. Explicit choices remain authoritative.
+export const overtimePreferences: OvertimePreference[] = [];
 freeze(settings);freeze(shifts);freeze(overtimePreferences);
 export function validateDemo(input = shifts, day = referenceDay, config = settings, preferences = overtimePreferences) {
   if (day !== referenceDay || toIsoDate(fromIsoDate(day)) !== day) throw Error('Invalid demo date');

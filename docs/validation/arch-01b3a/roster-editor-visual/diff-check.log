@@ -1,0 +1,1 @@
+PASS: git diff --check against main base 64ca62d and current worktree.

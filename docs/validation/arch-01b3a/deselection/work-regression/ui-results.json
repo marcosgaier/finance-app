@@ -1,0 +1,20 @@
+{
+  "status": "PASS",
+  "checks": [
+    "360px: payments: exact bank amounts, computed Wednesday, 4 upcoming/2 recent, zero weeks, keyboard/scroll/return; month 42 days, week 7 days, previous/next/fixed date, overnight/empty inline details, keyboard and returned focus, sticky banner, preserved calendar/scroll and unchanged summary; demo round trips from every tab, DOM identity/hidden/focus/scroll/CSS, zero demo effects, eight tabs, touch/layout, synthetic planning session and budget, native popup/Enter, noopener/no referrer, 404/offline, unchanged Finance storage/history",
+    "390px: payments: exact bank amounts, computed Wednesday, 4 upcoming/2 recent, zero weeks, keyboard/scroll/return; month 42 days, week 7 days, previous/next/fixed date, overnight/empty inline details, keyboard and returned focus, sticky banner, preserved calendar/scroll and unchanged summary; demo round trips from every tab, DOM identity/hidden/focus/scroll/CSS, zero demo effects, eight tabs, touch/layout, synthetic planning session and budget, native popup/Enter, noopener/no referrer, 404/offline, unchanged Finance storage/history",
+    "1280px: payments: exact bank amounts, computed Wednesday, 4 upcoming/2 recent, zero weeks, keyboard/scroll/return; month 42 days, week 7 days, previous/next/fixed date, overnight/empty inline details, keyboard and returned focus, sticky banner, preserved calendar/scroll and unchanged summary; demo round trips from every tab, DOM identity/hidden/focus/scroll/CSS, zero demo effects, eight tabs, touch/layout, synthetic planning session and budget, native popup/Enter, noopener/no referrer, 404/offline, unchanged Finance storage/history",
+    "incompatible: original recovery gate retained, no B1 access or storage writes",
+    "read-error: original recovery gate retained, no B1 access or storage writes",
+    "demo render failure contained; Finance state, return and recovery intact",
+    "unsaved: original recovery gate and recovery download retained"
+  ],
+  "zoom": "Payments 200% CSS zoom/reflow at 1280px PASS; native browser zoom and mobile pinch remain manual",
+  "syntheticOnly": true,
+  "externalNetwork": "intercepted; no live Taura requests",
+  "limitations": [
+    "No physical Android/PWA or screen reader testing",
+    "Existing Finance body min-width 320px overflows at 360px with CSS zoom 200% (180 CSS px); no global redesign",
+    "Recovery gates and download button availability tested; recovery file contents/retry not exercised here"
+  ]
+}

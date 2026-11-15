@@ -6,7 +6,7 @@ import { resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { sampleFinanceData } from '../src/data/sampleData.js';
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE ? pathToFileURL(resolve(process.env.PLAYWRIGHT_MODULE)).href : 'playwright');
-const output = new URL('../docs/validation/arch-01b2-2b/', import.meta.url);
+const output = process.env.VALIDATION_OUTPUT_DIR ? pathToFileURL(resolve(process.env.VALIDATION_OUTPUT_DIR)+'/') : new URL('../docs/validation/arch-01b2-2b/', import.meta.url);
 await mkdir(output, { recursive: true });
 const server = createServer(async (req, res) => {
   try {
@@ -103,13 +103,44 @@ try {
       assert.equal(await page.locator('#finance-region').evaluate(el=>getComputedStyle(el).display),'none');
       assert.equal(await page.locator('#work-demo-title').evaluate(el=>el===document.activeElement),true);
       assert.match(await page.locator('#work-demo').innerText(),/DEMOSTRACIÓN — datos ficticios; no es tu roster/);
-      assert.match(await page.locator('#work-demo').innerText(),/2026-09-24/);
       const work=page.locator('#work-demo');
+      const details=work.locator('details').first();
+      await details.locator('summary').click();
+      assert.match(await details.innerText(),/2026-09-24/);
+      assert.match(await details.innerText(),/no se guardan ni se importan a Finanzas/);
+      await details.locator('summary').click();
+      const nav=work.getByRole('navigation',{name:'Vistas de Trabajo'});
+      assert.deepEqual(await nav.getByRole('button').allTextContents(),['Resumen','Roster','Pagos']);
+      await page.keyboard.press('Tab');
+      for(const label of ['Resumen','Roster','Pagos']) {
+        const button=nav.getByRole('button',{name:label,exact:true});
+        const box=await button.boundingBox();
+        assert.ok(box.width>=44&&box.height>=44);
+        await button.focus();
+        assert.equal(await button.evaluate(el=>getComputedStyle(el).outlineStyle),'solid');
+        await page.keyboard.press('Enter');
+        assert.equal(await button.getAttribute('aria-current'),'page');
+        assert.equal(await nav.locator('[aria-current="page"]').count(),1);
+      }
+      await nav.getByRole('button',{name:'Resumen',exact:true}).click();
+      const back=work.getByRole('button',{name:'Volver a Finanzas',exact:true});
+      await back.focus();await page.keyboard.press('Tab');
+      assert.equal(await details.locator('summary').evaluate(el=>el===document.activeElement),true);
+      await page.keyboard.press('Tab');
+      assert.equal(await nav.getByRole('button',{name:'Resumen',exact:true}).evaluate(el=>el===document.activeElement),true);
+      assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+      await page.evaluate(()=>window.scrollTo(0,0));
+      await page.screenshot({path:fileURLToPath(new URL('toolbar-'+width+'.png',output))});
       assert.equal(await work.getByRole('button',{name:'Pagos',exact:true}).count(),1);
-      assert.equal(await work.locator('input,select,textarea,a[download]').count(),0);
+      assert.equal(await work.locator('input,select:visible,textarea,a[download]').count(),0);
       assert.equal(await work.getByRole('button',{name:/Agregar|Editar|Borrar|Cancelar|Copiar|Pegar|Seleccionar/}).count(),0);
       assert.equal(await work.getByRole('heading',{name:'Resumen del ejemplo',exact:true}).isVisible(),true);
       if(!calendarChecked) {
+      await page.screenshot({path:fileURLToPath(new URL('summary-'+width+'.png',output)),fullPage:true});
+      const summaryDetails=work.locator('section[aria-labelledby="work-summary-title"] details');
+      await summaryDetails.locator('summary').focus();await page.keyboard.press('Enter');
+      assert.equal(await summaryDetails.getAttribute('open'),'');
+      await page.keyboard.press('Space');assert.equal(await summaryDetails.getAttribute('open'),null);
       const summary=await work.getByRole('region',{name:'Resumen del ejemplo'}).innerText();
       await work.getByRole('button',{name:'Roster',exact:true}).click();
       assert.equal(await page.locator('#work-roster-title').evaluate(el=>el===document.activeElement),true);
@@ -137,7 +168,7 @@ try {
       await page.evaluate(()=>window.scrollTo(0,350));
       const rosterScroll=await page.evaluate(()=>window.scrollY);
       // Programmatic click preserves the scroll being tested (Playwright would scroll to the button).
-      await work.getByRole('button',{name:'Atrás al resumen',exact:true}).evaluate(el=>el.click());
+      await work.getByRole('button',{name:'Resumen',exact:true}).evaluate(el=>el.click());
       assert.equal(await page.locator('#work-summary-title').evaluate(el=>el===document.activeElement),true);
       assert.equal(await work.getByRole('region',{name:'Resumen del ejemplo'}).innerText(),summary);
       await work.getByRole('button',{name:'Roster',exact:true}).evaluate(el=>el.click());
@@ -157,7 +188,7 @@ try {
       await page.keyboard.press('Tab');await page.keyboard.press('Shift+Tab');
       assert.equal(await calendarDay.evaluate(el=>getComputedStyle(el).outlineStyle),'solid');
       await page.evaluate(()=>window.scrollTo(0,350));
-      const banner=await work.getByText('DEMOSTRACIÓN — datos ficticios; no es tu roster',{exact:true}).boundingBox();
+      const banner=await work.getByText('DEMOSTRACIÓN — datos ficticios; no es tu roster. No son sueldos reales ni depósitos confirmados. No se guardan ni se incorporan a Finanzas.',{exact:true}).boundingBox();
       assert.ok(Math.abs(banner.y)<2,'Demo banner remains visible while scrolling');
       assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
       assert.equal(await page.getByText('Demostración no disponible.',{exact:false}).count(),0);
@@ -174,21 +205,32 @@ try {
       const paymentsRegion=work.getByRole('region',{name:'Pagos del ejemplo',exact:true});
       assert.equal(await paymentsRegion.locator('[data-payment]').count(),6);
       assert.deepEqual(await paymentsRegion.locator('[data-payment]').evaluateAll(nodes=>nodes.map(el=>el.dataset.payDate)),['2026-09-30','2026-10-07','2026-10-14','2026-10-21','2026-09-23','2026-09-16']);
-      assert.equal(await paymentsRegion.getByText('Próximo pago estimado',{exact:true}).count(),1);
-      assert.equal(await paymentsRegion.getByText('Fecha estimada de cobro',{exact:true}).count(),6);
-      assert.equal(await paymentsRegion.getByText('Semana / período trabajado del ejemplo',{exact:true}).count(),6);
+      assert.equal(await paymentsRegion.getByText('Próximo pago',{exact:true}).count(),1);
+      assert.equal(await paymentsRegion.getByRole('heading',{name:/^Fecha estimada de cobro/}).count(),6);
+      assert.equal(await paymentsRegion.getByText('Período trabajado',{exact:true}).count(),6);
       assert.equal(await paymentsRegion.getByRole('region',{name:'Próximos pagos',exact:true}).locator('[data-payment]').count(),4);
       assert.equal(await paymentsRegion.getByRole('region',{name:'Pagos anteriores',exact:true}).locator('[data-payment]').count(),2);
+      await page.screenshot({path:fileURLToPath(new URL('payments-compact-'+width+'.png',output)),fullPage:true});
+      for(const disclosure of await paymentsRegion.locator('details').all()) {
+        const toggle=disclosure.locator(':scope > summary');
+        const box=await toggle.boundingBox();assert.ok(box.width>=44&&box.height>=44);
+        await toggle.focus();await page.keyboard.press('Enter');assert.equal(await disclosure.getAttribute('open'),'');
+        assert.equal(await toggle.evaluate(el=>getComputedStyle(el).outlineStyle),'solid');
+        await page.keyboard.press('Space');assert.equal(await disclosure.getAttribute('open'),null);
+        await page.keyboard.press('Enter');
+      }
       const paidWeek=paymentsRegion.locator('[data-payment="2026-09-20"]');
       assert.equal(await paidWeek.getAttribute('data-pay-date'),'2026-09-30');
       assert.match(await paidWeek.innerText(),/miércoles/);
       const money=value=>new Intl.NumberFormat('es-NZ',{style:'currency',currency:'NZD'}).format(value);
-      for(const [key,value] of Object.entries({base:1800,enhanced:0,night:36,weekend:48,gross:1884,paye:460.02,kiwisaver:56.52,net:1367.46})) {
+      for(const [key,value] of Object.entries({base:1800,enhanced:300,night:36,weekend:48,gross:2184,paye:564.27,kiwisaver:65.52,net:1554.21})) {
         assert.equal(await paidWeek.locator('[data-amount="'+key+'"]').innerText(),(key==='paye'||key==='kiwisaver'?'− ':'')+money(value));
       }
-      assert.match(await paidWeek.innerText(),/Hours Bank del ejemplo: \+10 h/);
+      assert.doesNotMatch(await paidWeek.innerText(),/Hours Bank: \+10 h/);
+      assert.equal(await paymentsRegion.getByRole('combobox',{name:'Tratamiento overtime 2026-09-20',exact:true}).inputValue(),'pay');
       assert.match(await paymentsRegion.innerText(),/Semana sin turnos en este ejemplo/);
-      assert.equal(await paymentsRegion.locator('input,select,textarea,button,a[download]').count(),0);
+      assert.equal(await paymentsRegion.getByRole('combobox',{name:'Tratamiento overtime 2026-09-20',exact:true}).count(),1);
+      assert.equal(await paymentsRegion.locator('input,select:not([aria-label="Tratamiento overtime 2026-09-20"]),textarea,button,a[download]').count(),0);
       assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
       if(!paymentsChecked) {
         await page.screenshot({path:fileURLToPath(new URL('payments-'+width+'.png',output)),fullPage:true});
@@ -209,7 +251,7 @@ try {
       await work.getByRole('button',{name:'Roster',exact:true}).evaluate(el=>el.click());
       await work.getByRole('button',{name:'Pagos',exact:true}).evaluate(el=>el.click());
       assert.equal(await page.evaluate(()=>window.scrollY),paymentsScroll);
-      await work.getByRole('button',{name:'Atrás al resumen',exact:true}).click();
+      await work.getByRole('button',{name:'Resumen',exact:true}).click();
       assert.equal(await page.locator('#work-summary-title').evaluate(el=>el===document.activeElement),true);
       await work.getByRole('button',{name:'Pagos',exact:true}).focus();
       await page.keyboard.press('Enter');
@@ -277,7 +319,7 @@ try {
     await popup.close();
     assert.equal(await budget.inputValue(), '42');
     assert.deepEqual(await snapshot(page), edited);
-    checks.push(`${width}px: payments: exact bank amounts, computed Wednesday, 4 upcoming/2 recent, zero weeks, keyboard/scroll/return; month 42 days, week 7 days, previous/next/fixed date, overnight/empty inline details, keyboard and returned focus, sticky banner, preserved calendar/scroll and unchanged summary; demo round trips from every tab, DOM identity/hidden/focus/scroll/CSS, zero demo effects, eight tabs, touch/layout, synthetic planning session and budget, native popup/Enter, noopener/no referrer, 404/offline, unchanged Finance storage/history`);
+    checks.push(`${width}px: payments: exact default pay amounts, computed Wednesday, 4 upcoming/2 recent, zero weeks, keyboard/scroll/return; month 42 days, week 7 days, previous/next/fixed date, overnight/empty inline details, keyboard and returned focus, sticky banner, preserved calendar/scroll and unchanged summary; demo round trips from every tab, DOM identity/hidden/focus/scroll/CSS, zero demo effects, eight tabs, touch/layout, synthetic planning session and budget, native popup/Enter, noopener/no referrer, 404/offline, unchanged Finance storage/history`);
     await context.close();
   }
   for (const [label, raw, readError] of [['incompatible', '{"schemaVersion":999}', false], ['read-error', '{}', true]]) {

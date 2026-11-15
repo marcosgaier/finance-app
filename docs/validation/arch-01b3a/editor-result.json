@@ -1,0 +1,59 @@
+{
+  "status": "PASS",
+  "node": "v24.22.1",
+  "chromium": "156.0.8078.79",
+  "checks": [
+    {
+      "width": 360,
+      "status": "PASS",
+      "flows": [
+        "edit/ID/invalid/unchanged",
+        "dialog keyboard/Escape/focus/scroll",
+        "consistent summary/payments",
+        "multiple/duplicate/cancel",
+        "confirmed deletion",
+        "empty day/night/add",
+        "month/week navigation",
+        "reset confirm",
+        "exit/reopen/reload"
+      ],
+      "workEffects": 0,
+      "financeUnchanged": true
+    },
+    {
+      "width": 390,
+      "status": "PASS",
+      "flows": [
+        "edit/ID/invalid/unchanged",
+        "dialog keyboard/Escape/focus/scroll",
+        "consistent summary/payments",
+        "multiple/duplicate/cancel",
+        "confirmed deletion",
+        "empty day/night/add",
+        "month/week navigation",
+        "reset confirm",
+        "exit/reopen/reload"
+      ],
+      "workEffects": 0,
+      "financeUnchanged": true
+    },
+    {
+      "width": 1280,
+      "status": "PASS",
+      "flows": [
+        "edit/ID/invalid/unchanged",
+        "dialog keyboard/Escape/focus/scroll",
+        "consistent summary/payments",
+        "multiple/duplicate/cancel",
+        "confirmed deletion",
+        "empty day/night/add",
+        "month/week navigation",
+        "reset confirm",
+        "exit/reopen/reload"
+      ],
+      "workEffects": 0,
+      "financeUnchanged": true
+    }
+  ],
+  "limits": "Local build, isolated synthetic profiles. Native Android/PWA, OS zoom and real screen readers remain manual. No Taura production access."
+}

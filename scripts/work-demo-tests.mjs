@@ -47,16 +47,19 @@ try {
   const payroll=await bundle(join(root,'vendor/taura/lib/payroll.ts'),'payroll');
   const periods=await bundle(join(root,'vendor/taura/domain/payPeriods.ts'),'periods');
   const tax=await bundle(join(root,'vendor/taura/domain/tax/calculateWeeklyPAYE.ts'),'tax');
+  const bankPreferences=[{id:'demo-bank',weekStart:'2026-09-20',overtimeTreatment:'bank',updatedAt:'2026-09-20T00:00:00Z'}];
   fixture.validateDemo();assert.throws(()=>fixture.validateDemo([{...fixture.shifts[0],planned_paid_hours:NaN}]));assert.throws(()=>fixture.validateDemo(fixture.shifts,'2028-01-01'));
   for(const patch of [{status:'unknown'},{kind:'unknown'},{actual_rate:Infinity},{actual_paid_hours:-1},{planned_end:null},{planned_start:'bad'},{planned_end:'2026-09-19T07:00:00'}])
     assert.throws(()=>fixture.validateDemo([{...fixture.shifts[0],...patch}]));
   assert.throws(()=>fixture.validateDemo(fixture.shifts,fixture.referenceDay,{...fixture.settings,day_rate:NaN}));
-  assert.throws(()=>fixture.validateDemo(fixture.shifts,fixture.referenceDay,fixture.settings,[{...fixture.overtimePreferences[0],overtimeTreatment:'unknown'}]));
-  assert.throws(()=>fixture.validateDemo(fixture.shifts,fixture.referenceDay,fixture.settings,[{...fixture.overtimePreferences[0],weekStart:'2026-09-21'}]));
+  assert.throws(()=>fixture.validateDemo(fixture.shifts,fixture.referenceDay,fixture.settings,[{...bankPreferences[0],overtimeTreatment:'unknown'}]));
+  assert.throws(()=>fixture.validateDemo(fixture.shifts,fixture.referenceDay,fixture.settings,[{...bankPreferences[0],weekStart:'2026-09-21'}]));
   assert.throws(()=>{fixture.shifts[0].planned_paid_hours=1;});
   assert.throws(()=>{fixture.settings.day_rate=1;});
   assert.throws(()=>{fixture.overtimePreferences.push({});});
   const {shifts,settings,overtimePreferences,referenceDate}=fixture.validateDemo();
+  assert.equal(contract.DEFAULT_OVERTIME_TREATMENT,'pay');assert.deepEqual(overtimePreferences,[]);
+  assert.deepEqual(fixture.validateDemo(shifts,fixture.referenceDay,settings,bankPreferences).overtimePreferences,bankPreferences);
   const before=JSON.stringify({shifts,settings,overtimePreferences});
   assert.throws(()=>{shifts[0].status='cancelled';});
   const roster=await bundle(join(root,'vendor/taura/domain/rosterWeeks.ts'),'roster');
@@ -64,7 +67,7 @@ try {
   assert.equal(roster.getRosterWeekStart(referenceDate).getDay(),0);
   assert.equal(roster.getShiftsInRosterWeek(shifts,referenceDate).length,7);
   assert.equal(roster.moveRosterWeek(referenceDate,1).getDay(),0);
-  const bank=payroll.totals([...contract.calculateContractOvertime(shifts,settings,overtimePreferences).values()]);
+  const bank=payroll.totals([...contract.calculateContractOvertime(shifts,settings,bankPreferences).values()]);
   const pay=payroll.totals([...contract.calculateContractOvertime(shifts,settings,[]).values()]);
   assert.equal(bank.ordinary,40);assert.equal(bank.overtime,20);assert.equal(bank.bankableHours,10);assert.equal(pay.gross-bank.gross,300);
   assert.equal(contract.getOvertimeWeekStart('2026-09-23').getDay(),0);
@@ -73,20 +76,20 @@ try {
   const projections=periods.buildPayProjections(shifts,settings,referenceDate,4,overtimePreferences);assert.ok(projections.length);assert.ok(projections.every(p=>p.estimatedGross>=p.estimatedNet));
   const payments=await bundle(join(root,'pages/PaymentsPage.tsx'),'payments-ui');
   const renderPayments=(prefs)=>renderToStaticMarkup(React.createElement(payments.PaymentsPage,{shifts,settings,referenceDate,overtimePreferences:prefs}));
-  const bankHtml=renderPayments(overtimePreferences),payHtml=renderPayments([]);
+  const bankHtml=renderPayments(bankPreferences),payHtml=renderPayments(overtimePreferences);
   for(const html of [bankHtml,payHtml]) {
     assert.equal((html.match(/data-payment=/g)||[]).length,6,'Four upcoming and two recent cards');
     assert.deepEqual([...html.matchAll(/data-pay-date="([^"]+)"/g)].map(m=>m[1]),['2026-09-30','2026-10-07','2026-10-14','2026-10-21','2026-09-23','2026-09-16']);
-    assert.equal((html.match(/Próximo pago estimado/g)||[]).length,1);
-    assert.equal((html.match(/Fecha estimada de cobro/g)||[]).length,6);
-    assert.equal((html.match(/Semana \/ período trabajado del ejemplo/g)||[]).length,6);
+    assert.equal((html.match(/Próximo pago/g)||[]).length,1);
+    assert.equal((html.match(/aria-label="Fecha estimada de cobro/g)||[]).length,6);
+    assert.equal((html.match(/Período trabajado/g)||[]).length,6);
     assert.match(html,/data-pay-date="2026-09-30"/,'Calculated Wednesday, not hardcoded Tuesday');
     assert.match(html,/PAYE estimado \(incluye ACC\)/);
     assert.match(html,/Semana sin turnos en este ejemplo/);
     assert.doesNotMatch(html,/<(?:select|input|button)\b|download=|Confirmado por payslips/);
   }
-  assert.match(bankHtml,/Hours Bank del ejemplo: \+10 h/);
-  assert.doesNotMatch(payHtml,/Hours Bank del ejemplo: \+10 h/);
+  assert.match(bankHtml,/Hours Bank: \+10 h/);
+  assert.doesNotMatch(payHtml,/Hours Bank: \+10 h/);
   assert.notEqual(bankHtml,payHtml,'Both overtime treatments are rendered from engine results');
   assert.equal(JSON.stringify({shifts,settings,overtimePreferences}),before);assert.deepEqual(attempts,[]);
   // Optional independent upstream tree; exact blob identity above is always enforced offline.
@@ -94,7 +97,7 @@ try {
     for(const f of manifest.files)assert.deepEqual(await readFile(join(process.env.TAURA_PARITY_ROOT,'src',f.path)),await readFile(join(root,'vendor/taura',f.path)));
     const upstream=await bundle(join(process.env.TAURA_PARITY_ROOT,'src/domain/payPeriods.ts'),'upstream');
     const upstreamRoster=await bundle(join(process.env.TAURA_PARITY_ROOT,'src/domain/rosterWeeks.ts'),'upstream-roster');
-    for(const prefs of [[],overtimePreferences])assert.deepEqual(upstream.buildPayProjections(shifts,settings,referenceDate,4,prefs),periods.buildPayProjections(shifts,settings,referenceDate,4,prefs));
+    for(const prefs of [[],bankPreferences])assert.deepEqual(upstream.buildPayProjections(shifts,settings,referenceDate,4,prefs),periods.buildPayProjections(shifts,settings,referenceDate,4,prefs));
     for(const date of ['2026-09-24','2026-10-01','2026-12-31','2027-01-01']) {
       for(const fn of ['getRosterWeekStart','getRosterWeekEnd','getRosterWeekDates','getContractSummaryWeekForRosterWeek'])assert.deepEqual(upstreamRoster[fn](date),roster[fn](date));
       for(const n of [-2,-1,0,1,2])assert.deepEqual(upstreamRoster.moveRosterWeek(date,n),roster.moveRosterWeek(date,n));

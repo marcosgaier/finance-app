@@ -87,4 +87,3 @@ El comentario del PR distingue el status Vercel y cualquier límite de acceso re
 El conector Vercel devolvió 403 forbidden al listar finance-app/margab27;
 no hay CLI vercel instalada. El estado del SHA se consulta mediante GitHub.
 Rollback: revertir este refinamiento, sin migraciones.
-

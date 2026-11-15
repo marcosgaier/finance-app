@@ -75,12 +75,14 @@ export function RosterPage({shifts,settings,overtimePreferences,referenceDate,on
         return <li key={key} className={view==='month'&&date.getMonth()!==cursor.getMonth()?styles.outside:undefined}>
           <button type="button" data-day={key} aria-label={`${formatDate(key,{dateStyle:'full'})}. ${description}`} aria-current={key===toIsoDate(referenceDate)?'date':undefined} aria-pressed={multi?dates.includes(key):undefined} aria-expanded={multi?undefined:selected===key} aria-controls={selected===key?'day-detail-title':undefined} onClick={event=>{origin.current=event.currentTarget;if(multi){setDates(current=>current.includes(key)?current.filter(d=>d!==key):[...current,key]);}else setSelected(key);}}>
             <b>{view==='month'?date.getDate():formatDate(key,{weekday:'long',day:'numeric',month:'long'})}</b>
-            <span>{view==='month'?(items.length?items.map(s=>({day:'☀',night:'☾',off:'–'}[s.kind as 'day'|'night'|'off']??'•')+(s.status==='planned'?' P':s.status==='worked'?' T':' !')).join(' '):'·'):description}</span>
+            <span className={ui.marks}>{items.length?items.slice(0,view==='month'?1:items.length).map(s=><span key={s.id} className={ui.mark} data-kind={s.kind} data-status={s.status} title={`${kindLabels[s.kind]} · ${statusLabels[s.status]}`}>
+              {({day:'☀',night:'☾',off:'⌂',annual_leave:'A',sick_leave:'S',custom:'◆'}[s.kind])} {view==='month'?({planned:'P',worked:'T',modified:'M',cancelled:'×',paid_leave:'LP',unpaid_leave:'LS',payslip:'R',confirmed:'C'}[s.status]):`${kindLabels[s.kind]} · ${statusLabels[s.status]} · ${s.planned_paid_hours} h`}
+            </span>):'·'}{view==='month'&&items.length>1?<small>+{items.length-1}</small>:null}</span>
           </button>
         </li>;
       })}
     </ul>
-    <p className={styles.calendarLegend}>☀ Día · ☾ Noche · – Libre · P Planificado · T Trabajado · ! Ver detalle</p>
+    <details className={ui.legend}><summary>☀ Día · ☾ Noche · ⌂ Libre · Estados y símbolos</summary><p>A Anual · S Enfermedad · ◆ Otro · P Planificado · T Trabajado · C Confirmado · × Cancelado · M Modificado · R Recibo · LP/LS Licencia paga/sin pago. + indica más turnos; abrí el día para ver todos. El borde oscuro marca la fecha del ejemplo.</p></details>
     {onBatch?<section id="roster-batch-actions" tabIndex={-1} className={ui.batchBar} aria-label="Selección y accesos rápidos">
       {multi?<><div className={ui.selectionStatus}><b role="status">{dates.length} días seleccionados</b><button type="button" disabled={!dates.length} aria-label="Limpiar selección" onClick={()=>setDates([])}>Limpiar</button></div>
         <div className={ui.templates}>{(Object.keys(quickLabels) as QuickKind[]).map(kind=><button key={kind} type="button" aria-label={quickLabels[kind]} disabled={!dates.length} onClick={()=>{

@@ -25,10 +25,10 @@ export function DemoShiftEditor({initial,editing,onSave,onClose}:{initial:Shift;
   const statuses=value.kind==='off'?['planned','cancelled']:['annual_leave','sick_leave'].includes(value.kind)?['planned','paid_leave','unpaid_leave','cancelled']:['planned','worked','modified','cancelled'];
   return <dialog ref={dialog} className={styles.editorDialog} aria-labelledby="demo-editor-title" aria-describedby="demo-editor-help" onCancel={event=>{event.preventDefault();onClose();}}>
     <h2 id="demo-editor-title">{editing?'Editar turno ficticio':'Agregar turno ficticio'}</h2>
-    <p id="demo-editor-help">MODO DEMOSTRACIÓN — solo memoria. No edita pagos confirmados. Todos los valores son ficticios; máximo 12 h por turno.</p>
-    <div className={styles.controls} aria-label="Plantillas rápidas del turno">{(Object.keys(quickLabels) as QuickKind[]).map(kind=><button key={kind} type="button" onClick={()=>{
+    <p id="demo-editor-help">DEMOSTRACIÓN · solo memoria · máximo 12 h. No edita pagos confirmados.</p>
+    <div className={styles.editorTemplates} aria-label="Plantillas rápidas del turno">{(Object.keys(quickLabels) as QuickKind[]).map(kind=><button key={kind} type="button" data-kind={kind} aria-label={quickLabels[kind]} aria-pressed={value.kind===kind} onClick={()=>{
       try{setValue({...value,...quickDraft(value.shift_date,value.id,kind,settings),created_at:value.created_at});setError('');}catch(reason){setError(reason instanceof Error?reason.message:'Fecha inválida.');}
-    }}>{quickLabels[kind]}</button>)}</div>
+    }}><span>{kind==='day'?'☀ Día':kind==='night'?'☾ Noche':'⌂ Libre'}</span><small>{kind==='day'?'06–18':kind==='night'?'18–06 (+1 día)':'0 h'}</small></button>)}</div>
     <form onSubmit={submit} noValidate>
       <div className={styles.editorGrid}>
         <label>Fecha del turno ficticio<input autoFocus type="date" value={value.shift_date} onChange={e=>patch('shift_date',e.target.value)}/></label>
@@ -38,22 +38,22 @@ export function DemoShiftEditor({initial,editing,onSave,onClose}:{initial:Shift;
         }}>{Object.entries(kindLabels).map(([key,label])=><option key={key} value={key}>{label}</option>)}</select></label>
         <label>Estado ficticio<select aria-label="Estado ficticio" value={value.status} onChange={e=>patch('status',e.target.value as Shift['status'])}>{statuses.map(key=><option key={key} value={key}>{statusLabels[key as Shift['status']]}</option>)}</select></label>
       </div>
-      <p>Cambiar tipo restablece horario, horas y datos trabajados del borrador. Cambiar fecha requiere ajustar también inicio y fin. Un nocturno termina al día siguiente.</p>
+      <p className={styles.editorHint}>Tipo/plantilla restablece horario, horas y datos trabajados. Al cambiar fecha, ajustá inicio y fin; noche termina al día siguiente.</p>
       {value.kind!=='off'?<>
         <fieldset><legend>Datos planificados del ejemplo</legend><div className={styles.editorGrid}>
           <label>Inicio planificado<input type="datetime-local" value={value.planned_start??''} onChange={e=>patch('planned_start',e.target.value||null)}/></label>
           <label>Fin planificado<input type="datetime-local" value={value.planned_end??''} onChange={e=>patch('planned_end',e.target.value||null)}/></label>
-          {numeric('planned_paid_hours','Horas planificadas')}{numeric('planned_unpaid_break','Descanso planificado (h)')}{numeric('planned_rate','Tarifa ficticia planificada (NZD/h)')}
-        </div></fieldset>
+          {numeric('planned_paid_hours','Horas planificadas')}
+        </div><details className={styles.editorSecondary}><summary>Descanso y tarifa · {value.planned_unpaid_break} h · {value.planned_rate} NZD/h</summary><div className={styles.editorGrid}>{numeric('planned_unpaid_break','Descanso planificado (h)')}{numeric('planned_rate','Tarifa ficticia planificada (NZD/h)')}</div></details></fieldset>
         <details><summary>Datos trabajados opcionales del ejemplo</summary><p>Solo «Trabajado» o «Modificado» usa las horas trabajadas si se informaron. No confirma un cobro ni un recibo.</p><div className={styles.editorGrid}>
           <label>Inicio trabajado ficticio<input type="datetime-local" value={value.actual_start??''} onChange={e=>patch('actual_start',e.target.value||null)}/></label>
           <label>Fin trabajado ficticio<input type="datetime-local" value={value.actual_end??''} onChange={e=>patch('actual_end',e.target.value||null)}/></label>
           {numeric('actual_paid_hours','Horas trabajadas ficticias',true)}{numeric('actual_unpaid_break','Descanso trabajado ficticio (h)',true)}{numeric('actual_rate','Tarifa ficticia trabajada (NZD/h)',true)}
         </div></details>
       </>:<p>Día libre: sin horario ni horas pagadas.</p>}
-      <p>Planificadas: {Number.isFinite(value.planned_paid_hours)?value.planned_paid_hours:'sin dato'} h · Trabajadas ficticias: {value.actual_paid_hours??'sin dato'} h.</p>
+      <p className={styles.editorHint}>Planificadas: {Number.isFinite(value.planned_paid_hours)?value.planned_paid_hours:'sin dato'} h · Trabajadas: {value.actual_paid_hours??'sin dato'} h ficticias.</p>
       {error?<p role="alert" className={styles.editorError}>{error}</p>:null}
-      <div className={styles.controls}><button type="submit">Guardar solo en la demo</button><button type="button" onClick={onClose}>Cerrar sin guardar</button></div>
+      <div className={styles.editorActions}><button type="submit">Guardar solo en la demo</button><button type="button" onClick={onClose}>Cerrar sin guardar</button></div>
     </form>
   </dialog>;
 }

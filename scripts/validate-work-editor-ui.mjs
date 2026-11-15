@@ -207,6 +207,20 @@ try {
     const id=await shifts().getAttribute('data-shift-id');
     await shifts().getByRole('button',{name:'Editar un turno',exact:true}).focus();await page.keyboard.press('Enter');
     await dialog.waitFor();assert.equal(await dialog.getByLabel('Fecha del turno ficticio',{exact:true}).evaluate(el=>el===document.activeElement),true);
+    // Visual refinement: secondary inputs remain reachable with native keyboard disclosure.
+    const secondary=dialog.locator('details').filter({has:dialog.getByLabel('Tarifa ficticia planificada (NZD/h)',{exact:true})});
+    if(await secondary.count()){
+      const summary=secondary.locator('summary');await summary.focus();await page.keyboard.press('Enter');
+      assert.equal(await dialog.getByLabel('Tarifa ficticia planificada (NZD/h)',{exact:true}).isVisible(),true);
+      assert.equal(await dialog.getByLabel('Descanso planificado (h)',{exact:true}).isVisible(),true);
+      await page.screenshot({path:fileURLToPath(new URL(`editor-secondary-${width}.png`,output))});
+      await summary.focus();await page.keyboard.press('Enter');
+      for(const control of await dialog.locator('button,input,select,summary').all()){
+        if(!await control.isVisible())continue;
+        const box=await control.boundingBox();assert.ok(box.width>=44&&box.height>=44,JSON.stringify(box));
+      }
+      await dialog.getByLabel('Fecha del turno ficticio',{exact:true}).focus();
+    }
     assert.equal(await dialog.getByRole('option',{name:'Confirmado ficticio',exact:true}).count(),0);
     for(let i=0;i<14;i++){await page.keyboard.press('Tab');assert.equal(await dialog.evaluate(el=>el.contains(document.activeElement)),true);}
     await dialog.getByLabel('Fecha del turno ficticio',{exact:true}).fill('');

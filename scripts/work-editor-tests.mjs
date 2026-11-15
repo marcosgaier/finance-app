@@ -13,6 +13,11 @@ async function load(path,name){const out=join(dir,name+'.mjs');await build({entr
 const api=await load('src/modules/work/editor/shiftDraft.ts','editor');
 const batch=await load('src/modules/work/editor/batchPlan.ts','batch');
 const fixtures=await load('src/modules/work/demo/fixtures.ts','fixtures');
+const overtime=await load('src/modules/work/demo/overtime.ts','overtime');
+const payroll=await load('src/modules/work/vendor/taura/lib/payroll.ts','payroll');
+const tax=await load('src/modules/work/vendor/taura/domain/tax/calculateWeeklyPAYE.ts','tax');
+const projections=await load('src/modules/work/vendor/taura/domain/payPeriods.ts','projections');
+const payments=await load('src/modules/work/pages/PaymentsPage.tsx','payments');
 const engine=await load('src/modules/work/vendor/taura/domain/contractRules.ts','engine');
 const details=await load('src/modules/work/components/DayDetails.tsx','details');
 const {newDraft,validateDraft,commitDraft,actOnShift}=api;
@@ -131,4 +136,47 @@ test('quick templates: day/night/off, intermonth/year, NZ DST, atomic invalid ba
   const changed=batch.applyBatch(source,batch.planBatch(source,[day],'off',fixtures.settings,()=> 'demo-x'));
   const hours=rows=>[...engine.calculateContractOvertime(rows,fixtures.settings,[]).values()].reduce((n,row)=>n+row.ordinary+row.overtime,0);
   assert.equal(hours(changed),0);assert.equal(hours(source),12);
+});
+
+test('WORK-OT-01 pay/bank/pay, base always paid, exact tax/net/bank consistency, no mutation and reset',()=>{
+  const data=fixtures.validateDemo(), original=JSON.stringify(data),week='2026-09-20';
+  const update=(prefs,treatment,shifts=data.shifts)=>overtime.changeOvertime(prefs,shifts,data.settings,data.referenceDate,week,treatment);
+  const project=prefs=>projections.buildPayProjections(data.shifts,data.settings,data.referenceDate,4,prefs).find(p=>p.id===week);
+  const pay=update(data.overtimePreferences,'pay'),bank=update(pay,'bank'),again=update(bank,'pay');
+  assert.deepEqual(project(pay),project(again));
+  const a=project(pay),b=project(bank);
+  assert.equal(a.basePay,b.basePay);assert.equal(a.basePay,60*30);
+  assert.equal(b.bankableHours,20*(data.settings.overtime_multiplier-1));assert.equal(a.bankableHours,0);
+  assert.equal(a.estimatedGross-b.estimatedGross,a.enhancedPayment);assert.equal(b.enhancedPayment,0);
+  assert.ok(a.estimatedPAYE>b.estimatedPAYE);assert.ok(a.estimatedKiwiSaver>b.estimatedKiwiSaver);
+  for(const [p,prefs] of [[a,pay],[b,bank]]) {
+    const sum=payroll.totals([...engine.calculateContractOvertime(data.shifts,data.settings,prefs).values()]);
+    const estimate=tax.calculateEstimatedWeeklyNet(sum.gross,p.payDate,data.settings.kiwisaver_rate,'M');
+    for(const key of ['estimatedGross','estimatedPAYE','estimatedKiwiSaver','estimatedNet'])assert.equal(p[key],estimate[key]);
+    assert.equal(p.bankableHours,sum.bankableHours);assert.equal(p.basePay,sum.basePay);
+    assert.ok(Math.abs(p.estimatedNet-(p.estimatedGross-p.estimatedPAYE-p.estimatedKiwiSaver))<0.011);
+  }
+  assert.equal(JSON.stringify(data),original);assert.deepEqual(fixtures.validateDemo().overtimePreferences,data.overtimePreferences);
+  assert.equal(project(structuredClone(fixtures.validateDemo().overtimePreferences)).bankableHours,10);
+});
+test('WORK-OT-01 independent weeks, no overtime and protected periods reject updates and hide controls',()=>{
+  const d=fixtures.validateDemo(),week='2026-09-20';
+  const second=d.shifts.map(s=>({...s,id:s.id+'-next'}));
+  // Use ISO calendar arithmetic for dates spanning the month boundary.
+  second.forEach((s,i)=>{s.shift_date=new Date(Date.UTC(2026,8,27+i)).toISOString().slice(0,10)});
+  const shifts=[...d.shifts,...second];
+  const first=overtime.changeOvertime(d.overtimePreferences,shifts,d.settings,d.referenceDate,week,'pay');
+  const both=overtime.changeOvertime(first,shifts,d.settings,d.referenceDate,'2026-09-27','bank');
+  assert.equal(both.find(p=>p.weekStart===week).overtimeTreatment,'pay');assert.equal(both.find(p=>p.weekStart==='2026-09-27').overtimeTreatment,'bank');
+  for(const status of ['confirmed','payslip','paid']) {
+    const locked=d.shifts.map((s,i)=>i===0?{...s,status}:s);
+    assert.equal(overtime.changeOvertime(d.overtimePreferences,locked,d.settings,d.referenceDate,week,'pay'),d.overtimePreferences);
+    const html=renderToStaticMarkup(React.createElement(payments.PaymentsPage,{...d,shifts:locked,onOvertimeTreatmentChange(){}}));
+    assert.doesNotMatch(html,/<select/);assert.match(html,/Solo consulta/);
+  }
+  const period=projections.buildPayProjections(d.shifts,d.settings,d.referenceDate,4,d.overtimePreferences).find(p=>p.id===week);
+  assert.equal(overtime.canChangeOvertime({...period,status:'paid'},week),false);
+  const short=d.shifts.slice(0,2);
+  assert.equal(overtime.changeOvertime(d.overtimePreferences,short,d.settings,d.referenceDate,week,'pay'),d.overtimePreferences);
+  assert.doesNotMatch(renderToStaticMarkup(React.createElement(payments.PaymentsPage,{...d,shifts:short,onOvertimeTreatmentChange(){}})),/<select/);
 });

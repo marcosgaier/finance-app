@@ -72,13 +72,43 @@ try {
     const errors=[];page.on('pageerror',error=>errors.push(error.message));page.on('download',()=>errors.push('Unexpected download'));
     const work=page.locator('#work-demo');
     const baseline=await snapshot(page);
-    const financeNode=await page.locator('#finance-region').elementHandle();
+    let financeNode=await page.locator('#finance-region').elementHandle();
     const openWork=async()=>{await page.getByRole('button',{name:'Ver demostración de Trabajo',exact:true}).click();await work.getByRole('button',{name:'Roster',exact:true}).click();};
     const day=date=>work.locator(`[data-day="${date}"]`);
     const dialog=page.getByRole('dialog');
     const shifts=()=>work.locator('[data-shift-id]');
     const unchanged=async()=>assert.deepEqual(await snapshot(page),baseline);
     await openWork();
+    // WORK-OT-01: one shared memory preference; no new storage/network effects.
+    const paymentsView=async()=>{await work.getByRole('button',{name:'Pagos',exact:true}).click();const detail=work.getByText('Overtime · tratamiento y detalle',{exact:true});if(await detail.getAttribute('aria-expanded')!=='true')await detail.evaluate(el=>el.parentElement.open=true);};
+    const choice=work.getByRole('combobox',{name:'Tratamiento overtime 2026-09-20',exact:true});
+    const card=work.locator('[data-payment="2026-09-20"]');
+    const amounts=()=>card.locator('[data-amount]').allTextContents();
+    await paymentsView();assert.equal(await choice.inputValue(),'bank');
+    const bankAmounts=await amounts();
+    await choice.selectOption('pay');const payAmounts=await amounts();assert.notDeepEqual(payAmounts,bankAmounts);
+    await choice.focus();await page.keyboard.press('Tab');await page.keyboard.press('Shift+Tab');
+    assert.equal(await choice.evaluate(el=>el===document.activeElement&&el.matches(':focus-visible')),true);
+    const box=await choice.boundingBox();assert.ok(box.height>=44&&box.width>=44);
+    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+    await page.evaluate(()=>window.scrollTo(0,0));
+    await page.screenshot({path:fileURLToPath(new URL(`overtime-pay-${width}.png`,output)),fullPage:true});
+    await work.getByRole('button',{name:'Resumen',exact:true}).click();
+    const summaryPay=await work.locator('section[aria-labelledby="work-summary-title"]').innerText();
+    assert.match(summaryPay,/Enhanced Payment estimado/);
+    await paymentsView();await choice.selectOption('bank');assert.deepEqual(await amounts(),bankAmounts);
+    await page.evaluate(()=>window.scrollTo(0,0));
+    await page.screenshot({path:fileURLToPath(new URL(`overtime-bank-${width}.png`,output)),fullPage:true});
+    await work.getByRole('button',{name:'Resumen',exact:true}).click();
+    const summaryBank=await work.locator('section[aria-labelledby="work-summary-title"]').innerText();
+    assert.match(summaryBank,/Hours Bank \(\+10 h\)/);assert.notEqual(summaryBank,summaryPay);
+    await paymentsView();await choice.selectOption('pay');assert.deepEqual(await amounts(),payAmounts);
+    await unchanged();
+    page.once('dialog',d=>d.dismiss());await work.getByRole('button',{name:'Restablecer ejemplo',exact:true}).click();assert.equal(await choice.inputValue(),'pay');
+    page.once('dialog',d=>d.accept());await work.getByRole('button',{name:'Restablecer ejemplo',exact:true}).click();assert.equal(await choice.inputValue(),'bank');
+    await choice.selectOption('pay');await work.getByRole('button',{name:'Volver a Finanzas',exact:true}).click();await openWork();await paymentsView();assert.equal(await choice.inputValue(),'bank');
+    await choice.selectOption('pay');await page.reload();financeNode=await page.locator('#finance-region').elementHandle();await openWork();await paymentsView();assert.equal(await choice.inputValue(),'bank');await unchanged();
+    await work.getByRole('button',{name:'Roster',exact:true}).click();
     assert.match(await work.innerText(),/DEMOSTRACIÓN — datos ficticios; no es tu roster/);
     await work.getByRole('button',{name:'Seleccionar varios días',exact:true}).click();
     assert.equal(await work.getByRole('button',{name:'Día 06:00–18:00',exact:true}).isDisabled(),true);
@@ -202,7 +232,7 @@ try {
     await work.getByRole('button',{name:'Resumen',exact:true}).click();
     assert.match(await work.getByRole('region',{name:'Resumen del ejemplo',exact:true}).innerText(),/58 h/);
     await work.getByRole('button',{name:'Pagos',exact:true}).click();
-    for(const detail of await work.locator('[data-payment="2026-09-20"] details').all())await detail.locator(':scope > summary').click();
+    for(const detail of await work.locator('[data-payment="2026-09-20"] details').all())if(!await detail.evaluate(el=>el.open))await detail.locator(':scope > summary').click();
     assert.match(await work.locator('[data-payment="2026-09-20"]').innerText(),/18 h en esta proyección/);
     assert.equal(await work.locator('[data-payment="2026-09-20"] [data-amount="gross"]').innerText(),new Intl.NumberFormat('es-NZ',{style:'currency',currency:'NZD'}).format(1824));
     await work.getByRole('button',{name:'Roster',exact:true}).click();
@@ -249,7 +279,7 @@ try {
     await page.reload();await openWork();await day('2026-09-24').click();assert.equal(await shifts().count(),1);
     // Reload performs Finance's existing one storage read; compare fresh instrumentation with original initial state.
     await unchanged();assert.deepEqual(errors,[]);assert.deepEqual(outbound,[]);
-    checks.push({width,status:'PASS',flows:['batch selection/month/week/keyboard/preview/cancel/confirm/conflicts/zero-effects','edit/ID/invalid/unchanged','dialog keyboard/Escape/focus/scroll','consistent summary/payments','multiple/duplicate/cancel','confirmed deletion','empty day/night/add','month/week navigation','reset confirm','exit/reopen/reload'],workEffects:0,financeUnchanged:true});
+    checks.push({width,status:'PASS',flows:['WORK-OT-01 bank/pay/bank/pay, summary coherence, keyboard/focus, reset cancellation/confirmation, exit/reload, zero effects','batch selection/month/week/keyboard/preview/cancel/confirm/conflicts/zero-effects','edit/ID/invalid/unchanged','dialog keyboard/Escape/focus/scroll','consistent summary/payments','multiple/duplicate/cancel','confirmed deletion','empty day/night/add','month/week navigation','reset confirm','exit/reopen/reload'],workEffects:0,financeUnchanged:true});
     await context.close();
   }
   const result={status:'PASS',node:process.version,chromium:browser.version(),checks,limits:'Local build, isolated synthetic profiles. Native Android/PWA, OS zoom and real screen readers remain manual. No Taura production access.'};

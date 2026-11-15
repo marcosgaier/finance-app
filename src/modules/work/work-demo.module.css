@@ -146,3 +146,7 @@
 .nextGrid p {font-size:13px;margin:4px 0}
 @media(min-width:600px){.dashboardGrid {grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media(max-width:400px){.summaryOverview .nextPaymentCard {grid-template-columns:1fr}.nextGrid {grid-template-columns:1fr}}
+
+.overtimeChoice { display:grid; gap:.35rem; margin-block:.5rem; }
+.overtimeChoice select { width:100%; min-width:0; min-height:44px; color:inherit; background:#fff; border:1px solid #678477; border-radius:8px; padding:.5rem; font:inherit; }
+.overtimeChoice select:focus-visible { outline:3px solid #38bdf8; outline-offset:3px; }

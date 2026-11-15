@@ -5,7 +5,8 @@ import {PaymentsPage} from './pages/PaymentsPage';
 import {validateDemo, referenceDay} from './demo/fixtures';
 import styles from './work-demo.module.css';
 import {applyBatch,type BatchPlan} from './editor/batchPlan';
-import type {Shift} from './vendor/taura/types';
+import {changeOvertime} from './demo/overtime';
+import type {OvertimePreference,OvertimeTreatment,Shift} from './vendor/taura/types';
 
 class DemoBoundary extends React.Component<{children:React.ReactNode},{failed:boolean}> {
   state = {failed:false};
@@ -14,31 +15,36 @@ class DemoBoundary extends React.Component<{children:React.ReactNode},{failed:bo
 }
 type WorkView = 'summary'|'roster'|'payments';
 const headingIds:Record<WorkView,string>={summary:'work-summary-title',roster:'work-roster-title',payments:'work-payments-title'};
-function Pages({view,shifts,onShifts,onBatch,generation,revision}:{view:WorkView;shifts:Shift[];onShifts:(next:Shift[])=>void;onBatch:(plan:BatchPlan)=>void;generation:number;revision:number}) {
+function Pages({view,shifts,onShifts,onBatch,generation,revision,overtimePreferences,onOvertimeTreatmentChange}:{view:WorkView;shifts:Shift[];onShifts:(next:Shift[])=>void;onBatch:(plan:BatchPlan)=>void;generation:number;revision:number;overtimePreferences:OvertimePreference[];onOvertimeTreatmentChange:(week:string,treatment:OvertimeTreatment)=>void}) {
   const ordered=[...shifts].sort((a,b)=>a.shift_date.localeCompare(b.shift_date)||(a.planned_start??'').localeCompare(b.planned_start??''));
-  const data={...validateDemo(),shifts:ordered};
+  const data={...validateDemo(),shifts:ordered,overtimePreferences};
   return <><section hidden={view!=='summary'} aria-labelledby="work-summary-title">
     <h2 id="work-summary-title" tabIndex={-1}>Resumen del ejemplo</h2><DashboardPage {...data}/>
   </section><section hidden={view!=='roster'} aria-labelledby="work-roster-title">
     <RosterPage key={revision} {...data} onShifts={onShifts} onBatch={onBatch} generation={generation}/>
   </section><section hidden={view!=='payments'} aria-labelledby="work-payments-title">
-    <PaymentsPage {...data}/>
+    <PaymentsPage {...data} onOvertimeTreatmentChange={onOvertimeTreatmentChange}/>
   </section></>;
 }
 // Initialization and editing stay inside the demo error boundary, including on
 // browsers without a required in-memory platform primitive.
 function DemoSession({view}:{view:WorkView}) {
   const [shifts,setShifts]=useState(()=>structuredClone(validateDemo().shifts));
+  const [overtimePreferences,setOvertimePreferences]=useState(()=>structuredClone(validateDemo().overtimePreferences));
+  function overtime(week:string,treatment:OvertimeTreatment){
+    const data=validateDemo(),sessionShifts=current.current;
+    setOvertimePreferences(previous=>changeOvertime(previous,sessionShifts,data.settings,data.referenceDate,week,treatment));
+  }
   const current=useRef(shifts),generation=useRef(0);
   function change(next:Shift[]){generation.current++;current.current=next;setShifts(next);}
   function batch(plan:BatchPlan){change(applyBatch(current.current,plan,generation.current));}
   const [revision,setRevision]=useState(0);
   function reset(){
     if(!window.confirm('¿Restablecer ejemplo? Se descartan los cambios ficticios de esta demo.'))return;
-    change(structuredClone(validateDemo().shifts));setRevision(value=>value+1);
+    change(structuredClone(validateDemo().shifts));setOvertimePreferences(structuredClone(validateDemo().overtimePreferences));setRevision(value=>value+1);
   }
   return <><div className={styles.sessionTools}><button className={styles.quietButton} type="button" onClick={reset}>Restablecer ejemplo</button></div>
-    <Pages view={view} shifts={shifts} onShifts={change} onBatch={batch} generation={generation.current} revision={revision}/></>;
+    <Pages view={view} shifts={shifts} onShifts={change} onBatch={batch} generation={generation.current} revision={revision} overtimePreferences={overtimePreferences} onOvertimeTreatmentChange={overtime}/></>;
 }
 export function WorkDemo({onClose}:{onClose:()=>void}) {
   const [view,setView]=useState<WorkView>('summary');

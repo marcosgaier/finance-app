@@ -132,7 +132,7 @@ try {
       await page.evaluate(()=>window.scrollTo(0,0));
       await page.screenshot({path:fileURLToPath(new URL('toolbar-'+width+'.png',output))});
       assert.equal(await work.getByRole('button',{name:'Pagos',exact:true}).count(),1);
-      assert.equal(await work.locator('input,select,textarea,a[download]').count(),0);
+      assert.equal(await work.locator('input,select:visible,textarea,a[download]').count(),0);
       assert.equal(await work.getByRole('button',{name:/Agregar|Editar|Borrar|Cancelar|Copiar|Pegar|Seleccionar/}).count(),0);
       assert.equal(await work.getByRole('heading',{name:'Resumen del ejemplo',exact:true}).isVisible(),true);
       if(!calendarChecked) {
@@ -228,7 +228,8 @@ try {
       }
       assert.match(await paidWeek.innerText(),/Hours Bank: \+10 h/);
       assert.match(await paymentsRegion.innerText(),/Semana sin turnos en este ejemplo/);
-      assert.equal(await paymentsRegion.locator('input,select,textarea,button,a[download]').count(),0);
+      assert.equal(await paymentsRegion.getByRole('combobox',{name:'Tratamiento overtime 2026-09-20',exact:true}).count(),1);
+      assert.equal(await paymentsRegion.locator('input,select:not([aria-label="Tratamiento overtime 2026-09-20"]),textarea,button,a[download]').count(),0);
       assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
       if(!paymentsChecked) {
         await page.screenshot({path:fileURLToPath(new URL('payments-'+width+'.png',output)),fullPage:true});

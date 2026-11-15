@@ -1,7 +1,8 @@
 import React from 'react';
-import type {OvertimePreference,PayPeriodProjection,PayPeriodStatus,Settings,Shift} from '../vendor/taura/types';
+import type {OvertimeTreatment,OvertimePreference,PayPeriodProjection,PayPeriodStatus,Settings,Shift} from '../vendor/taura/types';
 import {buildPayProjections} from '../vendor/taura/domain/payPeriods';
 import {formatDate,toIsoDate} from '../vendor/taura/lib/dates';
+import {canChangeOvertime} from '../demo/overtime';
 import styles from '../work-demo.module.css';
 
 const money=(value:number)=>new Intl.NumberFormat('es-NZ',{style:'currency',currency:'NZD'}).format(value);
@@ -14,9 +15,10 @@ interface Props {
   settings:Readonly<Settings>;
   overtimePreferences:readonly Readonly<OvertimePreference>[];
   referenceDate:Date;
+  onOvertimeTreatmentChange?:(week:string,treatment:OvertimeTreatment)=>void;
 }
 
-export function PaymentsPage({shifts,settings,overtimePreferences,referenceDate}:Props) {
+export function PaymentsPage({shifts,settings,overtimePreferences,referenceDate,onOvertimeTreatmentChange}:Props) {
   // Keep all shifts as overtime context; the engine and its rules remain unchanged.
   const periods=buildPayProjections([...shifts],settings,referenceDate,4,[...overtimePreferences]);
   const referenceDay=toIsoDate(referenceDate);
@@ -28,18 +30,18 @@ export function PaymentsPage({shifts,settings,overtimePreferences,referenceDate}
     <section aria-labelledby="upcoming-example-payments">
       <h3 id="upcoming-example-payments">Próximos pagos</h3>
       <p className={styles.muted}>Desde la fecha de referencia · del más cercano al más lejano.</p>
-      {upcoming.length?<div className={styles.paymentsList}>{upcoming.map((period,index)=><PaymentCard key={period.id} featured={index===0} period={period} kiwiSaverRate={settings.kiwisaver_rate}/>)}</div>:<p>Sin próximas proyecciones en este ejemplo.</p>}
+      {upcoming.length?<div className={styles.paymentsList}>{upcoming.map((period,index)=><PaymentCard key={period.id} featured={index===0} period={period} kiwiSaverRate={settings.kiwisaver_rate} onOvertimeTreatmentChange={onOvertimeTreatmentChange}/>)}</div>:<p>Sin próximas proyecciones en este ejemplo.</p>}
     </section>
     <section className={styles.previousPayments} aria-labelledby="recent-example-payments">
       <h3 id="recent-example-payments">Pagos anteriores</h3>
       <p className={styles.muted}>Del más reciente al más antiguo · sin confirmación de cobro.</p>
-      {recent.length?<div className={styles.paymentsList}>{recent.map(period=><PaymentCard key={period.id} period={period} kiwiSaverRate={settings.kiwisaver_rate}/>)}</div>:<p>Sin proyecciones recientes en este ejemplo.</p>}
+      {recent.length?<div className={styles.paymentsList}>{recent.map(period=><PaymentCard key={period.id} period={period} kiwiSaverRate={settings.kiwisaver_rate} onOvertimeTreatmentChange={onOvertimeTreatmentChange}/>)}</div>:<p>Sin proyecciones recientes en este ejemplo.</p>}
     </section>
     <details className={styles.disclosure}><summary>Información de las estimaciones</summary><p>Estimación del motor fijado: código M, año fiscal 2026–27. PAYE incluye ACC; no se descuenta de nuevo. Tarifas y estados ficticios. Esta demo no valida cálculos específicos de feriados.</p></details>
   </>;
 }
 
-function PaymentCard({period,kiwiSaverRate,featured=false}:{period:PayPeriodProjection;kiwiSaverRate:number;featured?:boolean}) {
+function PaymentCard({period,kiwiSaverRate,featured=false,onOvertimeTreatmentChange}:{period:PayPeriodProjection;kiwiSaverRate:number;featured?:boolean;onOvertimeTreatmentChange?:Props['onOvertimeTreatmentChange']}) {
   return <article className={`${styles.card} ${styles.paymentCard} ${featured?styles.featuredPayment:''}`} aria-labelledby={`example-payment-${period.id}`} data-payment={period.id} data-pay-date={period.payDate}>
     <p className={styles.paymentEyebrow}>{featured?'Próximo pago':'Pago estimado'}</p>
 
@@ -59,7 +61,12 @@ function PaymentCard({period,kiwiSaverRate,featured=false}:{period:PayPeriodProj
     {period.overtimeWeeks.length?<details className={styles.disclosure}><summary>Overtime · tratamiento y detalle</summary>{period.overtimeWeeks.map(week=><section className={styles.paymentOvertime} key={week.weekStart} aria-label={`Overtime ${week.weekStart}`}>
       <h5>Overtime · {formatDate(week.weekStart)} – {formatDate(week.weekEnd)}</h5>
       <p>{week.overtimeHours} h en esta proyección</p>
-      <p>Tratamiento: {week.overtimeTreatment==='bank'?'Hours Bank':'Enhanced Payment estimado'}</p>
+      {onOvertimeTreatmentChange&&canChangeOvertime(period,week.weekStart)?<label className={styles.overtimeChoice}>Tratamiento
+        <select aria-label={`Tratamiento overtime ${week.weekStart}`} value={week.overtimeTreatment} onChange={event=>onOvertimeTreatmentChange(week.weekStart,event.target.value as OvertimeTreatment)}>
+          <option value="pay">Cobrar Enhanced Payment</option><option value="bank">Acumular en Hours Bank</option>
+        </select></label>:<p>Solo consulta · tratamiento protegido</p>}
+      <p>La base se cobra siempre; Hours Bank suma solo el adicional (multiplicador − 1).</p>
+      <p aria-live="polite">Tratamiento: {week.overtimeTreatment==='bank'?'Hours Bank':'Enhanced Payment estimado'}</p>
       {week.overtimeTreatment==='bank'?<p>Hours Bank: +{week.bankableHours} h</p>:<p>Enhanced Payment estimado: {money(week.enhancedPayment)}</p>}
     </section>)}</details>:null}
 

@@ -53,9 +53,9 @@ el descarte del escenario sin sumar otro estado de restauración.
 
 | Ancho | Selección | Preview |
 |---|---|---|
-|360|[calendario](batch-selection-360.png)|[confirmación](batch-preview-360.png)|
-|390|[calendario](batch-selection-390.png)|[confirmación](batch-preview-390.png)|
-|1280|[calendario](batch-selection-1280.png)|[confirmación](batch-preview-1280.png)|
+|360|[calendario · archivo histórico](https://github.com/marcosgaier/finance-app/blob/b5d08af909377960b505d922b9f87ecac6ea5473/docs/validation/arch-01b3a/batch/batch-selection-360.png)|[confirmación · archivo histórico](https://github.com/marcosgaier/finance-app/blob/b5d08af909377960b505d922b9f87ecac6ea5473/docs/validation/arch-01b3a/batch/batch-preview-360.png)|
+|390|[calendario · archivo histórico](https://github.com/marcosgaier/finance-app/blob/b5d08af909377960b505d922b9f87ecac6ea5473/docs/validation/arch-01b3a/batch/batch-selection-390.png)|[confirmación · archivo histórico](https://github.com/marcosgaier/finance-app/blob/b5d08af909377960b505d922b9f87ecac6ea5473/docs/validation/arch-01b3a/batch/batch-preview-390.png)|
+|1280|[calendario · archivo histórico](https://github.com/marcosgaier/finance-app/blob/b5d08af909377960b505d922b9f87ecac6ea5473/docs/validation/arch-01b3a/batch/batch-selection-1280.png)|[confirmación · archivo histórico](https://github.com/marcosgaier/finance-app/blob/b5d08af909377960b505d922b9f87ecac6ea5473/docs/validation/arch-01b3a/batch/batch-preview-1280.png)|
 
 ## Reproducir y límites
 

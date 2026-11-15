@@ -32,9 +32,9 @@ originales de la base (build temporal; fuentes restauradas antes del build final
 
 | Ancho | Antes | Calendario nuevo, editor previo | Final |
 | --- | --- | --- | --- |
-| 360 | [Antes](before/batch-selection-360.png) | [Fase 1](phase1/batch-selection-360.png) | [Final](after/batch-selection-360.png) |
-| 390 | [Antes](before/batch-selection-390.png) | [Fase 1](phase1/batch-selection-390.png) | [Final](after/batch-selection-390.png) |
-| 1280 | [Antes](before/batch-selection-1280.png) | [Fase 1](phase1/batch-selection-1280.png) | [Final](after/batch-selection-1280.png) |
+| 360 | [Antes · archivo histórico](https://github.com/marcosgaier/finance-app/blob/b5d08af909377960b505d922b9f87ecac6ea5473/docs/validation/arch-01b3a/roster-editor-visual/before/batch-selection-360.png) | [Fase 1 · archivo histórico](https://github.com/marcosgaier/finance-app/blob/b5d08af909377960b505d922b9f87ecac6ea5473/docs/validation/arch-01b3a/roster-editor-visual/phase1/batch-selection-360.png) | [Final · archivo histórico](https://github.com/marcosgaier/finance-app/blob/b5d08af909377960b505d922b9f87ecac6ea5473/docs/validation/arch-01b3a/roster-editor-visual/after/batch-selection-360.png) |
+| 390 | [Antes · archivo histórico](https://github.com/marcosgaier/finance-app/blob/b5d08af909377960b505d922b9f87ecac6ea5473/docs/validation/arch-01b3a/roster-editor-visual/before/batch-selection-390.png) | [Fase 1 · archivo histórico](https://github.com/marcosgaier/finance-app/blob/b5d08af909377960b505d922b9f87ecac6ea5473/docs/validation/arch-01b3a/roster-editor-visual/phase1/batch-selection-390.png) | [Final · archivo histórico](https://github.com/marcosgaier/finance-app/blob/b5d08af909377960b505d922b9f87ecac6ea5473/docs/validation/arch-01b3a/roster-editor-visual/after/batch-selection-390.png) |
+| 1280 | [Antes · archivo histórico](https://github.com/marcosgaier/finance-app/blob/b5d08af909377960b505d922b9f87ecac6ea5473/docs/validation/arch-01b3a/roster-editor-visual/before/batch-selection-1280.png) | [Fase 1 · archivo histórico](https://github.com/marcosgaier/finance-app/blob/b5d08af909377960b505d922b9f87ecac6ea5473/docs/validation/arch-01b3a/roster-editor-visual/phase1/batch-selection-1280.png) | [Final · archivo histórico](https://github.com/marcosgaier/finance-app/blob/b5d08af909377960b505d922b9f87ecac6ea5473/docs/validation/arch-01b3a/roster-editor-visual/after/batch-selection-1280.png) |
 
 ## Fase 2: editor
 
@@ -47,9 +47,9 @@ Se conservan exactamente handlers, validación, borradores, plantillas y envío 
 
 | Ancho | Antes | Después | Secundarios abiertos por teclado |
 | --- | --- | --- | --- |
-| 360 | [Antes](before/editor-360.png) | [Después](after/editor-360.png) | [Descanso/tarifa](after/editor-secondary-360.png) |
-| 390 | [Antes](before/editor-390.png) | [Después](after/editor-390.png) | [Descanso/tarifa](after/editor-secondary-390.png) |
-| 1280 | [Antes](before/editor-1280.png) | [Después](after/editor-1280.png) | [Descanso/tarifa](after/editor-secondary-1280.png) |
+| 360 | [Antes · archivo histórico](https://github.com/marcosgaier/finance-app/blob/b5d08af909377960b505d922b9f87ecac6ea5473/docs/validation/arch-01b3a/roster-editor-visual/before/editor-360.png) | [Después · archivo histórico](https://github.com/marcosgaier/finance-app/blob/b5d08af909377960b505d922b9f87ecac6ea5473/docs/validation/arch-01b3a/roster-editor-visual/after/editor-360.png) | [Descanso/tarifa](after/editor-secondary-360.png) |
+| 390 | [Antes · archivo histórico](https://github.com/marcosgaier/finance-app/blob/b5d08af909377960b505d922b9f87ecac6ea5473/docs/validation/arch-01b3a/roster-editor-visual/before/editor-390.png) | [Después · archivo histórico](https://github.com/marcosgaier/finance-app/blob/b5d08af909377960b505d922b9f87ecac6ea5473/docs/validation/arch-01b3a/roster-editor-visual/after/editor-390.png) | [Descanso/tarifa](after/editor-secondary-390.png) |
+| 1280 | [Antes · archivo histórico](https://github.com/marcosgaier/finance-app/blob/b5d08af909377960b505d922b9f87ecac6ea5473/docs/validation/arch-01b3a/roster-editor-visual/before/editor-1280.png) | [Después · archivo histórico](https://github.com/marcosgaier/finance-app/blob/b5d08af909377960b505d922b9f87ecac6ea5473/docs/validation/arch-01b3a/roster-editor-visual/after/editor-1280.png) | [Descanso/tarifa](after/editor-secondary-1280.png) |
 
 Capturas comparables, mismo flujo/día/datos, viewport 900px de alto. Inspección visual:
 sin recortes de controles ni desbordamiento, acciones presentes, textos legibles.
@@ -60,7 +60,7 @@ sin recortes de controles ni desbordamiento, acciones presentes, textos legibles
 - [typecheck:work](typecheck.log), [build final](build.log), [diff-check](diff-check.log): PASS.
 - [Editor final](editor.log), [resultado](after/editor-result.json): PASS 360/390/1280. Pay predeterminado, bank/pay manual, coherencia de cálculo/resumen/pagos, teclado, foco restaurado, Escape, IDs, datos inválidos, duplicar/cancelar/eliminar, navegación mes/semana, reset/salida/recarga, multiselección y autodesselección, preview, conflictos, lotes sin cambio y atomicidad. Cero efectos nuevos Work; Finance intacto.
 - Nueva aserción abre/cierra descanso/tarifa con Enter, verifica ambos campos visibles y controles visibles del editor >=44x44.
-- [Estados](states.log), [resultado](states/result.json): espécimen del componente Roster con props sintéticas para todos los tipos/estados, +2, contraste calculado >=4.5:1, foco/Space y targets >=44x44. [360](states/states-360.png), [390](states/states-390.png), [1280](states/states-1280.png). No altera fixtures ni permite editar protegidos; esta prueba es aislada del flujo de aplicación.
+- [Estados](states.log), [resultado](states/result.json): espécimen del componente Roster con props sintéticas para todos los tipos/estados, +2, contraste calculado >=4.5:1, foco/Space y targets >=44x44. [360 · archivo histórico](https://github.com/marcosgaier/finance-app/blob/b5d08af909377960b505d922b9f87ecac6ea5473/docs/validation/arch-01b3a/roster-editor-visual/states/states-360.png), [390 · archivo histórico](https://github.com/marcosgaier/finance-app/blob/b5d08af909377960b505d922b9f87ecac6ea5473/docs/validation/arch-01b3a/roster-editor-visual/states/states-390.png), [1280 · archivo histórico](https://github.com/marcosgaier/finance-app/blob/b5d08af909377960b505d922b9f87ecac6ea5473/docs/validation/arch-01b3a/roster-editor-visual/states/states-1280.png). No altera fixtures ni permite editar protegidos; esta prueba es aislada del flujo de aplicación.
 - [Work/Finance](work.log): PASS 360/390/1280, ocho pestañas, retorno/DOM/CSS/scroll/estado/recovery, pagos del ejemplo y persistencia intacta.
 - [Pagos Finance](payments.log): 20 PASS.
 - Planificador [escritorio](planning.log) y [móvil](planning-mobile.log): PASS, servidor aislado localhost:52981 del build final, datos sintéticos, sin peticiones externas ni errores de consola.

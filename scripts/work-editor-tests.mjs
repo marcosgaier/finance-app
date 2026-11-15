@@ -163,6 +163,25 @@ test('batch 0/1/N dates: create/change/skip, immutable IDs and metadata, no hidd
   assert.equal(JSON.stringify(rows),before);
 });
 
+test('batch preserves empty actual notes as real data; absent/nullish notes allow planned changes',()=>{
+  for(const patch of [{actual_notes:''},{actual_notes:'keep'},{},{actual_notes:undefined},{actual_notes:null}]) {
+    for(const kind of ['day','night','off']) {
+      const original=Object.freeze({...draft(),notes:'planned note',...patch});
+      const rows=Object.freeze([original]),before=structuredClone(rows);
+      const protectedNote=patch.actual_notes!==null&&patch.actual_notes!==undefined;
+      const plan=batch.planBatch(rows,[day],kind,fixtures.settings,()=> 'demo-unused');
+      assert.equal(plan.rows[0].action,protectedNote?'skip':'change');
+      const next=batch.applyBatch(rows,plan);
+      assert.deepEqual(rows,before);
+      assert.equal(Object.hasOwn(next[0],'actual_notes'),Object.hasOwn(original,'actual_notes'));
+      assert.equal(next[0].actual_notes,original.actual_notes);
+      assert.equal(next[0].notes,original.notes);
+      if(protectedNote)assert.deepEqual(next,rows);
+      else assert.equal(next[0].kind,kind);
+    }
+  }
+});
+
 test('batch protects every nonplanned status and any actual data, including zero and notes',()=>{
   for(const patch of [{status:'worked'},{status:'modified'},{status:'confirmed'},{status:'payslip'},{status:'paid'},{status:'cancelled'},{status:'paid_leave'},{actual_paid_hours:0},{actual_start:'2026-09-24T07:00:00'},{actual_notes:'keep'},{confirmed_at:'keep'}]){
     const rows=[{...draft(),...patch}],plan=batch.planBatch(rows,[day],'off',fixtures.settings,()=> 'demo-unused');

@@ -36,9 +36,9 @@ Los enlaces Antes corresponden a la evidencia ya publicada de la base aprobada.
 
 | Ancho | Antes | Después | Cabecera y foco teclado |
 | --- | --- | --- | --- |
-| 360 | [Antes](../deselection/work-regression/work-360.png) | [Después](work-regression/work-360.png) | [Segmentos](work-regression/toolbar-360.png) |
-| 390 | [Antes](../deselection/work-regression/work-390.png) | [Después](work-regression/work-390.png) | [Segmentos](work-regression/toolbar-390.png) |
-| 1280 | [Antes](../deselection/work-regression/work-1280.png) | [Después](work-regression/work-1280.png) | [Segmentos](work-regression/toolbar-1280.png) |
+| 360 | [Antes · archivo histórico](https://github.com/marcosgaier/finance-app/blob/b5d08af909377960b505d922b9f87ecac6ea5473/docs/validation/arch-01b3a/deselection/work-regression/work-360.png) | [Después · archivo histórico](https://github.com/marcosgaier/finance-app/blob/b5d08af909377960b505d922b9f87ecac6ea5473/docs/validation/arch-01b3a/toolbar/work-regression/work-360.png) | [Segmentos · archivo histórico](https://github.com/marcosgaier/finance-app/blob/b5d08af909377960b505d922b9f87ecac6ea5473/docs/validation/arch-01b3a/toolbar/work-regression/toolbar-360.png) |
+| 390 | [Antes · archivo histórico](https://github.com/marcosgaier/finance-app/blob/b5d08af909377960b505d922b9f87ecac6ea5473/docs/validation/arch-01b3a/deselection/work-regression/work-390.png) | [Después · archivo histórico](https://github.com/marcosgaier/finance-app/blob/b5d08af909377960b505d922b9f87ecac6ea5473/docs/validation/arch-01b3a/toolbar/work-regression/work-390.png) | [Segmentos · archivo histórico](https://github.com/marcosgaier/finance-app/blob/b5d08af909377960b505d922b9f87ecac6ea5473/docs/validation/arch-01b3a/toolbar/work-regression/toolbar-390.png) |
+| 1280 | [Antes · archivo histórico](https://github.com/marcosgaier/finance-app/blob/b5d08af909377960b505d922b9f87ecac6ea5473/docs/validation/arch-01b3a/deselection/work-regression/work-1280.png) | [Después · archivo histórico](https://github.com/marcosgaier/finance-app/blob/b5d08af909377960b505d922b9f87ecac6ea5473/docs/validation/arch-01b3a/toolbar/work-regression/work-1280.png) | [Segmentos · archivo histórico](https://github.com/marcosgaier/finance-app/blob/b5d08af909377960b505d922b9f87ecac6ea5473/docs/validation/arch-01b3a/toolbar/work-regression/toolbar-1280.png) |
 
 Inspección visual de las capturas: etiquetas completas, tres segmentos en una fila,
 sin desbordes ni solapamientos en los tres anchos. La advertencia sigue inequívoca.

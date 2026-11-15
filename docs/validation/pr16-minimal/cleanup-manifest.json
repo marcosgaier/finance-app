@@ -1,0 +1,2439 @@
+{
+  "audited": "b5d08af909377960b505d922b9f87ecac6ea5473",
+  "base": "64ca62dfabbef5e790c96036aa100abaae037436",
+  "kept": [
+    "docs/validation/arch-01b3a/worked-editor/after/batch-preview-1280.png",
+    "docs/validation/arch-01b3a/worked-editor/after/batch-preview-360.png",
+    "docs/validation/arch-01b3a/worked-editor/after/batch-preview-390.png",
+    "docs/validation/arch-01b3a/worked-editor/after/batch-week-1280.png",
+    "docs/validation/arch-01b3a/worked-editor/after/batch-week-360.png",
+    "docs/validation/arch-01b3a/worked-editor/after/batch-week-390.png",
+    "docs/validation/arch-01b3a/worked-editor/after/editor-1280.png",
+    "docs/validation/arch-01b3a/worked-editor/after/editor-360.png",
+    "docs/validation/arch-01b3a/worked-editor/after/editor-390.png",
+    "docs/validation/arch-01b3a/worked-editor/after/worked-editor-1280.png",
+    "docs/validation/arch-01b3a/worked-editor/after/worked-editor-360.png",
+    "docs/validation/arch-01b3a/worked-editor/after/worked-editor-390.png",
+    "docs/validation/arch-01b3a/worked-editor/after/worked-saved-1280.png",
+    "docs/validation/arch-01b3a/worked-editor/after/worked-saved-360.png",
+    "docs/validation/arch-01b3a/worked-editor/after/worked-saved-390.png",
+    "docs/validation/arch-01b3a/worked-editor/before/editor-1280.png",
+    "docs/validation/arch-01b3a/worked-editor/before/editor-360.png",
+    "docs/validation/arch-01b3a/worked-editor/before/editor-390.png",
+    "docs/validation/arch-01b3a/worked-editor/payments/manual-1280.png",
+    "docs/validation/arch-01b3a/worked-editor/payments/manual-360.png",
+    "docs/validation/arch-01b3a/worked-editor/payments/payment-1280.png",
+    "docs/validation/arch-01b3a/worked-editor/payments/payment-360.png",
+    "docs/validation/arch-01b3a/worked-editor/planning/planner-desktop.png",
+    "docs/validation/arch-01b3a/worked-editor/planning/planner-mobile.png"
+  ],
+  "removed": [
+    {
+      "path": "docs/validation/arch-01b3a/batch/batch-preview-1280.png",
+      "bytes": 55091
+    },
+    {
+      "path": "docs/validation/arch-01b3a/batch/batch-preview-360.png",
+      "bytes": 43745
+    },
+    {
+      "path": "docs/validation/arch-01b3a/batch/batch-preview-390.png",
+      "bytes": 43342
+    },
+    {
+      "path": "docs/validation/arch-01b3a/batch/batch-selection-1280.png",
+      "bytes": 96272
+    },
+    {
+      "path": "docs/validation/arch-01b3a/batch/batch-selection-360.png",
+      "bytes": 88689
+    },
+    {
+      "path": "docs/validation/arch-01b3a/batch/batch-selection-390.png",
+      "bytes": 88876
+    },
+    {
+      "path": "docs/validation/arch-01b3a/batch/editor-1280.png",
+      "bytes": 66282
+    },
+    {
+      "path": "docs/validation/arch-01b3a/batch/editor-360.png",
+      "bytes": 44061
+    },
+    {
+      "path": "docs/validation/arch-01b3a/batch/editor-390.png",
+      "bytes": 44879
+    },
+    {
+      "path": "docs/validation/arch-01b3a/batch/editor-bottom-1280.png",
+      "bytes": 63617
+    },
+    {
+      "path": "docs/validation/arch-01b3a/batch/editor-bottom-360.png",
+      "bytes": 42979
+    },
+    {
+      "path": "docs/validation/arch-01b3a/batch/editor-bottom-390.png",
+      "bytes": 43433
+    },
+    {
+      "path": "docs/validation/arch-01b3a/batch/payments/manual-1280.png",
+      "bytes": 120232
+    },
+    {
+      "path": "docs/validation/arch-01b3a/batch/payments/manual-360.png",
+      "bytes": 123389
+    },
+    {
+      "path": "docs/validation/arch-01b3a/batch/payments/payment-1280.png",
+      "bytes": 140598
+    },
+    {
+      "path": "docs/validation/arch-01b3a/batch/payments/payment-360.png",
+      "bytes": 137543
+    },
+    {
+      "path": "docs/validation/arch-01b3a/batch/planning/overview.png",
+      "bytes": 139811
+    },
+    {
+      "path": "docs/validation/arch-01b3a/batch/planning/planner-desktop.png",
+      "bytes": 302046
+    },
+    {
+      "path": "docs/validation/arch-01b3a/batch/planning/planner-mobile.png",
+      "bytes": 239878
+    },
+    {
+      "path": "docs/validation/arch-01b3a/batch/roster-edited-1280.png",
+      "bytes": 107473
+    },
+    {
+      "path": "docs/validation/arch-01b3a/batch/roster-edited-360.png",
+      "bytes": 96484
+    },
+    {
+      "path": "docs/validation/arch-01b3a/batch/roster-edited-390.png",
+      "bytes": 96726
+    },
+    {
+      "path": "docs/validation/arch-01b3a/batch/work-regression/access-1280.png",
+      "bytes": 207212
+    },
+    {
+      "path": "docs/validation/arch-01b3a/batch/work-regression/access-360.png",
+      "bytes": 212193
+    },
+    {
+      "path": "docs/validation/arch-01b3a/batch/work-regression/access-390.png",
+      "bytes": 212607
+    },
+    {
+      "path": "docs/validation/arch-01b3a/batch/work-regression/detail-1280.png",
+      "bytes": 108050
+    },
+    {
+      "path": "docs/validation/arch-01b3a/batch/work-regression/detail-360.png",
+      "bytes": 93808
+    },
+    {
+      "path": "docs/validation/arch-01b3a/batch/work-regression/detail-390.png",
+      "bytes": 95802
+    },
+    {
+      "path": "docs/validation/arch-01b3a/batch/work-regression/payments-1280.png",
+      "bytes": 383998
+    },
+    {
+      "path": "docs/validation/arch-01b3a/batch/work-regression/payments-360.png",
+      "bytes": 342961
+    },
+    {
+      "path": "docs/validation/arch-01b3a/batch/work-regression/payments-390.png",
+      "bytes": 343104
+    },
+    {
+      "path": "docs/validation/arch-01b3a/batch/work-regression/payments-zoom200-1280.png",
+      "bytes": 1207454
+    },
+    {
+      "path": "docs/validation/arch-01b3a/batch/work-regression/week-1280.png",
+      "bytes": 100331
+    },
+    {
+      "path": "docs/validation/arch-01b3a/batch/work-regression/week-360.png",
+      "bytes": 89067
+    },
+    {
+      "path": "docs/validation/arch-01b3a/batch/work-regression/week-390.png",
+      "bytes": 89957
+    },
+    {
+      "path": "docs/validation/arch-01b3a/batch/work-regression/work-1280.png",
+      "bytes": 88201
+    },
+    {
+      "path": "docs/validation/arch-01b3a/batch/work-regression/work-360.png",
+      "bytes": 79273
+    },
+    {
+      "path": "docs/validation/arch-01b3a/batch/work-regression/work-390.png",
+      "bytes": 80077
+    },
+    {
+      "path": "docs/validation/arch-01b3a/deselection/editor/batch-cleared-1280.png",
+      "bytes": 94161
+    },
+    {
+      "path": "docs/validation/arch-01b3a/deselection/editor/batch-cleared-360.png",
+      "bytes": 79637
+    },
+    {
+      "path": "docs/validation/arch-01b3a/deselection/editor/batch-cleared-390.png",
+      "bytes": 81688
+    },
+    {
+      "path": "docs/validation/arch-01b3a/deselection/editor/batch-preview-1280.png",
+      "bytes": 58102
+    },
+    {
+      "path": "docs/validation/arch-01b3a/deselection/editor/batch-preview-360.png",
+      "bytes": 41444
+    },
+    {
+      "path": "docs/validation/arch-01b3a/deselection/editor/batch-preview-390.png",
+      "bytes": 44838
+    },
+    {
+      "path": "docs/validation/arch-01b3a/deselection/editor/batch-selection-1280.png",
+      "bytes": 91677
+    },
+    {
+      "path": "docs/validation/arch-01b3a/deselection/editor/batch-selection-360.png",
+      "bytes": 77365
+    },
+    {
+      "path": "docs/validation/arch-01b3a/deselection/editor/batch-selection-390.png",
+      "bytes": 79740
+    },
+    {
+      "path": "docs/validation/arch-01b3a/deselection/editor/batch-week-1280.png",
+      "bytes": 96312
+    },
+    {
+      "path": "docs/validation/arch-01b3a/deselection/editor/batch-week-360.png",
+      "bytes": 83102
+    },
+    {
+      "path": "docs/validation/arch-01b3a/deselection/editor/batch-week-390.png",
+      "bytes": 84303
+    },
+    {
+      "path": "docs/validation/arch-01b3a/deselection/editor/editor-1280.png",
+      "bytes": 63784
+    },
+    {
+      "path": "docs/validation/arch-01b3a/deselection/editor/editor-360.png",
+      "bytes": 44016
+    },
+    {
+      "path": "docs/validation/arch-01b3a/deselection/editor/editor-390.png",
+      "bytes": 44223
+    },
+    {
+      "path": "docs/validation/arch-01b3a/deselection/editor/editor-bottom-1280.png",
+      "bytes": 61842
+    },
+    {
+      "path": "docs/validation/arch-01b3a/deselection/editor/editor-bottom-360.png",
+      "bytes": 41313
+    },
+    {
+      "path": "docs/validation/arch-01b3a/deselection/editor/editor-bottom-390.png",
+      "bytes": 43649
+    },
+    {
+      "path": "docs/validation/arch-01b3a/deselection/editor/roster-edited-1280.png",
+      "bytes": 97352
+    },
+    {
+      "path": "docs/validation/arch-01b3a/deselection/editor/roster-edited-360.png",
+      "bytes": 84530
+    },
+    {
+      "path": "docs/validation/arch-01b3a/deselection/editor/roster-edited-390.png",
+      "bytes": 85416
+    },
+    {
+      "path": "docs/validation/arch-01b3a/deselection/payments/manual-1280.png",
+      "bytes": 120232
+    },
+    {
+      "path": "docs/validation/arch-01b3a/deselection/payments/manual-360.png",
+      "bytes": 123389
+    },
+    {
+      "path": "docs/validation/arch-01b3a/deselection/payments/payment-1280.png",
+      "bytes": 140598
+    },
+    {
+      "path": "docs/validation/arch-01b3a/deselection/payments/payment-360.png",
+      "bytes": 137543
+    },
+    {
+      "path": "docs/validation/arch-01b3a/deselection/planning-mobile/overview.png",
+      "bytes": 160555
+    },
+    {
+      "path": "docs/validation/arch-01b3a/deselection/planning-mobile/planner-desktop.png",
+      "bytes": 291548
+    },
+    {
+      "path": "docs/validation/arch-01b3a/deselection/planning-mobile/planner-mobile.png",
+      "bytes": 240371
+    },
+    {
+      "path": "docs/validation/arch-01b3a/deselection/planning/overview.png",
+      "bytes": 139811
+    },
+    {
+      "path": "docs/validation/arch-01b3a/deselection/planning/planner-desktop.png",
+      "bytes": 302046
+    },
+    {
+      "path": "docs/validation/arch-01b3a/deselection/planning/planner-mobile.png",
+      "bytes": 239878
+    },
+    {
+      "path": "docs/validation/arch-01b3a/deselection/work-regression/access-1280.png",
+      "bytes": 207212
+    },
+    {
+      "path": "docs/validation/arch-01b3a/deselection/work-regression/access-360.png",
+      "bytes": 212193
+    },
+    {
+      "path": "docs/validation/arch-01b3a/deselection/work-regression/access-390.png",
+      "bytes": 212607
+    },
+    {
+      "path": "docs/validation/arch-01b3a/deselection/work-regression/detail-1280.png",
+      "bytes": 100503
+    },
+    {
+      "path": "docs/validation/arch-01b3a/deselection/work-regression/detail-360.png",
+      "bytes": 85940
+    },
+    {
+      "path": "docs/validation/arch-01b3a/deselection/work-regression/detail-390.png",
+      "bytes": 88244
+    },
+    {
+      "path": "docs/validation/arch-01b3a/deselection/work-regression/payments-1280.png",
+      "bytes": 383998
+    },
+    {
+      "path": "docs/validation/arch-01b3a/deselection/work-regression/payments-360.png",
+      "bytes": 342961
+    },
+    {
+      "path": "docs/validation/arch-01b3a/deselection/work-regression/payments-390.png",
+      "bytes": 343104
+    },
+    {
+      "path": "docs/validation/arch-01b3a/deselection/work-regression/payments-zoom200-1280.png",
+      "bytes": 1207454
+    },
+    {
+      "path": "docs/validation/arch-01b3a/deselection/work-regression/week-1280.png",
+      "bytes": 89263
+    },
+    {
+      "path": "docs/validation/arch-01b3a/deselection/work-regression/week-360.png",
+      "bytes": 80638
+    },
+    {
+      "path": "docs/validation/arch-01b3a/deselection/work-regression/week-390.png",
+      "bytes": 80738
+    },
+    {
+      "path": "docs/validation/arch-01b3a/deselection/work-regression/work-1280.png",
+      "bytes": 84635
+    },
+    {
+      "path": "docs/validation/arch-01b3a/deselection/work-regression/work-360.png",
+      "bytes": 75568
+    },
+    {
+      "path": "docs/validation/arch-01b3a/deselection/work-regression/work-390.png",
+      "bytes": 75860
+    },
+    {
+      "path": "docs/validation/arch-01b3a/editor-1280.png",
+      "bytes": 95409
+    },
+    {
+      "path": "docs/validation/arch-01b3a/editor-360.png",
+      "bytes": 67969
+    },
+    {
+      "path": "docs/validation/arch-01b3a/editor-390.png",
+      "bytes": 69170
+    },
+    {
+      "path": "docs/validation/arch-01b3a/editor-bottom-1280.png",
+      "bytes": 96024
+    },
+    {
+      "path": "docs/validation/arch-01b3a/editor-bottom-360.png",
+      "bytes": 57003
+    },
+    {
+      "path": "docs/validation/arch-01b3a/editor-bottom-390.png",
+      "bytes": 58298
+    },
+    {
+      "path": "docs/validation/arch-01b3a/payments-summary/editor/batch-cleared-1280.png",
+      "bytes": 76046
+    },
+    {
+      "path": "docs/validation/arch-01b3a/payments-summary/editor/batch-cleared-360.png",
+      "bytes": 65686
+    },
+    {
+      "path": "docs/validation/arch-01b3a/payments-summary/editor/batch-cleared-390.png",
+      "bytes": 67047
+    },
+    {
+      "path": "docs/validation/arch-01b3a/payments-summary/editor/batch-preview-1280.png",
+      "bytes": 56233
+    },
+    {
+      "path": "docs/validation/arch-01b3a/payments-summary/editor/batch-preview-360.png",
+      "bytes": 42929
+    },
+    {
+      "path": "docs/validation/arch-01b3a/payments-summary/editor/batch-preview-390.png",
+      "bytes": 46071
+    },
+    {
+      "path": "docs/validation/arch-01b3a/payments-summary/editor/batch-selection-1280.png",
+      "bytes": 76353
+    },
+    {
+      "path": "docs/validation/arch-01b3a/payments-summary/editor/batch-selection-360.png",
+      "bytes": 63345
+    },
+    {
+      "path": "docs/validation/arch-01b3a/payments-summary/editor/batch-selection-390.png",
+      "bytes": 65020
+    },
+    {
+      "path": "docs/validation/arch-01b3a/payments-summary/editor/batch-week-1280.png",
+      "bytes": 81087
+    },
+    {
+      "path": "docs/validation/arch-01b3a/payments-summary/editor/batch-week-360.png",
+      "bytes": 69062
+    },
+    {
+      "path": "docs/validation/arch-01b3a/payments-summary/editor/batch-week-390.png",
+      "bytes": 69622
+    },
+    {
+      "path": "docs/validation/arch-01b3a/payments-summary/editor/editor-1280.png",
+      "bytes": 66924
+    },
+    {
+      "path": "docs/validation/arch-01b3a/payments-summary/editor/editor-360.png",
+      "bytes": 44974
+    },
+    {
+      "path": "docs/validation/arch-01b3a/payments-summary/editor/editor-390.png",
+      "bytes": 45278
+    },
+    {
+      "path": "docs/validation/arch-01b3a/payments-summary/editor/editor-bottom-1280.png",
+      "bytes": 64964
+    },
+    {
+      "path": "docs/validation/arch-01b3a/payments-summary/editor/editor-bottom-360.png",
+      "bytes": 42253
+    },
+    {
+      "path": "docs/validation/arch-01b3a/payments-summary/editor/editor-bottom-390.png",
+      "bytes": 44700
+    },
+    {
+      "path": "docs/validation/arch-01b3a/payments-summary/editor/roster-edited-1280.png",
+      "bytes": 81192
+    },
+    {
+      "path": "docs/validation/arch-01b3a/payments-summary/editor/roster-edited-360.png",
+      "bytes": 70695
+    },
+    {
+      "path": "docs/validation/arch-01b3a/payments-summary/editor/roster-edited-390.png",
+      "bytes": 71196
+    },
+    {
+      "path": "docs/validation/arch-01b3a/payments-summary/payments/manual-1280.png",
+      "bytes": 120715
+    },
+    {
+      "path": "docs/validation/arch-01b3a/payments-summary/payments/manual-360.png",
+      "bytes": 123380
+    },
+    {
+      "path": "docs/validation/arch-01b3a/payments-summary/payments/payment-1280.png",
+      "bytes": 140656
+    },
+    {
+      "path": "docs/validation/arch-01b3a/payments-summary/payments/payment-360.png",
+      "bytes": 137543
+    },
+    {
+      "path": "docs/validation/arch-01b3a/payments-summary/planning-mobile/overview.png",
+      "bytes": 160555
+    },
+    {
+      "path": "docs/validation/arch-01b3a/payments-summary/planning-mobile/planner-desktop.png",
+      "bytes": 291548
+    },
+    {
+      "path": "docs/validation/arch-01b3a/payments-summary/planning-mobile/planner-mobile.png",
+      "bytes": 240371
+    },
+    {
+      "path": "docs/validation/arch-01b3a/payments-summary/planning/overview.png",
+      "bytes": 139811
+    },
+    {
+      "path": "docs/validation/arch-01b3a/payments-summary/planning/planner-desktop.png",
+      "bytes": 302046
+    },
+    {
+      "path": "docs/validation/arch-01b3a/payments-summary/planning/planner-mobile.png",
+      "bytes": 239878
+    },
+    {
+      "path": "docs/validation/arch-01b3a/payments-summary/work/access-1280.png",
+      "bytes": 207212
+    },
+    {
+      "path": "docs/validation/arch-01b3a/payments-summary/work/access-360.png",
+      "bytes": 212193
+    },
+    {
+      "path": "docs/validation/arch-01b3a/payments-summary/work/access-390.png",
+      "bytes": 212607
+    },
+    {
+      "path": "docs/validation/arch-01b3a/payments-summary/work/detail-1280.png",
+      "bytes": 84099
+    },
+    {
+      "path": "docs/validation/arch-01b3a/payments-summary/work/detail-360.png",
+      "bytes": 75767
+    },
+    {
+      "path": "docs/validation/arch-01b3a/payments-summary/work/detail-390.png",
+      "bytes": 75980
+    },
+    {
+      "path": "docs/validation/arch-01b3a/payments-summary/work/payments-1280.png",
+      "bytes": 281931
+    },
+    {
+      "path": "docs/validation/arch-01b3a/payments-summary/work/payments-360.png",
+      "bytes": 225216
+    },
+    {
+      "path": "docs/validation/arch-01b3a/payments-summary/work/payments-390.png",
+      "bytes": 234561
+    },
+    {
+      "path": "docs/validation/arch-01b3a/payments-summary/work/payments-compact-1280.png",
+      "bytes": 156885
+    },
+    {
+      "path": "docs/validation/arch-01b3a/payments-summary/work/payments-compact-360.png",
+      "bytes": 139814
+    },
+    {
+      "path": "docs/validation/arch-01b3a/payments-summary/work/payments-compact-390.png",
+      "bytes": 140270
+    },
+    {
+      "path": "docs/validation/arch-01b3a/payments-summary/work/payments-zoom200-1280.png",
+      "bytes": 862985
+    },
+    {
+      "path": "docs/validation/arch-01b3a/payments-summary/work/summary-1280.png",
+      "bytes": 60915
+    },
+    {
+      "path": "docs/validation/arch-01b3a/payments-summary/work/summary-360.png",
+      "bytes": 56293
+    },
+    {
+      "path": "docs/validation/arch-01b3a/payments-summary/work/summary-390.png",
+      "bytes": 56503
+    },
+    {
+      "path": "docs/validation/arch-01b3a/payments-summary/work/toolbar-1280.png",
+      "bytes": 58794
+    },
+    {
+      "path": "docs/validation/arch-01b3a/payments-summary/work/toolbar-360.png",
+      "bytes": 45564
+    },
+    {
+      "path": "docs/validation/arch-01b3a/payments-summary/work/toolbar-390.png",
+      "bytes": 46097
+    },
+    {
+      "path": "docs/validation/arch-01b3a/payments-summary/work/week-1280.png",
+      "bytes": 73144
+    },
+    {
+      "path": "docs/validation/arch-01b3a/payments-summary/work/week-360.png",
+      "bytes": 66441
+    },
+    {
+      "path": "docs/validation/arch-01b3a/payments-summary/work/week-390.png",
+      "bytes": 66090
+    },
+    {
+      "path": "docs/validation/arch-01b3a/payments-summary/work/work-1280.png",
+      "bytes": 68812
+    },
+    {
+      "path": "docs/validation/arch-01b3a/payments-summary/work/work-360.png",
+      "bytes": 61346
+    },
+    {
+      "path": "docs/validation/arch-01b3a/payments-summary/work/work-390.png",
+      "bytes": 61232
+    },
+    {
+      "path": "docs/validation/arch-01b3a/payments/manual-1280.png",
+      "bytes": 154698
+    },
+    {
+      "path": "docs/validation/arch-01b3a/payments/manual-360.png",
+      "bytes": 158487
+    },
+    {
+      "path": "docs/validation/arch-01b3a/payments/payment-1280.png",
+      "bytes": 189157
+    },
+    {
+      "path": "docs/validation/arch-01b3a/payments/payment-360.png",
+      "bytes": 187772
+    },
+    {
+      "path": "docs/validation/arch-01b3a/planning/overview.png",
+      "bytes": 211381
+    },
+    {
+      "path": "docs/validation/arch-01b3a/planning/planner-desktop.png",
+      "bytes": 511602
+    },
+    {
+      "path": "docs/validation/arch-01b3a/planning/planner-mobile.png",
+      "bytes": 396969
+    },
+    {
+      "path": "docs/validation/arch-01b3a/refinement/after/batch-preview-1280.png",
+      "bytes": 58102
+    },
+    {
+      "path": "docs/validation/arch-01b3a/refinement/after/batch-preview-360.png",
+      "bytes": 41444
+    },
+    {
+      "path": "docs/validation/arch-01b3a/refinement/after/batch-preview-390.png",
+      "bytes": 44838
+    },
+    {
+      "path": "docs/validation/arch-01b3a/refinement/after/batch-selection-1280.png",
+      "bytes": 91677
+    },
+    {
+      "path": "docs/validation/arch-01b3a/refinement/after/batch-selection-360.png",
+      "bytes": 77365
+    },
+    {
+      "path": "docs/validation/arch-01b3a/refinement/after/batch-selection-390.png",
+      "bytes": 79740
+    },
+    {
+      "path": "docs/validation/arch-01b3a/refinement/after/batch-week-1280.png",
+      "bytes": 96312
+    },
+    {
+      "path": "docs/validation/arch-01b3a/refinement/after/batch-week-360.png",
+      "bytes": 83102
+    },
+    {
+      "path": "docs/validation/arch-01b3a/refinement/after/batch-week-390.png",
+      "bytes": 84303
+    },
+    {
+      "path": "docs/validation/arch-01b3a/refinement/after/editor-1280.png",
+      "bytes": 63784
+    },
+    {
+      "path": "docs/validation/arch-01b3a/refinement/after/editor-360.png",
+      "bytes": 44016
+    },
+    {
+      "path": "docs/validation/arch-01b3a/refinement/after/editor-390.png",
+      "bytes": 44223
+    },
+    {
+      "path": "docs/validation/arch-01b3a/refinement/after/editor-bottom-1280.png",
+      "bytes": 61842
+    },
+    {
+      "path": "docs/validation/arch-01b3a/refinement/after/editor-bottom-360.png",
+      "bytes": 41313
+    },
+    {
+      "path": "docs/validation/arch-01b3a/refinement/after/editor-bottom-390.png",
+      "bytes": 43649
+    },
+    {
+      "path": "docs/validation/arch-01b3a/refinement/after/roster-edited-1280.png",
+      "bytes": 97352
+    },
+    {
+      "path": "docs/validation/arch-01b3a/refinement/after/roster-edited-360.png",
+      "bytes": 84530
+    },
+    {
+      "path": "docs/validation/arch-01b3a/refinement/after/roster-edited-390.png",
+      "bytes": 85416
+    },
+    {
+      "path": "docs/validation/arch-01b3a/refinement/before/batch-preview-1280.png",
+      "bytes": 55091
+    },
+    {
+      "path": "docs/validation/arch-01b3a/refinement/before/batch-preview-360.png",
+      "bytes": 43745
+    },
+    {
+      "path": "docs/validation/arch-01b3a/refinement/before/batch-preview-390.png",
+      "bytes": 43342
+    },
+    {
+      "path": "docs/validation/arch-01b3a/refinement/before/batch-selection-1280.png",
+      "bytes": 96272
+    },
+    {
+      "path": "docs/validation/arch-01b3a/refinement/before/batch-selection-360.png",
+      "bytes": 88689
+    },
+    {
+      "path": "docs/validation/arch-01b3a/refinement/before/batch-selection-390.png",
+      "bytes": 88876
+    },
+    {
+      "path": "docs/validation/arch-01b3a/refinement/before/editor-1280.png",
+      "bytes": 66282
+    },
+    {
+      "path": "docs/validation/arch-01b3a/refinement/before/editor-360.png",
+      "bytes": 44061
+    },
+    {
+      "path": "docs/validation/arch-01b3a/refinement/before/editor-390.png",
+      "bytes": 44879
+    },
+    {
+      "path": "docs/validation/arch-01b3a/refinement/before/editor-bottom-1280.png",
+      "bytes": 63617
+    },
+    {
+      "path": "docs/validation/arch-01b3a/refinement/before/editor-bottom-360.png",
+      "bytes": 42979
+    },
+    {
+      "path": "docs/validation/arch-01b3a/refinement/before/editor-bottom-390.png",
+      "bytes": 43433
+    },
+    {
+      "path": "docs/validation/arch-01b3a/refinement/before/roster-edited-1280.png",
+      "bytes": 107473
+    },
+    {
+      "path": "docs/validation/arch-01b3a/refinement/before/roster-edited-360.png",
+      "bytes": 96484
+    },
+    {
+      "path": "docs/validation/arch-01b3a/refinement/before/roster-edited-390.png",
+      "bytes": 96726
+    },
+    {
+      "path": "docs/validation/arch-01b3a/refinement/payments/manual-1280.png",
+      "bytes": 120232
+    },
+    {
+      "path": "docs/validation/arch-01b3a/refinement/payments/manual-360.png",
+      "bytes": 123389
+    },
+    {
+      "path": "docs/validation/arch-01b3a/refinement/payments/payment-1280.png",
+      "bytes": 140598
+    },
+    {
+      "path": "docs/validation/arch-01b3a/refinement/payments/payment-360.png",
+      "bytes": 137543
+    },
+    {
+      "path": "docs/validation/arch-01b3a/refinement/planning-mobile/overview.png",
+      "bytes": 160555
+    },
+    {
+      "path": "docs/validation/arch-01b3a/refinement/planning-mobile/planner-desktop.png",
+      "bytes": 291548
+    },
+    {
+      "path": "docs/validation/arch-01b3a/refinement/planning-mobile/planner-mobile.png",
+      "bytes": 240371
+    },
+    {
+      "path": "docs/validation/arch-01b3a/refinement/planning/overview.png",
+      "bytes": 139811
+    },
+    {
+      "path": "docs/validation/arch-01b3a/refinement/planning/planner-desktop.png",
+      "bytes": 302046
+    },
+    {
+      "path": "docs/validation/arch-01b3a/refinement/planning/planner-mobile.png",
+      "bytes": 239878
+    },
+    {
+      "path": "docs/validation/arch-01b3a/refinement/work-regression/access-1280.png",
+      "bytes": 207212
+    },
+    {
+      "path": "docs/validation/arch-01b3a/refinement/work-regression/access-360.png",
+      "bytes": 212193
+    },
+    {
+      "path": "docs/validation/arch-01b3a/refinement/work-regression/access-390.png",
+      "bytes": 212607
+    },
+    {
+      "path": "docs/validation/arch-01b3a/refinement/work-regression/detail-1280.png",
+      "bytes": 100503
+    },
+    {
+      "path": "docs/validation/arch-01b3a/refinement/work-regression/detail-360.png",
+      "bytes": 85940
+    },
+    {
+      "path": "docs/validation/arch-01b3a/refinement/work-regression/detail-390.png",
+      "bytes": 88244
+    },
+    {
+      "path": "docs/validation/arch-01b3a/refinement/work-regression/payments-1280.png",
+      "bytes": 383998
+    },
+    {
+      "path": "docs/validation/arch-01b3a/refinement/work-regression/payments-360.png",
+      "bytes": 342961
+    },
+    {
+      "path": "docs/validation/arch-01b3a/refinement/work-regression/payments-390.png",
+      "bytes": 343104
+    },
+    {
+      "path": "docs/validation/arch-01b3a/refinement/work-regression/payments-zoom200-1280.png",
+      "bytes": 1207454
+    },
+    {
+      "path": "docs/validation/arch-01b3a/refinement/work-regression/week-1280.png",
+      "bytes": 89263
+    },
+    {
+      "path": "docs/validation/arch-01b3a/refinement/work-regression/week-360.png",
+      "bytes": 80638
+    },
+    {
+      "path": "docs/validation/arch-01b3a/refinement/work-regression/week-390.png",
+      "bytes": 80738
+    },
+    {
+      "path": "docs/validation/arch-01b3a/refinement/work-regression/work-1280.png",
+      "bytes": 84635
+    },
+    {
+      "path": "docs/validation/arch-01b3a/refinement/work-regression/work-360.png",
+      "bytes": 75568
+    },
+    {
+      "path": "docs/validation/arch-01b3a/refinement/work-regression/work-390.png",
+      "bytes": 75860
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-edited-1280.png",
+      "bytes": 182480
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-edited-360.png",
+      "bytes": 172185
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-edited-390.png",
+      "bytes": 171015
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/after/batch-cleared-1280.png",
+      "bytes": 77777
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/after/batch-cleared-360.png",
+      "bytes": 66374
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/after/batch-cleared-390.png",
+      "bytes": 66447
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/after/batch-preview-1280.png",
+      "bytes": 55427
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/after/batch-preview-360.png",
+      "bytes": 45364
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/after/batch-preview-390.png",
+      "bytes": 45896
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/after/batch-selection-1280.png",
+      "bytes": 77267
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/after/batch-selection-360.png",
+      "bytes": 64115
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/after/batch-selection-390.png",
+      "bytes": 64278
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/after/batch-week-1280.png",
+      "bytes": 83055
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/after/batch-week-360.png",
+      "bytes": 70920
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/after/batch-week-390.png",
+      "bytes": 71054
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/after/editor-1280.png",
+      "bytes": 66013
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/after/editor-360.png",
+      "bytes": 49989
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/after/editor-390.png",
+      "bytes": 50533
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/after/editor-bottom-1280.png",
+      "bytes": 66013
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/after/editor-bottom-360.png",
+      "bytes": 49657
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/after/editor-bottom-390.png",
+      "bytes": 50199
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/after/overtime-bank-1280.png",
+      "bytes": 169158
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/after/overtime-bank-360.png",
+      "bytes": 149855
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/after/overtime-bank-390.png",
+      "bytes": 151020
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/after/overtime-pay-1280.png",
+      "bytes": 171394
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/after/overtime-pay-360.png",
+      "bytes": 151677
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/after/overtime-pay-390.png",
+      "bytes": 153131
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/after/roster-edited-1280.png",
+      "bytes": 83688
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/after/roster-edited-360.png",
+      "bytes": 71802
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/after/roster-edited-390.png",
+      "bytes": 72265
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/before/batch-cleared-1280.png",
+      "bytes": 76012
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/before/batch-cleared-360.png",
+      "bytes": 65637
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/before/batch-cleared-390.png",
+      "bytes": 67010
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/before/batch-preview-1280.png",
+      "bytes": 56166
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/before/batch-preview-360.png",
+      "bytes": 42929
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/before/batch-preview-390.png",
+      "bytes": 46071
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/before/batch-selection-1280.png",
+      "bytes": 76319
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/before/batch-selection-360.png",
+      "bytes": 63295
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/before/batch-selection-390.png",
+      "bytes": 64986
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/before/batch-week-1280.png",
+      "bytes": 81054
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/before/batch-week-360.png",
+      "bytes": 69012
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/before/batch-week-390.png",
+      "bytes": 69590
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/before/editor-1280.png",
+      "bytes": 66886
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/before/editor-360.png",
+      "bytes": 44974
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/before/editor-390.png",
+      "bytes": 45278
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/before/editor-bottom-1280.png",
+      "bytes": 64927
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/before/editor-bottom-360.png",
+      "bytes": 42253
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/before/editor-bottom-390.png",
+      "bytes": 44700
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/before/overtime-bank-1280.png",
+      "bytes": 169158
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/before/overtime-bank-360.png",
+      "bytes": 149855
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/before/overtime-bank-390.png",
+      "bytes": 151020
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/before/overtime-pay-1280.png",
+      "bytes": 171394
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/before/overtime-pay-360.png",
+      "bytes": 151677
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/before/overtime-pay-390.png",
+      "bytes": 153131
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/before/roster-edited-1280.png",
+      "bytes": 81192
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/before/roster-edited-360.png",
+      "bytes": 70695
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/before/roster-edited-390.png",
+      "bytes": 71196
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/payments/manual-1280.png",
+      "bytes": 120232
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/payments/manual-360.png",
+      "bytes": 123389
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/payments/payment-1280.png",
+      "bytes": 140598
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/payments/payment-360.png",
+      "bytes": 137543
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/phase1/batch-cleared-1280.png",
+      "bytes": 77777
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/phase1/batch-cleared-360.png",
+      "bytes": 66374
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/phase1/batch-cleared-390.png",
+      "bytes": 66447
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/phase1/batch-preview-1280.png",
+      "bytes": 55808
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/phase1/batch-preview-360.png",
+      "bytes": 42661
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/phase1/batch-preview-390.png",
+      "bytes": 45768
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/phase1/batch-selection-1280.png",
+      "bytes": 77269
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/phase1/batch-selection-360.png",
+      "bytes": 64120
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/phase1/batch-selection-390.png",
+      "bytes": 64272
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/phase1/batch-week-1280.png",
+      "bytes": 83055
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/phase1/batch-week-360.png",
+      "bytes": 70920
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/phase1/batch-week-390.png",
+      "bytes": 71054
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/phase1/editor-1280.png",
+      "bytes": 66472
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/phase1/editor-360.png",
+      "bytes": 44931
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/phase1/editor-390.png",
+      "bytes": 45337
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/phase1/editor-bottom-1280.png",
+      "bytes": 64593
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/phase1/editor-bottom-360.png",
+      "bytes": 42209
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/phase1/editor-bottom-390.png",
+      "bytes": 44740
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/phase1/overtime-bank-1280.png",
+      "bytes": 169158
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/phase1/overtime-bank-360.png",
+      "bytes": 149855
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/phase1/overtime-bank-390.png",
+      "bytes": 151020
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/phase1/overtime-pay-1280.png",
+      "bytes": 171394
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/phase1/overtime-pay-360.png",
+      "bytes": 151677
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/phase1/overtime-pay-390.png",
+      "bytes": 153131
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/phase1/roster-edited-1280.png",
+      "bytes": 83688
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/phase1/roster-edited-360.png",
+      "bytes": 71802
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/phase1/roster-edited-390.png",
+      "bytes": 72265
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/planning-mobile/overview.png",
+      "bytes": 160555
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/planning-mobile/planner-desktop.png",
+      "bytes": 291548
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/planning-mobile/planner-mobile.png",
+      "bytes": 240371
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/planning/overview.png",
+      "bytes": 139811
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/planning/planner-desktop.png",
+      "bytes": 302046
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/planning/planner-mobile.png",
+      "bytes": 239878
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/states/states-1280.png",
+      "bytes": 58761
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/states/states-360.png",
+      "bytes": 53292
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/states/states-390.png",
+      "bytes": 53451
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/states/states-focus-1280.png",
+      "bytes": 68117
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/states/states-focus-360.png",
+      "bytes": 61343
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/states/states-focus-390.png",
+      "bytes": 61791
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/work/access-1280.png",
+      "bytes": 207212
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/work/access-360.png",
+      "bytes": 212193
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/work/access-390.png",
+      "bytes": 212607
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/work/detail-1280.png",
+      "bytes": 85388
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/work/detail-360.png",
+      "bytes": 76619
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/work/detail-390.png",
+      "bytes": 76846
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/work/payments-1280.png",
+      "bytes": 288953
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/work/payments-360.png",
+      "bytes": 231297
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/work/payments-390.png",
+      "bytes": 241846
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/work/payments-compact-1280.png",
+      "bytes": 156751
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/work/payments-compact-360.png",
+      "bytes": 139686
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/work/payments-compact-390.png",
+      "bytes": 140154
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/work/payments-zoom200-1280.png",
+      "bytes": 887542
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/work/summary-1280.png",
+      "bytes": 60404
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/work/summary-360.png",
+      "bytes": 55718
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/work/summary-390.png",
+      "bytes": 55928
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/work/toolbar-1280.png",
+      "bytes": 58283
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/work/toolbar-360.png",
+      "bytes": 44964
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/work/toolbar-390.png",
+      "bytes": 45513
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/work/week-1280.png",
+      "bytes": 75243
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/work/week-360.png",
+      "bytes": 68462
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/work/week-390.png",
+      "bytes": 68376
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/work/work-1280.png",
+      "bytes": 69885
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/work/work-360.png",
+      "bytes": 62049
+    },
+    {
+      "path": "docs/validation/arch-01b3a/roster-editor-visual/work/work-390.png",
+      "bytes": 61935
+    },
+    {
+      "path": "docs/validation/arch-01b3a/toolbar/editor/batch-cleared-1280.png",
+      "bytes": 77448
+    },
+    {
+      "path": "docs/validation/arch-01b3a/toolbar/editor/batch-cleared-360.png",
+      "bytes": 67739
+    },
+    {
+      "path": "docs/validation/arch-01b3a/toolbar/editor/batch-cleared-390.png",
+      "bytes": 69115
+    },
+    {
+      "path": "docs/validation/arch-01b3a/toolbar/editor/batch-preview-1280.png",
+      "bytes": 58159
+    },
+    {
+      "path": "docs/validation/arch-01b3a/toolbar/editor/batch-preview-360.png",
+      "bytes": 43993
+    },
+    {
+      "path": "docs/validation/arch-01b3a/toolbar/editor/batch-preview-390.png",
+      "bytes": 47030
+    },
+    {
+      "path": "docs/validation/arch-01b3a/toolbar/editor/batch-selection-1280.png",
+      "bytes": 74914
+    },
+    {
+      "path": "docs/validation/arch-01b3a/toolbar/editor/batch-selection-360.png",
+      "bytes": 65397
+    },
+    {
+      "path": "docs/validation/arch-01b3a/toolbar/editor/batch-selection-390.png",
+      "bytes": 67096
+    },
+    {
+      "path": "docs/validation/arch-01b3a/toolbar/editor/batch-week-1280.png",
+      "bytes": 79756
+    },
+    {
+      "path": "docs/validation/arch-01b3a/toolbar/editor/batch-week-360.png",
+      "bytes": 70631
+    },
+    {
+      "path": "docs/validation/arch-01b3a/toolbar/editor/batch-week-390.png",
+      "bytes": 71839
+    },
+    {
+      "path": "docs/validation/arch-01b3a/toolbar/editor/editor-1280.png",
+      "bytes": 63241
+    },
+    {
+      "path": "docs/validation/arch-01b3a/toolbar/editor/editor-360.png",
+      "bytes": 43944
+    },
+    {
+      "path": "docs/validation/arch-01b3a/toolbar/editor/editor-390.png",
+      "bytes": 44128
+    },
+    {
+      "path": "docs/validation/arch-01b3a/toolbar/editor/editor-bottom-1280.png",
+      "bytes": 61292
+    },
+    {
+      "path": "docs/validation/arch-01b3a/toolbar/editor/editor-bottom-360.png",
+      "bytes": 41217
+    },
+    {
+      "path": "docs/validation/arch-01b3a/toolbar/editor/editor-bottom-390.png",
+      "bytes": 43540
+    },
+    {
+      "path": "docs/validation/arch-01b3a/toolbar/editor/roster-edited-1280.png",
+      "bytes": 81457
+    },
+    {
+      "path": "docs/validation/arch-01b3a/toolbar/editor/roster-edited-360.png",
+      "bytes": 71173
+    },
+    {
+      "path": "docs/validation/arch-01b3a/toolbar/editor/roster-edited-390.png",
+      "bytes": 71910
+    },
+    {
+      "path": "docs/validation/arch-01b3a/toolbar/payments/manual-1280.png",
+      "bytes": 120232
+    },
+    {
+      "path": "docs/validation/arch-01b3a/toolbar/payments/manual-360.png",
+      "bytes": 123389
+    },
+    {
+      "path": "docs/validation/arch-01b3a/toolbar/payments/payment-1280.png",
+      "bytes": 140598
+    },
+    {
+      "path": "docs/validation/arch-01b3a/toolbar/payments/payment-360.png",
+      "bytes": 137543
+    },
+    {
+      "path": "docs/validation/arch-01b3a/toolbar/planning-mobile/overview.png",
+      "bytes": 160555
+    },
+    {
+      "path": "docs/validation/arch-01b3a/toolbar/planning-mobile/planner-desktop.png",
+      "bytes": 291548
+    },
+    {
+      "path": "docs/validation/arch-01b3a/toolbar/planning-mobile/planner-mobile.png",
+      "bytes": 240371
+    },
+    {
+      "path": "docs/validation/arch-01b3a/toolbar/planning/overview.png",
+      "bytes": 139811
+    },
+    {
+      "path": "docs/validation/arch-01b3a/toolbar/planning/planner-desktop.png",
+      "bytes": 302046
+    },
+    {
+      "path": "docs/validation/arch-01b3a/toolbar/planning/planner-mobile.png",
+      "bytes": 239878
+    },
+    {
+      "path": "docs/validation/arch-01b3a/toolbar/work-regression/access-1280.png",
+      "bytes": 207212
+    },
+    {
+      "path": "docs/validation/arch-01b3a/toolbar/work-regression/access-360.png",
+      "bytes": 212193
+    },
+    {
+      "path": "docs/validation/arch-01b3a/toolbar/work-regression/access-390.png",
+      "bytes": 212607
+    },
+    {
+      "path": "docs/validation/arch-01b3a/toolbar/work-regression/detail-1280.png",
+      "bytes": 84299
+    },
+    {
+      "path": "docs/validation/arch-01b3a/toolbar/work-regression/detail-360.png",
+      "bytes": 74775
+    },
+    {
+      "path": "docs/validation/arch-01b3a/toolbar/work-regression/detail-390.png",
+      "bytes": 75256
+    },
+    {
+      "path": "docs/validation/arch-01b3a/toolbar/work-regression/payments-1280.png",
+      "bytes": 367773
+    },
+    {
+      "path": "docs/validation/arch-01b3a/toolbar/work-regression/payments-360.png",
+      "bytes": 328303
+    },
+    {
+      "path": "docs/validation/arch-01b3a/toolbar/work-regression/payments-390.png",
+      "bytes": 328199
+    },
+    {
+      "path": "docs/validation/arch-01b3a/toolbar/work-regression/payments-zoom200-1280.png",
+      "bytes": 1141398
+    },
+    {
+      "path": "docs/validation/arch-01b3a/toolbar/work-regression/toolbar-1280.png",
+      "bytes": 55015
+    },
+    {
+      "path": "docs/validation/arch-01b3a/toolbar/work-regression/toolbar-360.png",
+      "bytes": 45449
+    },
+    {
+      "path": "docs/validation/arch-01b3a/toolbar/work-regression/toolbar-390.png",
+      "bytes": 45723
+    },
+    {
+      "path": "docs/validation/arch-01b3a/toolbar/work-regression/week-1280.png",
+      "bytes": 73483
+    },
+    {
+      "path": "docs/validation/arch-01b3a/toolbar/work-regression/week-360.png",
+      "bytes": 65354
+    },
+    {
+      "path": "docs/validation/arch-01b3a/toolbar/work-regression/week-390.png",
+      "bytes": 65288
+    },
+    {
+      "path": "docs/validation/arch-01b3a/toolbar/work-regression/work-1280.png",
+      "bytes": 68641
+    },
+    {
+      "path": "docs/validation/arch-01b3a/toolbar/work-regression/work-360.png",
+      "bytes": 60304
+    },
+    {
+      "path": "docs/validation/arch-01b3a/toolbar/work-regression/work-390.png",
+      "bytes": 60424
+    },
+    {
+      "path": "docs/validation/arch-01b3a/work-regression/access-1280.png",
+      "bytes": 290656
+    },
+    {
+      "path": "docs/validation/arch-01b3a/work-regression/access-360.png",
+      "bytes": 300353
+    },
+    {
+      "path": "docs/validation/arch-01b3a/work-regression/access-390.png",
+      "bytes": 303119
+    },
+    {
+      "path": "docs/validation/arch-01b3a/work-regression/detail-1280.png",
+      "bytes": 188426
+    },
+    {
+      "path": "docs/validation/arch-01b3a/work-regression/detail-360.png",
+      "bytes": 170342
+    },
+    {
+      "path": "docs/validation/arch-01b3a/work-regression/detail-390.png",
+      "bytes": 172502
+    },
+    {
+      "path": "docs/validation/arch-01b3a/work-regression/payments-1280.png",
+      "bytes": 650734
+    },
+    {
+      "path": "docs/validation/arch-01b3a/work-regression/payments-360.png",
+      "bytes": 596860
+    },
+    {
+      "path": "docs/validation/arch-01b3a/work-regression/payments-390.png",
+      "bytes": 596128
+    },
+    {
+      "path": "docs/validation/arch-01b3a/work-regression/payments-zoom200-1280.png",
+      "bytes": 1442925
+    },
+    {
+      "path": "docs/validation/arch-01b3a/work-regression/week-1280.png",
+      "bytes": 165665
+    },
+    {
+      "path": "docs/validation/arch-01b3a/work-regression/week-360.png",
+      "bytes": 149412
+    },
+    {
+      "path": "docs/validation/arch-01b3a/work-regression/week-390.png",
+      "bytes": 152673
+    },
+    {
+      "path": "docs/validation/arch-01b3a/work-regression/work-1280.png",
+      "bytes": 155057
+    },
+    {
+      "path": "docs/validation/arch-01b3a/work-regression/work-360.png",
+      "bytes": 142631
+    },
+    {
+      "path": "docs/validation/arch-01b3a/work-regression/work-390.png",
+      "bytes": 143270
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/after/batch-cleared-1280.png",
+      "bytes": 77777
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/after/batch-cleared-360.png",
+      "bytes": 66374
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/after/batch-cleared-390.png",
+      "bytes": 66447
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/after/batch-selection-1280.png",
+      "bytes": 77267
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/after/batch-selection-360.png",
+      "bytes": 64120
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/after/batch-selection-390.png",
+      "bytes": 64272
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/after/editor-bottom-1280.png",
+      "bytes": 59530
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/after/editor-bottom-360.png",
+      "bytes": 44010
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/after/editor-bottom-390.png",
+      "bytes": 44676
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/after/editor-secondary-1280.png",
+      "bytes": 62381
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/after/editor-secondary-360.png",
+      "bytes": 43910
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/after/editor-secondary-390.png",
+      "bytes": 44786
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/after/overtime-bank-1280.png",
+      "bytes": 169158
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/after/overtime-bank-360.png",
+      "bytes": 149855
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/after/overtime-bank-390.png",
+      "bytes": 151020
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/after/overtime-pay-1280.png",
+      "bytes": 171394
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/after/overtime-pay-360.png",
+      "bytes": 151677
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/after/overtime-pay-390.png",
+      "bytes": 153131
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/after/roster-edited-1280.png",
+      "bytes": 87303
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/after/roster-edited-360.png",
+      "bytes": 75063
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/after/roster-edited-390.png",
+      "bytes": 75550
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/before/batch-cleared-1280.png",
+      "bytes": 77777
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/before/batch-cleared-360.png",
+      "bytes": 66374
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/before/batch-cleared-390.png",
+      "bytes": 66447
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/before/batch-preview-1280.png",
+      "bytes": 55427
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/before/batch-preview-360.png",
+      "bytes": 45364
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/before/batch-preview-390.png",
+      "bytes": 45896
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/before/batch-selection-1280.png",
+      "bytes": 77269
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/before/batch-selection-360.png",
+      "bytes": 64120
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/before/batch-selection-390.png",
+      "bytes": 64278
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/before/batch-week-1280.png",
+      "bytes": 83055
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/before/batch-week-360.png",
+      "bytes": 70920
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/before/batch-week-390.png",
+      "bytes": 71054
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/before/editor-bottom-1280.png",
+      "bytes": 66013
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/before/editor-bottom-360.png",
+      "bytes": 49657
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/before/editor-bottom-390.png",
+      "bytes": 50199
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/before/overtime-bank-1280.png",
+      "bytes": 169158
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/before/overtime-bank-360.png",
+      "bytes": 149855
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/before/overtime-bank-390.png",
+      "bytes": 151020
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/before/overtime-pay-1280.png",
+      "bytes": 171394
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/before/overtime-pay-360.png",
+      "bytes": 151677
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/before/overtime-pay-390.png",
+      "bytes": 153131
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/before/roster-edited-1280.png",
+      "bytes": 83688
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/before/roster-edited-360.png",
+      "bytes": 71802
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/before/roster-edited-390.png",
+      "bytes": 72265
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/planning-mobile/overview.png",
+      "bytes": 160555
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/planning-mobile/planner-desktop.png",
+      "bytes": 291548
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/planning-mobile/planner-mobile.png",
+      "bytes": 240371
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/planning/overview.png",
+      "bytes": 139806
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/work/access-1280.png",
+      "bytes": 207212
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/work/access-360.png",
+      "bytes": 212193
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/work/access-390.png",
+      "bytes": 212607
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/work/detail-1280.png",
+      "bytes": 88992
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/work/detail-360.png",
+      "bytes": 79881
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/work/detail-390.png",
+      "bytes": 80129
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/work/payments-1280.png",
+      "bytes": 288953
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/work/payments-360.png",
+      "bytes": 231297
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/work/payments-390.png",
+      "bytes": 241846
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/work/payments-compact-1280.png",
+      "bytes": 156751
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/work/payments-compact-360.png",
+      "bytes": 139686
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/work/payments-compact-390.png",
+      "bytes": 140154
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/work/payments-zoom200-1280.png",
+      "bytes": 887542
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/work/summary-1280.png",
+      "bytes": 60404
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/work/summary-360.png",
+      "bytes": 55718
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/work/summary-390.png",
+      "bytes": 55928
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/work/toolbar-1280.png",
+      "bytes": 58283
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/work/toolbar-360.png",
+      "bytes": 44964
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/work/toolbar-390.png",
+      "bytes": 45513
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/work/week-1280.png",
+      "bytes": 75243
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/work/week-360.png",
+      "bytes": 68462
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/work/week-390.png",
+      "bytes": 68376
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/work/work-1280.png",
+      "bytes": 69885
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/work/work-360.png",
+      "bytes": 62049
+    },
+    {
+      "path": "docs/validation/arch-01b3a/worked-editor/work/work-390.png",
+      "bytes": 61935
+    },
+    {
+      "path": "docs/validation/work-ot-01/batch-cleared-1280.png",
+      "bytes": 76046
+    },
+    {
+      "path": "docs/validation/work-ot-01/batch-cleared-360.png",
+      "bytes": 65686
+    },
+    {
+      "path": "docs/validation/work-ot-01/batch-cleared-390.png",
+      "bytes": 67047
+    },
+    {
+      "path": "docs/validation/work-ot-01/batch-preview-1280.png",
+      "bytes": 56233
+    },
+    {
+      "path": "docs/validation/work-ot-01/batch-preview-360.png",
+      "bytes": 42929
+    },
+    {
+      "path": "docs/validation/work-ot-01/batch-preview-390.png",
+      "bytes": 46071
+    },
+    {
+      "path": "docs/validation/work-ot-01/batch-selection-1280.png",
+      "bytes": 76353
+    },
+    {
+      "path": "docs/validation/work-ot-01/batch-selection-360.png",
+      "bytes": 63345
+    },
+    {
+      "path": "docs/validation/work-ot-01/batch-selection-390.png",
+      "bytes": 65020
+    },
+    {
+      "path": "docs/validation/work-ot-01/batch-week-1280.png",
+      "bytes": 81087
+    },
+    {
+      "path": "docs/validation/work-ot-01/batch-week-360.png",
+      "bytes": 69062
+    },
+    {
+      "path": "docs/validation/work-ot-01/batch-week-390.png",
+      "bytes": 69622
+    },
+    {
+      "path": "docs/validation/work-ot-01/editor-1280.png",
+      "bytes": 66924
+    },
+    {
+      "path": "docs/validation/work-ot-01/editor-360.png",
+      "bytes": 44974
+    },
+    {
+      "path": "docs/validation/work-ot-01/editor-390.png",
+      "bytes": 45278
+    },
+    {
+      "path": "docs/validation/work-ot-01/editor-bottom-1280.png",
+      "bytes": 64964
+    },
+    {
+      "path": "docs/validation/work-ot-01/editor-bottom-360.png",
+      "bytes": 42253
+    },
+    {
+      "path": "docs/validation/work-ot-01/editor-bottom-390.png",
+      "bytes": 44700
+    },
+    {
+      "path": "docs/validation/work-ot-01/finance/access-1280.png",
+      "bytes": 207212
+    },
+    {
+      "path": "docs/validation/work-ot-01/finance/access-360.png",
+      "bytes": 212193
+    },
+    {
+      "path": "docs/validation/work-ot-01/finance/access-390.png",
+      "bytes": 212607
+    },
+    {
+      "path": "docs/validation/work-ot-01/finance/detail-1280.png",
+      "bytes": 84099
+    },
+    {
+      "path": "docs/validation/work-ot-01/finance/detail-360.png",
+      "bytes": 75767
+    },
+    {
+      "path": "docs/validation/work-ot-01/finance/detail-390.png",
+      "bytes": 75980
+    },
+    {
+      "path": "docs/validation/work-ot-01/finance/payments-1280.png",
+      "bytes": 287463
+    },
+    {
+      "path": "docs/validation/work-ot-01/finance/payments-360.png",
+      "bytes": 230094
+    },
+    {
+      "path": "docs/validation/work-ot-01/finance/payments-390.png",
+      "bytes": 240457
+    },
+    {
+      "path": "docs/validation/work-ot-01/finance/payments-compact-1280.png",
+      "bytes": 156885
+    },
+    {
+      "path": "docs/validation/work-ot-01/finance/payments-compact-360.png",
+      "bytes": 139814
+    },
+    {
+      "path": "docs/validation/work-ot-01/finance/payments-compact-390.png",
+      "bytes": 140270
+    },
+    {
+      "path": "docs/validation/work-ot-01/finance/payments-zoom200-1280.png",
+      "bytes": 880691
+    },
+    {
+      "path": "docs/validation/work-ot-01/finance/summary-1280.png",
+      "bytes": 60915
+    },
+    {
+      "path": "docs/validation/work-ot-01/finance/summary-360.png",
+      "bytes": 56293
+    },
+    {
+      "path": "docs/validation/work-ot-01/finance/summary-390.png",
+      "bytes": 56503
+    },
+    {
+      "path": "docs/validation/work-ot-01/finance/toolbar-1280.png",
+      "bytes": 58794
+    },
+    {
+      "path": "docs/validation/work-ot-01/finance/toolbar-360.png",
+      "bytes": 45564
+    },
+    {
+      "path": "docs/validation/work-ot-01/finance/toolbar-390.png",
+      "bytes": 46097
+    },
+    {
+      "path": "docs/validation/work-ot-01/finance/week-1280.png",
+      "bytes": 73144
+    },
+    {
+      "path": "docs/validation/work-ot-01/finance/week-360.png",
+      "bytes": 66441
+    },
+    {
+      "path": "docs/validation/work-ot-01/finance/week-390.png",
+      "bytes": 66090
+    },
+    {
+      "path": "docs/validation/work-ot-01/finance/work-1280.png",
+      "bytes": 68812
+    },
+    {
+      "path": "docs/validation/work-ot-01/finance/work-360.png",
+      "bytes": 61346
+    },
+    {
+      "path": "docs/validation/work-ot-01/finance/work-390.png",
+      "bytes": 61232
+    },
+    {
+      "path": "docs/validation/work-ot-01/overtime-bank-1280.png",
+      "bytes": 169158
+    },
+    {
+      "path": "docs/validation/work-ot-01/overtime-bank-360.png",
+      "bytes": 149855
+    },
+    {
+      "path": "docs/validation/work-ot-01/overtime-bank-390.png",
+      "bytes": 151020
+    },
+    {
+      "path": "docs/validation/work-ot-01/overtime-pay-1280.png",
+      "bytes": 171394
+    },
+    {
+      "path": "docs/validation/work-ot-01/overtime-pay-360.png",
+      "bytes": 151677
+    },
+    {
+      "path": "docs/validation/work-ot-01/overtime-pay-390.png",
+      "bytes": 153131
+    },
+    {
+      "path": "docs/validation/work-ot-01/payments/manual-1280.png",
+      "bytes": 120232
+    },
+    {
+      "path": "docs/validation/work-ot-01/payments/manual-360.png",
+      "bytes": 123389
+    },
+    {
+      "path": "docs/validation/work-ot-01/payments/payment-1280.png",
+      "bytes": 140598
+    },
+    {
+      "path": "docs/validation/work-ot-01/payments/payment-360.png",
+      "bytes": 137543
+    },
+    {
+      "path": "docs/validation/work-ot-01/planning-mobile/overview.png",
+      "bytes": 160555
+    },
+    {
+      "path": "docs/validation/work-ot-01/planning-mobile/planner-desktop.png",
+      "bytes": 291548
+    },
+    {
+      "path": "docs/validation/work-ot-01/planning-mobile/planner-mobile.png",
+      "bytes": 240371
+    },
+    {
+      "path": "docs/validation/work-ot-01/planning/overview.png",
+      "bytes": 139811
+    },
+    {
+      "path": "docs/validation/work-ot-01/planning/planner-desktop.png",
+      "bytes": 302046
+    },
+    {
+      "path": "docs/validation/work-ot-01/planning/planner-mobile.png",
+      "bytes": 239878
+    },
+    {
+      "path": "docs/validation/work-ot-01/roster-edited-1280.png",
+      "bytes": 81192
+    },
+    {
+      "path": "docs/validation/work-ot-01/roster-edited-360.png",
+      "bytes": 70695
+    },
+    {
+      "path": "docs/validation/work-ot-01/roster-edited-390.png",
+      "bytes": 71196
+    },
+    {
+      "path": "docs/validation/work-ot-default-pay/access-1280.png",
+      "bytes": 207212
+    },
+    {
+      "path": "docs/validation/work-ot-default-pay/access-360.png",
+      "bytes": 212193
+    },
+    {
+      "path": "docs/validation/work-ot-default-pay/access-390.png",
+      "bytes": 212607
+    },
+    {
+      "path": "docs/validation/work-ot-default-pay/batch-cleared-1280.png",
+      "bytes": 76012
+    },
+    {
+      "path": "docs/validation/work-ot-default-pay/batch-cleared-360.png",
+      "bytes": 65637
+    },
+    {
+      "path": "docs/validation/work-ot-default-pay/batch-cleared-390.png",
+      "bytes": 67010
+    },
+    {
+      "path": "docs/validation/work-ot-default-pay/batch-preview-1280.png",
+      "bytes": 56166
+    },
+    {
+      "path": "docs/validation/work-ot-default-pay/batch-preview-360.png",
+      "bytes": 42929
+    },
+    {
+      "path": "docs/validation/work-ot-default-pay/batch-preview-390.png",
+      "bytes": 46071
+    },
+    {
+      "path": "docs/validation/work-ot-default-pay/batch-selection-1280.png",
+      "bytes": 76319
+    },
+    {
+      "path": "docs/validation/work-ot-default-pay/batch-selection-360.png",
+      "bytes": 63295
+    },
+    {
+      "path": "docs/validation/work-ot-default-pay/batch-selection-390.png",
+      "bytes": 64986
+    },
+    {
+      "path": "docs/validation/work-ot-default-pay/batch-week-1280.png",
+      "bytes": 81054
+    },
+    {
+      "path": "docs/validation/work-ot-default-pay/batch-week-360.png",
+      "bytes": 69012
+    },
+    {
+      "path": "docs/validation/work-ot-default-pay/batch-week-390.png",
+      "bytes": 69590
+    },
+    {
+      "path": "docs/validation/work-ot-default-pay/detail-1280.png",
+      "bytes": 84069
+    },
+    {
+      "path": "docs/validation/work-ot-default-pay/detail-360.png",
+      "bytes": 75716
+    },
+    {
+      "path": "docs/validation/work-ot-default-pay/detail-390.png",
+      "bytes": 75950
+    },
+    {
+      "path": "docs/validation/work-ot-default-pay/editor-1280.png",
+      "bytes": 66886
+    },
+    {
+      "path": "docs/validation/work-ot-default-pay/editor-360.png",
+      "bytes": 44974
+    },
+    {
+      "path": "docs/validation/work-ot-default-pay/editor-390.png",
+      "bytes": 45278
+    },
+    {
+      "path": "docs/validation/work-ot-default-pay/editor-bottom-1280.png",
+      "bytes": 64927
+    },
+    {
+      "path": "docs/validation/work-ot-default-pay/editor-bottom-360.png",
+      "bytes": 42253
+    },
+    {
+      "path": "docs/validation/work-ot-default-pay/editor-bottom-390.png",
+      "bytes": 44700
+    },
+    {
+      "path": "docs/validation/work-ot-default-pay/manual-1280.png",
+      "bytes": 120232
+    },
+    {
+      "path": "docs/validation/work-ot-default-pay/manual-360.png",
+      "bytes": 123389
+    },
+    {
+      "path": "docs/validation/work-ot-default-pay/overtime-bank-1280.png",
+      "bytes": 169158
+    },
+    {
+      "path": "docs/validation/work-ot-default-pay/overtime-bank-360.png",
+      "bytes": 149855
+    },
+    {
+      "path": "docs/validation/work-ot-default-pay/overtime-bank-390.png",
+      "bytes": 151020
+    },
+    {
+      "path": "docs/validation/work-ot-default-pay/overtime-pay-1280.png",
+      "bytes": 171394
+    },
+    {
+      "path": "docs/validation/work-ot-default-pay/overtime-pay-360.png",
+      "bytes": 151677
+    },
+    {
+      "path": "docs/validation/work-ot-default-pay/overtime-pay-390.png",
+      "bytes": 153131
+    },
+    {
+      "path": "docs/validation/work-ot-default-pay/overview.png",
+      "bytes": 160555
+    },
+    {
+      "path": "docs/validation/work-ot-default-pay/payment-1280.png",
+      "bytes": 140598
+    },
+    {
+      "path": "docs/validation/work-ot-default-pay/payment-360.png",
+      "bytes": 137543
+    },
+    {
+      "path": "docs/validation/work-ot-default-pay/payments-1280.png",
+      "bytes": 288953
+    },
+    {
+      "path": "docs/validation/work-ot-default-pay/payments-360.png",
+      "bytes": 231297
+    },
+    {
+      "path": "docs/validation/work-ot-default-pay/payments-390.png",
+      "bytes": 241846
+    },
+    {
+      "path": "docs/validation/work-ot-default-pay/payments-compact-1280.png",
+      "bytes": 156751
+    },
+    {
+      "path": "docs/validation/work-ot-default-pay/payments-compact-360.png",
+      "bytes": 139686
+    },
+    {
+      "path": "docs/validation/work-ot-default-pay/payments-compact-390.png",
+      "bytes": 140154
+    },
+    {
+      "path": "docs/validation/work-ot-default-pay/payments-zoom200-1280.png",
+      "bytes": 887542
+    },
+    {
+      "path": "docs/validation/work-ot-default-pay/planner-desktop.png",
+      "bytes": 291548
+    },
+    {
+      "path": "docs/validation/work-ot-default-pay/planner-mobile.png",
+      "bytes": 240371
+    },
+    {
+      "path": "docs/validation/work-ot-default-pay/roster-edited-1280.png",
+      "bytes": 81192
+    },
+    {
+      "path": "docs/validation/work-ot-default-pay/roster-edited-360.png",
+      "bytes": 70695
+    },
+    {
+      "path": "docs/validation/work-ot-default-pay/roster-edited-390.png",
+      "bytes": 71196
+    },
+    {
+      "path": "docs/validation/work-ot-default-pay/summary-1280.png",
+      "bytes": 60404
+    },
+    {
+      "path": "docs/validation/work-ot-default-pay/summary-360.png",
+      "bytes": 55718
+    },
+    {
+      "path": "docs/validation/work-ot-default-pay/summary-390.png",
+      "bytes": 55928
+    },
+    {
+      "path": "docs/validation/work-ot-default-pay/toolbar-1280.png",
+      "bytes": 58283
+    },
+    {
+      "path": "docs/validation/work-ot-default-pay/toolbar-360.png",
+      "bytes": 44964
+    },
+    {
+      "path": "docs/validation/work-ot-default-pay/toolbar-390.png",
+      "bytes": 45513
+    },
+    {
+      "path": "docs/validation/work-ot-default-pay/week-1280.png",
+      "bytes": 73108
+    },
+    {
+      "path": "docs/validation/work-ot-default-pay/week-360.png",
+      "bytes": 66390
+    },
+    {
+      "path": "docs/validation/work-ot-default-pay/week-390.png",
+      "bytes": 66056
+    },
+    {
+      "path": "docs/validation/work-ot-default-pay/work-1280.png",
+      "bytes": 68774
+    },
+    {
+      "path": "docs/validation/work-ot-default-pay/work-360.png",
+      "bytes": 61296
+    },
+    {
+      "path": "docs/validation/work-ot-default-pay/work-390.png",
+      "bytes": 61200
+    }
+  ],
+  "removedBytes": 79106654,
+  "repairedMarkdown": [
+    "docs/validation/arch-01b3a/README.md",
+    "docs/validation/arch-01b3a/batch/README.md",
+    "docs/validation/arch-01b3a/deselection/README.md",
+    "docs/validation/arch-01b3a/payments-summary/README.md",
+    "docs/validation/arch-01b3a/refinement/README.md",
+    "docs/validation/arch-01b3a/roster-editor-visual/README.md",
+    "docs/validation/arch-01b3a/toolbar/README.md",
+    "docs/validation/work-ot-01/README.md"
+  ]
+}

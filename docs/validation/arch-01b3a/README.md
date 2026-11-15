@@ -42,9 +42,9 @@ hooks, adaptadores, estilos globales, SW ni módulos ajenos a su subárbol/React
 
 | Ancho | Editor (inicio) | Editor (scroll) | Roster editado |
 |---|---|---|---|
-| 360 | [editor](editor-360.png) | [controles](editor-bottom-360.png) | [roster](roster-edited-360.png) |
-| 390 | [editor](editor-390.png) | [controles](editor-bottom-390.png) | [roster](roster-edited-390.png) |
-| 1280 | [editor](editor-1280.png) | [controles](editor-bottom-1280.png) | [roster](roster-edited-1280.png) |
+| 360 | [editor · archivo histórico](https://github.com/marcosgaier/finance-app/blob/b5d08af909377960b505d922b9f87ecac6ea5473/docs/validation/arch-01b3a/editor-360.png) | [controles · archivo histórico](https://github.com/marcosgaier/finance-app/blob/b5d08af909377960b505d922b9f87ecac6ea5473/docs/validation/arch-01b3a/editor-bottom-360.png) | [roster · archivo histórico](https://github.com/marcosgaier/finance-app/blob/b5d08af909377960b505d922b9f87ecac6ea5473/docs/validation/arch-01b3a/roster-edited-360.png) |
+| 390 | [editor · archivo histórico](https://github.com/marcosgaier/finance-app/blob/b5d08af909377960b505d922b9f87ecac6ea5473/docs/validation/arch-01b3a/editor-390.png) | [controles · archivo histórico](https://github.com/marcosgaier/finance-app/blob/b5d08af909377960b505d922b9f87ecac6ea5473/docs/validation/arch-01b3a/editor-bottom-390.png) | [roster · archivo histórico](https://github.com/marcosgaier/finance-app/blob/b5d08af909377960b505d922b9f87ecac6ea5473/docs/validation/arch-01b3a/roster-edited-390.png) |
+| 1280 | [editor · archivo histórico](https://github.com/marcosgaier/finance-app/blob/b5d08af909377960b505d922b9f87ecac6ea5473/docs/validation/arch-01b3a/editor-1280.png) | [controles · archivo histórico](https://github.com/marcosgaier/finance-app/blob/b5d08af909377960b505d922b9f87ecac6ea5473/docs/validation/arch-01b3a/editor-bottom-1280.png) | [roster · archivo histórico](https://github.com/marcosgaier/finance-app/blob/b5d08af909377960b505d922b9f87ecac6ea5473/docs/validation/arch-01b3a/roster-edited-1280.png) |
 
 ## Reproducir
 

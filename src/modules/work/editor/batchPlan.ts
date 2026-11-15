@@ -1,5 +1,5 @@
 import type {Shift,Settings} from '../vendor/taura/types';
-import {civilDay,newDraft,validateDraft,nzInstant} from './shiftDraft';
+import {civilDay,newDraft,validateDraft,nzInstant,hasActualData} from './shiftDraft';
 
 export type QuickKind='day'|'night'|'off';
 export const quickLabels:Record<QuickKind,string>={day:'Día 06:00–18:00',night:'Noche 18:00–06:00 (+1 día)',off:'Libre 0 h'};
@@ -29,7 +29,7 @@ export function planBatch(shifts:readonly Readonly<Shift>[],dates:readonly strin
     const items=shifts.filter(s=>s.shift_date===date),original=items[0];
     let reason=items.length>1?'Varios turnos: requiere revisión individual.':'';
     if(!reason&&original&&original.status!=='planned')reason=`Estado ${original.status}: histórico o no planificado protegido.`;
-    if(!reason&&original&&Object.entries(original).some(([key,value])=>/^(actual_|worked_|confirmed|paid_|payslip)/.test(key)&&value!==null&&value!==undefined&&value!==''))reason='Contiene datos trabajados, reales o confirmados: requiere revisión individual.';
+    if(!reason&&original&&(hasActualData(original)||Object.entries(original).some(([key,value])=>/^(actual_|worked_|confirmed|paid_|payslip)/.test(key)&&value!==null&&value!==undefined&&value!=='')))reason='Contiene datos trabajados, reales o confirmados: requiere revisión individual.';
     if(reason)return {date,action:'skip',reason};
     const id=original?.id??idFor(date);
     if(!original&&ids.has(id))throw Error('Identidad nueva duplicada.');

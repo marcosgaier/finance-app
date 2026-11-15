@@ -33,8 +33,8 @@ la plantilla modifica, evitando confundir metadatos clonados con cambios.
   Cancelar conserva selección; Escape conserva tres fechas; plantilla idéntica
   conserva selección; todas protegidas impiden confirmar. Se comprueban ambos
   tipos aplicados y continúan las regresiones editor/IDs/resumen/pagos/reset.
-- Capturas después del primer lote: [360](editor/batch-cleared-360.png),
-  [390](editor/batch-cleared-390.png), [1280](editor/batch-cleared-1280.png).
+- Capturas después del primer lote: [360 · archivo histórico](https://github.com/marcosgaier/finance-app/blob/b5d08af909377960b505d922b9f87ecac6ea5473/docs/validation/arch-01b3a/deselection/editor/batch-cleared-360.png),
+  [390 · archivo histórico](https://github.com/marcosgaier/finance-app/blob/b5d08af909377960b505d922b9f87ecac6ea5473/docs/validation/arch-01b3a/deselection/editor/batch-cleared-390.png), [1280 · archivo histórico](https://github.com/marcosgaier/finance-app/blob/b5d08af909377960b505d922b9f87ecac6ea5473/docs/validation/arch-01b3a/deselection/editor/batch-cleared-1280.png).
 - [Work/Finance](work-regression.log): PASS en los tres anchos, ocho pestañas,
   recuperación, navegación externa interceptada y aislamiento.
 - [Pagos](payments.log): 20 PASS.

@@ -1,0 +1,13 @@
+{
+  "units": "decimal bytes; not Git compressed transfer size",
+  "base": "64ca62dfabbef5e790c96036aa100abaae037436",
+  "previousHead": "b5d08af909377960b505d922b9f87ecac6ea5473",
+  "historyMeasuredHead": "b5d08af909377960b505d922b9f87ecac6ea5473",
+  "previousEvidenceChangedFiles": 773,
+  "previousEvidenceTreeBytes": 107639041,
+  "currentEvidenceTreeFiles": 426,
+  "currentEvidenceTreeBytes": 28846242,
+  "uniqueBranchHistoryBlobBytes": 35674052,
+  "gitCountObjects": "count: 1121\nsize: 55659\nin-pack: 486\npacks: 1\nsize-pack: 853\nprune-packable: 0\ngarbage: 0\nsize-garbage: 0",
+  "note": "Deleted evidence blobs remain reachable through previous commits. No history rewritten. Run again after commit for final history size."
+}

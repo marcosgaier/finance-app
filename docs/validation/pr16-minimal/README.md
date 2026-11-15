@@ -53,6 +53,22 @@ sobre el HEAD auditado; no ejecutar sobre el árbol ya limpiado.
 El [reporte de tamaño](size-report.json) distingue árbol de evidencias completo
 (incluye archivos anteriores a este PR) e historial de objetos exclusivos de rama.
 
+Medición del commit de producto/limpieza `f8d62a8` antes de este cierre documental:
+diff total 794 → 219 archivos; suma de bytes de archivos cambiados del árbol
+81.929.491 → 3.133.932. Evidencias del diff: 773 → 196 archivos,
+81.749.119 → 2.948.335 bytes. Historial exclusivo de rama: 35.854.922 bytes de
+blobs únicos lógicos; no incluye blobs compartidos con main. Los informes de
+cierre añaden unos pocos KB. El historial no disminuyó: antes eran 35.674.052
+bytes únicos, con numerosas capturas repetidas que comparten el mismo blob.
+El almacén Git local completo medía 55.716 KiB sueltos + 853 KiB empaquetados;
+incluye objetos de otras referencias y no mide una transferencia de este PR.
+
+La verificación de enlaces detectó también tres referencias previas inexistentes
+`editor-secondary-*`: corregidas al pie del editor archivado, con etiqueta fiel.
+Todos los enlaces locales PNG de los ocho informes reparados fueron comprobados.
+Vercel SUCCESS confirmado por GitHub para `f8d62a8`; inspección directa por el
+conector Vercel devolvió 404. El SHA documental final se verifica tras su push.
+
 **Limitación Git:** borrar en un commit nuevo reduce el diff final y el árbol,
 pero todos los blobs anteriores siguen accesibles en el historial. No hubo
 force push, rebase, reescritura ni garbage collection. La suma de tamaños lógicos

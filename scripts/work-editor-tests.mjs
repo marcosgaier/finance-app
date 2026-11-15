@@ -157,7 +157,10 @@ test('WORK-OT-01 pay/bank/pay, base always paid, exact tax/net/bank consistency,
     assert.ok(Math.abs(p.estimatedNet-(p.estimatedGross-p.estimatedPAYE-p.estimatedKiwiSaver))<0.011);
   }
   assert.equal(JSON.stringify(data),original);assert.deepEqual(fixtures.validateDemo().overtimePreferences,data.overtimePreferences);
-  assert.equal(project(structuredClone(fixtures.validateDemo().overtimePreferences)).bankableHours,10);
+  assert.deepEqual(project(structuredClone(fixtures.validateDemo().overtimePreferences)),a);
+  assert.equal(a.overtimeWeeks[0].overtimeTreatment,'pay');
+  assert.deepEqual(update(data.overtimePreferences,'pay'),data.overtimePreferences);
+  assert.deepEqual(fixtures.validateDemo(data.shifts,fixtures.referenceDay,data.settings,bank).overtimePreferences,bank);
 });
 test('WORK-OT-01 independent weeks, no overtime and protected periods reject updates and hide controls',()=>{
   const d=fixtures.validateDemo(),week='2026-09-20';
@@ -167,7 +170,7 @@ test('WORK-OT-01 independent weeks, no overtime and protected periods reject upd
   const shifts=[...d.shifts,...second];
   const first=overtime.changeOvertime(d.overtimePreferences,shifts,d.settings,d.referenceDate,week,'pay');
   const both=overtime.changeOvertime(first,shifts,d.settings,d.referenceDate,'2026-09-27','bank');
-  assert.equal(both.find(p=>p.weekStart===week).overtimeTreatment,'pay');assert.equal(both.find(p=>p.weekStart==='2026-09-27').overtimeTreatment,'bank');
+  assert.equal(projections.buildPayProjections(shifts,d.settings,d.referenceDate,4,both).find(p=>p.id===week).overtimeWeeks[0].overtimeTreatment,'pay');assert.equal(both.find(p=>p.weekStart==='2026-09-27').overtimeTreatment,'bank');
   for(const status of ['confirmed','payslip','paid']) {
     const locked=d.shifts.map((s,i)=>i===0?{...s,status}:s);
     assert.equal(overtime.changeOvertime(d.overtimePreferences,locked,d.settings,d.referenceDate,week,'pay'),d.overtimePreferences);

@@ -84,9 +84,10 @@ try {
     const choice=work.getByRole('combobox',{name:'Tratamiento overtime 2026-09-20',exact:true});
     const card=work.locator('[data-payment="2026-09-20"]');
     const amounts=()=>card.locator('[data-amount]').allTextContents();
-    await paymentsView();assert.equal(await choice.inputValue(),'bank');
-    const bankAmounts=await amounts();
-    await choice.selectOption('pay');const payAmounts=await amounts();assert.notDeepEqual(payAmounts,bankAmounts);
+    await paymentsView();assert.equal(await choice.inputValue(),'pay');
+    const payAmounts=await amounts();
+    await choice.selectOption('bank');const bankAmounts=await amounts();
+    await choice.selectOption('pay');assert.deepEqual(await amounts(),payAmounts);assert.notDeepEqual(payAmounts,bankAmounts);
     await choice.focus();await page.keyboard.press('Tab');await page.keyboard.press('Shift+Tab');
     assert.equal(await choice.evaluate(el=>el===document.activeElement&&el.matches(':focus-visible')),true);
     const box=await choice.boundingBox();assert.ok(box.height>=44&&box.width>=44);
@@ -105,9 +106,10 @@ try {
     await paymentsView();await choice.selectOption('pay');assert.deepEqual(await amounts(),payAmounts);
     await unchanged();
     page.once('dialog',d=>d.dismiss());await work.getByRole('button',{name:'Restablecer ejemplo',exact:true}).click();assert.equal(await choice.inputValue(),'pay');
-    page.once('dialog',d=>d.accept());await work.getByRole('button',{name:'Restablecer ejemplo',exact:true}).click();assert.equal(await choice.inputValue(),'bank');
-    await choice.selectOption('pay');await work.getByRole('button',{name:'Volver a Finanzas',exact:true}).click();await openWork();await paymentsView();assert.equal(await choice.inputValue(),'bank');
-    await choice.selectOption('pay');await page.reload();financeNode=await page.locator('#finance-region').elementHandle();await openWork();await paymentsView();assert.equal(await choice.inputValue(),'bank');await unchanged();
+    await choice.selectOption('bank');
+    page.once('dialog',d=>d.accept());await work.getByRole('button',{name:'Restablecer ejemplo',exact:true}).click();assert.equal(await choice.inputValue(),'pay');
+    await choice.selectOption('bank');await work.getByRole('button',{name:'Volver a Finanzas',exact:true}).click();await openWork();await paymentsView();assert.equal(await choice.inputValue(),'pay');
+    await choice.selectOption('bank');await page.reload();financeNode=await page.locator('#finance-region').elementHandle();await openWork();await paymentsView();assert.equal(await choice.inputValue(),'pay');await unchanged();
     await work.getByRole('button',{name:'Roster',exact:true}).click();
     assert.match(await work.innerText(),/DEMOSTRACIÓN — datos ficticios; no es tu roster/);
     await work.getByRole('button',{name:'Seleccionar varios días',exact:true}).click();
@@ -234,7 +236,7 @@ try {
     await work.getByRole('button',{name:'Pagos',exact:true}).click();
     for(const detail of await work.locator('[data-payment="2026-09-20"] details').all())if(!await detail.evaluate(el=>el.open))await detail.locator(':scope > summary').click();
     assert.match(await work.locator('[data-payment="2026-09-20"]').innerText(),/18 h en esta proyección/);
-    assert.equal(await work.locator('[data-payment="2026-09-20"] [data-amount="gross"]').innerText(),new Intl.NumberFormat('es-NZ',{style:'currency',currency:'NZD'}).format(1824));
+    assert.equal(await work.locator('[data-payment="2026-09-20"] [data-amount="gross"]').innerText(),new Intl.NumberFormat('es-NZ',{style:'currency',currency:'NZD'}).format(2094));
     await work.getByRole('button',{name:'Roster',exact:true}).click();
     await shifts().getByRole('button',{name:'Duplicar turno',exact:true}).click();
     assert.equal(await shifts().count(),2);
@@ -279,7 +281,7 @@ try {
     await page.reload();await openWork();await day('2026-09-24').click();assert.equal(await shifts().count(),1);
     // Reload performs Finance's existing one storage read; compare fresh instrumentation with original initial state.
     await unchanged();assert.deepEqual(errors,[]);assert.deepEqual(outbound,[]);
-    checks.push({width,status:'PASS',flows:['WORK-OT-01 bank/pay/bank/pay, summary coherence, keyboard/focus, reset cancellation/confirmation, exit/reload, zero effects','batch selection/month/week/keyboard/preview/cancel/confirm/conflicts/zero-effects','edit/ID/invalid/unchanged','dialog keyboard/Escape/focus/scroll','consistent summary/payments','multiple/duplicate/cancel','confirmed deletion','empty day/night/add','month/week navigation','reset confirm','exit/reopen/reload'],workEffects:0,financeUnchanged:true});
+    checks.push({width,status:'PASS',flows:['WORK-OT-01 default pay/bank/pay, summary coherence, keyboard/focus, reset cancellation/confirmation, exit/reload, zero effects','batch selection/month/week/keyboard/preview/cancel/confirm/conflicts/zero-effects','edit/ID/invalid/unchanged','dialog keyboard/Escape/focus/scroll','consistent summary/payments','multiple/duplicate/cancel','confirmed deletion','empty day/night/add','month/week navigation','reset confirm','exit/reopen/reload'],workEffects:0,financeUnchanged:true});
     await context.close();
   }
   const result={status:'PASS',node:process.version,chromium:browser.version(),checks,limits:'Local build, isolated synthetic profiles. Native Android/PWA, OS zoom and real screen readers remain manual. No Taura production access.'};

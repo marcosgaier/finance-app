@@ -223,10 +223,11 @@ try {
       assert.equal(await paidWeek.getAttribute('data-pay-date'),'2026-09-30');
       assert.match(await paidWeek.innerText(),/miércoles/);
       const money=value=>new Intl.NumberFormat('es-NZ',{style:'currency',currency:'NZD'}).format(value);
-      for(const [key,value] of Object.entries({base:1800,enhanced:0,night:36,weekend:48,gross:1884,paye:460.02,kiwisaver:56.52,net:1367.46})) {
+      for(const [key,value] of Object.entries({base:1800,enhanced:300,night:36,weekend:48,gross:2184,paye:564.27,kiwisaver:65.52,net:1554.21})) {
         assert.equal(await paidWeek.locator('[data-amount="'+key+'"]').innerText(),(key==='paye'||key==='kiwisaver'?'− ':'')+money(value));
       }
-      assert.match(await paidWeek.innerText(),/Hours Bank: \+10 h/);
+      assert.doesNotMatch(await paidWeek.innerText(),/Hours Bank: \+10 h/);
+      assert.equal(await paymentsRegion.getByRole('combobox',{name:'Tratamiento overtime 2026-09-20',exact:true}).inputValue(),'pay');
       assert.match(await paymentsRegion.innerText(),/Semana sin turnos en este ejemplo/);
       assert.equal(await paymentsRegion.getByRole('combobox',{name:'Tratamiento overtime 2026-09-20',exact:true}).count(),1);
       assert.equal(await paymentsRegion.locator('input,select:not([aria-label="Tratamiento overtime 2026-09-20"]),textarea,button,a[download]').count(),0);
@@ -318,7 +319,7 @@ try {
     await popup.close();
     assert.equal(await budget.inputValue(), '42');
     assert.deepEqual(await snapshot(page), edited);
-    checks.push(`${width}px: payments: exact bank amounts, computed Wednesday, 4 upcoming/2 recent, zero weeks, keyboard/scroll/return; month 42 days, week 7 days, previous/next/fixed date, overnight/empty inline details, keyboard and returned focus, sticky banner, preserved calendar/scroll and unchanged summary; demo round trips from every tab, DOM identity/hidden/focus/scroll/CSS, zero demo effects, eight tabs, touch/layout, synthetic planning session and budget, native popup/Enter, noopener/no referrer, 404/offline, unchanged Finance storage/history`);
+    checks.push(`${width}px: payments: exact default pay amounts, computed Wednesday, 4 upcoming/2 recent, zero weeks, keyboard/scroll/return; month 42 days, week 7 days, previous/next/fixed date, overnight/empty inline details, keyboard and returned focus, sticky banner, preserved calendar/scroll and unchanged summary; demo round trips from every tab, DOM identity/hidden/focus/scroll/CSS, zero demo effects, eight tabs, touch/layout, synthetic planning session and budget, native popup/Enter, noopener/no referrer, 404/offline, unchanged Finance storage/history`);
     await context.close();
   }
   for (const [label, raw, readError] of [['incompatible', '{"schemaVersion":999}', false], ['read-error', '{}', true]]) {

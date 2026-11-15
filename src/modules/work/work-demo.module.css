@@ -83,6 +83,14 @@
 @media(max-width:400px) {.nextPaymentCard {grid-template-columns:1fr}.workDemo {padding:16px}}
 .editorDialog {width:min(640px,calc(100% - 24px));max-height:88dvh;overflow:auto;padding:20px;border:2px solid #173e35;border-radius:18px;background:#f4f7f5;color:#152622;box-sizing:border-box}
 .editorDialog::backdrop {background:#102c25aa}
+.shiftComparison {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:8px 0;font-size:12px}
+.shiftComparison span {background:#e7efec;padding:8px;border-radius:8px;overflow-wrap:anywhere}
+.shiftComparison b {display:block;font-variant-numeric:tabular-nums}
+.editorNotes {display:grid;gap:4px;font-size:12px;font-weight:600;margin:8px 0}
+.editorNotes textarea {width:100%;min-height:60px;box-sizing:border-box;resize:vertical;border:1px solid #68877a;border-radius:8px;padding:8px;font:inherit;color:#152622;background:white}
+.shiftNotes p {white-space:pre-wrap;overflow-wrap:anywhere}
+.shiftNotes summary {min-height:44px;align-content:center;cursor:pointer}
+.editorDialog button:disabled,.editorDialog select:disabled {opacity:.55;cursor:not-allowed}
 .editorDialog h2 {font-size:23px;font-weight:750}
 .editorDialog p {margin:12px 0}
 .editorGrid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:12px 0}

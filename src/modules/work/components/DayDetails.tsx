@@ -3,6 +3,7 @@ import type {Shift} from '../vendor/taura/types';
 import {formatDate} from '../vendor/taura/lib/dates';
 import styles from '../work-demo.module.css';
 import {protectedShift} from '../editor/shiftDraft';
+import {ShiftComparison} from './ShiftComparison';
 
 export const kindLabels:Record<Shift['kind'],string>={day:'Diurno',night:'Nocturno',off:'Libre',annual_leave:'Licencia anual',sick_leave:'Licencia por enfermedad',custom:'Personalizado'};
 export const statusLabels:Record<Shift['status'],string>={planned:'Planificado',worked:'Trabajado',modified:'Modificado',cancelled:'Cancelado',paid_leave:'Licencia paga',unpaid_leave:'Licencia sin pago',payslip:'Recibo ficticio',confirmed:'Confirmado ficticio'};
@@ -14,6 +15,8 @@ export function DayDetails({date,shifts,onClose,onAdd,onEdit,onAction}:{date:str
       <p>{statusLabels[s.status]} · estado ficticio · {s.planned_paid_hours} h planificadas
         {s.actual_paid_hours!=null?` · ${s.actual_paid_hours} h trabajadas del ejemplo`:''}</p>
       {s.planned_start&&s.planned_end?<p>Inicio {s.planned_start.replace('T',' ')} · Fin {s.planned_end.replace('T',' ')}</p>:null}
+      <ShiftComparison shift={s}/>
+      {s.notes||s.actual_notes?<details className={styles.shiftNotes}><summary>Notas del ejemplo</summary>{s.notes?<p>Planificadas: {s.notes}</p>:null}{s.actual_notes?<p>Reales: {s.actual_notes}</p>:null}</details>:null}
       {protectedShift(s)?<p>Dato ficticio con recibo/confirmado: protegido, solo consulta. No se puede editar, duplicar, cancelar ni eliminar.</p>:<div className={styles.controls}>
         {onEdit?<button type="button" onClick={()=>onEdit(s)}>Editar un turno</button>:null}
         {onAction?<><button type="button" onClick={()=>onAction(s.id,'duplicate')}>Duplicar turno</button>

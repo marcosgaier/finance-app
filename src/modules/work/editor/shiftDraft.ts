@@ -34,6 +34,30 @@ function interval(start:string|null,end:string|null,day:string,rest:number,hours
   if(civilDuration>12||duration<=0||duration>13||rest>=duration||duration-rest>12+1e-8||hours>duration-rest+1e-8)
     fail('Horario o descanso inválido: máximo contractual de 12 h pagadas por turno.');
 }
+export function hasActualData(shift:Readonly<Shift>):boolean {
+  return [shift.actual_start,shift.actual_end,shift.actual_paid_hours,shift.actual_unpaid_break,shift.actual_rate,shift.actual_notes].some(v=>v!==null&&v!==undefined);
+}
+export function canMarkWorked(shift:Readonly<Shift>):boolean {
+  return ['day','night','custom'].includes(shift.kind)&&['planned','worked','modified'].includes(shift.status)&&!protectedShift(shift);
+}
+// Field-by-field nullish filling preserves partial actuals, including zero and empty notes.
+export function markWorkedDraft(shift:Readonly<Shift>):Shift {
+  if(!canMarkWorked(shift))fail('Este turno no permite marcar trabajo.');
+  return {...clone(shift),status:shift.status==='modified'?'modified':'worked',
+    actual_start:shift.actual_start??shift.planned_start,actual_end:shift.actual_end??shift.planned_end,
+    actual_paid_hours:shift.actual_paid_hours??shift.planned_paid_hours,
+    actual_unpaid_break:shift.actual_unpaid_break??shift.planned_unpaid_break,
+    actual_rate:shift.actual_rate??shift.planned_rate,actual_notes:shift.actual_notes??shift.notes};
+}
+export function calculateDraftHours(shift:Readonly<Shift>,actual=false):Shift {
+  if(protectedShift(shift)||shift.kind==='off')fail('Este turno no permite calcular horas.');
+  const start=actual?shift.actual_start:shift.planned_start,end=actual?shift.actual_end:shift.planned_end;
+  const rest=actual?(shift.actual_unpaid_break??0):shift.planned_unpaid_break;
+  numeric(rest,'Descanso');
+  interval(start,end,shift.shift_date,rest,0);
+  const hours=(nzInstant(end!)-nzInstant(start!))/3600000-rest;
+  return {...clone(shift),[actual?'actual_paid_hours':'planned_paid_hours']:hours};
+}
 export function validateDraft(shift:Shift):Shift {
   civilDay(shift.shift_date);
   if(shift.shift_date<'2026-04-01'||shift.shift_date>'2027-03-31')fail('Fecha fuera del año fiscal del ejemplo 2026–27.');
@@ -84,7 +108,7 @@ export function actOnShift(shifts:readonly Readonly<Shift>[],id:string,action:'c
   if(!newId)fail('El duplicado requiere identidad nueva.');
   // A duplicate is a new planned example, never a confirmation of work/payment.
   const copy={...clone(target),id:newId,status:'planned' as const,actual_start:null,actual_end:null,
-    actual_paid_hours:null,actual_unpaid_break:null,actual_rate:null};
+    actual_paid_hours:null,actual_unpaid_break:null,actual_rate:null,actual_notes:undefined};
   delete copy.created_at;delete copy.updated_at;
   return commitDraft(shifts,copy);
 }

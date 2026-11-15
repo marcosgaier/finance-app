@@ -203,12 +203,61 @@ try {
     page.once('dialog',d=>d.accept());await work.getByRole('button',{name:'Restablecer ejemplo',exact:true}).click();
 
     await day('2026-09-24').click();
+    // Point 2: draft-only actions, partial actuals, notes and explicit save/cancel.
+    const prior=await shifts().innerText();
+    const edit=()=>shifts().getByRole('button',{name:'Editar un turno',exact:true}).click();
+    const plannedOptions=()=>dialog.locator('details').filter({has:page.getByLabel('Notas planificadas',{exact:true})});
+    const actualOptions=()=>dialog.locator('details').filter({has:page.getByLabel('Notas reales',{exact:true})});
+    await edit();assert.match(await dialog.innerText(),/Sin horas reales/);
+    await plannedOptions().locator('summary').click();
+    await dialog.getByLabel('Descanso planificado (h)',{exact:true}).fill('0.5');
+    await dialog.getByLabel('Notas planificadas',{exact:true}).fill('Plan sintético\nsegunda línea');
+    await dialog.getByRole('button',{name:'Calcular horas desde el horario',exact:true}).click();
+    assert.equal(await dialog.getByLabel('Horas planificadas',{exact:true}).inputValue(),'11.5');
+    await dialog.getByRole('button',{name:'Marcar como trabajado',exact:true}).focus();await page.keyboard.press('Enter');
+    await actualOptions().locator('summary').click();
+    assert.equal(await dialog.getByLabel('Horas trabajadas ficticias',{exact:true}).inputValue(),'11.5');
+    assert.equal(await dialog.getByLabel('Notas reales',{exact:true}).inputValue(),'Plan sintético\nsegunda línea');
+    await page.keyboard.press('Escape');assert.equal(await shifts().innerText(),prior);await unchanged();
+    await edit();await actualOptions().locator('summary').click();
+    await dialog.getByLabel('Horas trabajadas ficticias',{exact:true}).fill('0');
+    await dialog.getByLabel('Descanso trabajado ficticio (h)',{exact:true}).fill('0');
+    await dialog.getByLabel('Tarifa ficticia trabajada (NZD/h)',{exact:true}).fill('0');
+    await dialog.getByLabel('Notas reales',{exact:true}).fill('Real parcial sintético');
+    await dialog.getByRole('button',{name:'Guardar solo en la demo',exact:true}).click();
+    await edit();await dialog.getByRole('button',{name:'Marcar como trabajado',exact:true}).click();
+    await actualOptions().locator('summary').click();
+    for(const label of ['Horas trabajadas ficticias','Descanso trabajado ficticio (h)','Tarifa ficticia trabajada (NZD/h)'])assert.equal(await dialog.getByLabel(label,{exact:true}).inputValue(),'0');
+    assert.equal(await dialog.getByLabel('Notas reales',{exact:true}).inputValue(),'Real parcial sintético');
+    assert.equal(await dialog.getByLabel('Tipo de turno ficticio',{exact:true}).isDisabled(),true);
+    await dialog.getByLabel('Fin trabajado ficticio',{exact:true}).fill('2026-09-24T18:00');
+    await dialog.getByRole('button',{name:'Calcular horas desde el horario trabajado',exact:true}).click();
+    assert.equal(await dialog.getByLabel('Horas trabajadas ficticias',{exact:true}).inputValue(),'11');
+    await plannedOptions().locator('summary').click();
+    await dialog.getByLabel('Notas planificadas',{exact:true}).fill('Plan guardado');
+    assert.match(await dialog.locator('[aria-label="Comparación de horas"]').innerText(),/-1 h/);
+    for(const control of await dialog.locator('button,input,select,textarea,summary').all()){
+      if(!await control.isVisible())continue;const box=await control.boundingBox();assert.ok(box.width>=44&&box.height>=44);
+    }
+    await dialog.getByRole('button',{name:'Calcular horas desde el horario trabajado',exact:true}).focus();
+    await page.keyboard.press('Tab');await page.keyboard.press('Shift+Tab');
+    assert.equal(await page.evaluate(()=>document.activeElement.matches(':focus-visible')),true);
+    await page.screenshot({path:fileURLToPath(new URL(`worked-editor-${width}.png`,output))});
+    await dialog.getByRole('button',{name:'Guardar solo en la demo',exact:true}).click();
+    assert.match(await shifts().innerText(),/Trabajado/);assert.match(await shifts().innerText(),/-1 h/);
+    await shifts().locator('details').locator('summary').click();assert.match(await shifts().innerText(),/Plan guardado/);assert.match(await shifts().innerText(),/Real parcial sintético/);
+    await page.screenshot({path:fileURLToPath(new URL(`worked-saved-${width}.png`,output)),fullPage:true});
+    await edit();await actualOptions().locator('summary').click();
+    await dialog.getByLabel('Notas reales',{exact:true}).fill('descartar');
+    await dialog.getByRole('button',{name:'Cerrar sin guardar',exact:true}).click();assert.doesNotMatch(await shifts().innerText(),/descartar/);
+    await unchanged();page.once('dialog',d=>d.accept());await work.getByRole('button',{name:'Restablecer ejemplo',exact:true}).click();
+    await day('2026-09-24').click();
     const original=await shifts().innerText();
     const id=await shifts().getAttribute('data-shift-id');
     await shifts().getByRole('button',{name:'Editar un turno',exact:true}).focus();await page.keyboard.press('Enter');
     await dialog.waitFor();assert.equal(await dialog.getByLabel('Fecha del turno ficticio',{exact:true}).evaluate(el=>el===document.activeElement),true);
     // Visual refinement: secondary inputs remain reachable with native keyboard disclosure.
-    const secondary=dialog.locator('details').filter({has:dialog.getByLabel('Tarifa ficticia planificada (NZD/h)',{exact:true})});
+    const secondary=dialog.locator('details').filter({has:page.getByLabel('Tarifa ficticia planificada (NZD/h)',{exact:true})});
     if(await secondary.count()){
       const summary=secondary.locator('summary');await summary.focus();await page.keyboard.press('Enter');
       assert.equal(await dialog.getByLabel('Tarifa ficticia planificada (NZD/h)',{exact:true}).isVisible(),true);

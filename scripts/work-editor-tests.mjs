@@ -24,6 +24,55 @@ const {newDraft,validateDraft,commitDraft,actOnShift}=api;
 const before=JSON.stringify(fixtures.validateDemo());
 const day='2026-09-24';
 const draft=()=>newDraft(day,'demo-new');
+test('worked draft fills nullish fields only; preserves every partial actual, notes/metadata and zero without mutation',()=>{
+  for(const patch of [{},{actual_start:day+'T08:00:00'},{actual_end:day+'T18:00:00'},
+    {actual_paid_hours:0},{actual_unpaid_break:0},{actual_rate:0},{actual_notes:''},{actual_notes:'real\nnota'}]) {
+    const source=freeze({...draft(),notes:'plan',future:{nested:[1]},...patch}),before=JSON.stringify(source);
+    const next=api.markWorkedDraft(source);
+    for(const [key,value] of Object.entries(patch))assert.equal(next[key],value);
+    assert.equal(next.status,'worked');assert.equal(JSON.stringify(source),before);
+    assert.deepEqual(next.future,source.future);assert.equal(next.notes,'plan');
+    assert.deepEqual(api.markWorkedDraft(next),next);
+  }
+  const original=freeze({...draft(),notes:'plan',actual_notes:'keep'});
+  const next=commitDraft([original],api.markWorkedDraft(original),original.id);
+  assert.equal(next[0].actual_notes,'keep');assert.equal(original.status,'planned');
+  assert.equal(actOnShift(next,original.id,'duplicate','demo-copy')[1].actual_notes,undefined);
+  for(const patch of [{status:'cancelled'},{status:'confirmed'},{status:'payslip'},{status:'paid'},{kind:'off'},{kind:'annual_leave'},{kind:'sick_leave'}])assert.throws(()=>api.markWorkedDraft({...draft(),...patch}));
+  assert.equal(api.markWorkedDraft({...draft(),status:'modified'}).status,'modified');
+});
+test('hours calculation: exact seconds, breaks, midnight, NZ DST and contractual validation; only selected draft field changes',()=>{
+  const cases=[
+    [draft(),12],
+    [{...draft(),planned_unpaid_break:.5},11.5],
+    [newDraft(day,'demo-night','night'),12],
+    [newDraft('2026-09-26','demo-spring','night'),11],
+    [{...newDraft('2026-04-04','demo-autumn','night'),planned_unpaid_break:1},12],
+    [{...draft(),planned_end:day+'T18:59:30'},43170/3600]
+  ];
+  for(const [source,expected] of cases){
+    freeze(source);const before=JSON.stringify(source),next=api.calculateDraftHours(source);
+    assert.equal(next.planned_paid_hours,expected);assert.equal(JSON.stringify(source),before);validateDraft(next);
+    const actual={...api.markWorkedDraft(source),actual_unpaid_break:source.planned_unpaid_break};
+    assert.equal(api.calculateDraftHours(actual,true).actual_paid_hours,expected);
+  }
+  for(const patch of [{planned_end:null},{planned_start:day+'T25:00'},{planned_start:day+'T08:00',planned_end:day+'T07:00'},
+    {planned_start:'2026-09-25T07:00'}, {planned_unpaid_break:12},{planned_unpaid_break:-1},{planned_unpaid_break:NaN},
+    {planned_end:day+'T20:00',planned_unpaid_break:1},
+    {shift_date:'2026-09-27',planned_start:'2026-09-27T02:30',planned_end:'2026-09-27T06:00'},
+    {shift_date:'2026-04-05',planned_start:'2026-04-05T02:30',planned_end:'2026-04-05T06:00'}])assert.throws(()=>api.calculateDraftHours({...draft(),...patch}));
+  assert.throws(()=>api.calculateDraftHours(newDraft('2026-04-04','demo-long','night')));
+  assert.throws(()=>api.calculateDraftHours(draft(),true));
+  for(const status of ['payslip','confirmed','paid'])assert.throws(()=>api.calculateDraftHours({...draft(),status}));
+});
+test('comparison distinguishes no actual hours from zero; notes render as text',()=>{
+  for(const actual_paid_hours of [null,0,10,12]){
+    const html=renderToStaticMarkup(React.createElement(details.DayDetails,{date:day,shifts:[{...draft(),actual_paid_hours,notes:'<script>plan</script>',actual_notes:'real'}],onClose(){}}));
+    assert.match(html,actual_paid_hours===null?/Sin horas reales/:/Diferencia/);
+    assert.equal(html.includes('Pendiente'),actual_paid_hours===null);
+    assert.match(html,/&lt;script&gt;plan/);assert.match(html,/Reales: real/);
+  }
+});
 function freeze(value){if(value&&typeof value==='object'){Object.values(value).forEach(freeze);Object.freeze(value);}return value;}
 
 test('commit updates only chosen ID, preserves created_at and unknown nested fields, without mutating source',()=>{
